@@ -1,0 +1,9 @@
+{
+  "name": "SyncMeet 1:1",
+  "description": "A minimal, low-latency 1:1 video calling platform with screen sharing and chat.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "display-capture"
+  ]
+}
