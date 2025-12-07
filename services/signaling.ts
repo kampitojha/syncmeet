@@ -10,19 +10,24 @@ class PeerSignalingService {
   public isConnectedToSignaling: boolean = false;
 
   constructor() {
-    // Cleaner ID
     this.userId = Math.random().toString(36).substr(2, 9);
   }
 
   public joinRoom(roomId: string, name: string) {
-    if (this.room) return;
+    if (this.room) {
+        // Broadcast presence even if already joined (Critical for discovery)
+        this.send('join', roomId, { name });
+        return;
+    }
 
     try {
-        // Using HiveMQ - often more reliable for public WebSocket usage
+        // Changed AppID to v3 to avoid conflicts with old cached sessions
+        // Added EMQX as primary because it supports secure WSS very well
         const config = { 
-            appId: 'syncmeet-v2-stable',
+            appId: 'syncmeet-v3-robust',
             brokerUrls: [
-                'wss://broker.hivemq.com:8884/mqtt', 
+                'wss://broker.emqx.io:8084/mqtt',      // Primary: High reliability
+                'wss://test.mosquitto.org:8081/mqtt',  // Backup: Standard
             ] 
         };
 
@@ -32,47 +37,42 @@ class PeerSignalingService {
         this.sendAction = send;
         this.isConnectedToSignaling = true;
 
-        // Message Listener
         get((data: SignalPayload, peerId: string) => {
-          if (data.senderId === this.userId) return; // Ignore self
+          if (data.senderId === this.userId) return;
           this.emit(data.type, data);
         });
 
-        // Peer Join Event
         this.room.onPeerJoin((peerId: string) => {
           console.log(`👤 Signaling: Peer ${peerId} joined`);
           this.emit('peer-joined', { peerId });
-          // Announce self immediately
+          // Handshake trigger
           this.send('join', roomId, { name });
         });
 
         this.room.onPeerLeave((peerId: string) => {
-             console.log(`👋 Signaling: Peer ${peerId} left`);
              this.emit('leave', { senderId: peerId, roomId });
         });
 
-        // Initial broadcast to find existing peers
+        // Initial broadcast
         setTimeout(() => {
           this.send('join', roomId, { name });
-        }, 500);
+        }, 1000);
 
     } catch (error) {
-        console.error("Signaling Initialization Failed:", error);
+        console.error("Signaling Init Failed:", error);
         this.isConnectedToSignaling = false;
     }
   }
 
-  // --- Send Wrapper ---
   private send(type: SignalPayload['type'], roomId: string, payload: any) {
     if (!this.sendAction) return;
     try {
         this.sendAction({ type, roomId, senderId: this.userId, payload });
     } catch (e) {
-        console.warn(`Failed to send ${type}`, e);
+        console.warn(`Signaling Send Error (${type}):`, e);
     }
   }
 
-  // --- API Methods ---
   public sendOffer(roomId: string, targetUserId: string, offer: RTCSessionDescriptionInit) {
     this.send('offer', roomId, { targetUserId, sdp: offer });
   }

@@ -2,11 +2,11 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { signaling } from '../services/signaling';
 import { SignalPayload } from '../types';
 
-// Use standard Google STUN servers
+// Robust STUN config including Twilio as backup
 const rtcConfig: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:global.stun.twilio.com:3478' }
   ],
   iceCandidatePoolSize: 0, 
 };
@@ -44,14 +44,12 @@ export const useWebRTC = (roomId: string, userName: string) => {
   // Logic Refs
   const remoteUserNameRef = useRef<string | null>(null);
   const isScreenSharingRef = useRef(false);
-  const isNegotiating = useRef(false);
 
   useEffect(() => { isScreenSharingRef.current = isScreenSharing; }, [isScreenSharing]);
 
   // --- 1. Connection Core ---
 
   const createPeerConnection = useCallback(() => {
-    // If exists and stable, return it. If closed/failed, recreate.
     if (peerConnection.current && peerConnection.current.connectionState !== 'closed' && peerConnection.current.connectionState !== 'failed') {
         return peerConnection.current;
     }
@@ -72,18 +70,16 @@ export const useWebRTC = (roomId: string, userName: string) => {
         
         if (pc.iceConnectionState === 'connected') {
             setStatusMessage('');
-            // Stop handshake spam once connected
             if (handshakeInterval.current) {
                 clearInterval(handshakeInterval.current);
                 handshakeInterval.current = null;
             }
         } else if (pc.iceConnectionState === 'disconnected') {
             setStatusMessage('Reconnecting...');
-            // Optional: Restart ICE
             pc.restartIce();
         } else if (pc.iceConnectionState === 'failed') {
             setStatusMessage('Connection failed. Retrying...');
-            startHandshake(); // Restart discovery
+            startHandshake();
         }
     };
 
@@ -96,7 +92,6 @@ export const useWebRTC = (roomId: string, userName: string) => {
       });
     };
 
-    // Attach local tracks immediately
     if (localStream) {
         localStream.getTracks().forEach(track => {
             try { pc.addTrack(track, localStream); } catch(e) {}
@@ -114,10 +109,9 @@ export const useWebRTC = (roomId: string, userName: string) => {
     console.log("👋 Starting Handshake...");
     setStatusMessage("Searching for peer...");
     
-    // Announce initially
     signaling.joinRoom(roomId, userName);
 
-    // Keep announcing every 3 seconds until connected
+    // Aggressive discovery: ping every 2s until connected
     handshakeInterval.current = window.setInterval(() => {
         if (peerConnection.current?.iceConnectionState === 'connected') {
             clearInterval(handshakeInterval.current!);
@@ -125,7 +119,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
         }
         console.log("📡 Pinging room...");
         signaling.joinRoom(roomId, userName);
-    }, 3000);
+    }, 2000);
 
   }, [roomId, userName]);
 
@@ -135,13 +129,12 @@ export const useWebRTC = (roomId: string, userName: string) => {
     if (!roomId || !userName) return;
 
     try {
-      // LAG FIX: Use 480p resolution and lower framerate. 
-      // High res (720p/1080p) causes lag and connection drops on P2P.
+      // Use 480p for stability
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
             width: { ideal: 640 }, 
             height: { ideal: 480 }, 
-            frameRate: { ideal: 20 } 
+            frameRate: { ideal: 24 } 
         }, 
         audio: { 
             echoCancellation: true, 
@@ -188,8 +181,6 @@ export const useWebRTC = (roomId: string, userName: string) => {
     setConnectionState('new');
     setStatusMessage('');
     signaling.leaveRoom(roomId);
-    
-    isNegotiating.current = false;
   }, [roomId, localStream]);
 
   // --- 4. Signaling Event Handlers ---
@@ -202,10 +193,9 @@ export const useWebRTC = (roomId: string, userName: string) => {
       setRemoteUserName(payload.payload.name);
       remoteUserNameRef.current = payload.payload.name;
       
-      // Stop handshake loop as we found someone
+      // Found peer, stop pinging to reduce noise
       if (handshakeInterval.current) clearInterval(handshakeInterval.current);
 
-      // Caller Logic (Tie-Breaker)
       const isCaller = signaling.userId > payload.senderId;
       
       if (isCaller) {
@@ -213,7 +203,17 @@ export const useWebRTC = (roomId: string, userName: string) => {
         setStatusMessage("Connecting...");
         
         const pc = createPeerConnection();
-        // Prevent double offers if already negotiating
+        
+        // FIX: If we are already offering but connection isn't done, 
+        // resend the offer! This fixes cases where the first offer was lost.
+        if (pc.signalingState === 'have-local-offer') {
+            console.log("⚠️ Resending lost offer...");
+            if (pc.localDescription) {
+                signaling.sendOffer(roomId, payload.senderId, pc.localDescription);
+            }
+            return;
+        }
+
         if (pc.signalingState !== 'stable') return;
 
         try {
@@ -232,11 +232,10 @@ export const useWebRTC = (roomId: string, userName: string) => {
       
       const pc = createPeerConnection();
       
-      // Handle Collision
+      // Glare handling
       if (pc.signalingState !== 'stable') {
-           // If I am polite (smaller ID), I accept their offer and drop mine
            const amIPolite = signaling.userId < payload.senderId;
-           if (!amIPolite) return; // Ignore offer if I am impolite
+           if (!amIPolite) return; 
            
            await Promise.all([
              pc.setLocalDescription({type: "rollback"}),
@@ -246,7 +245,6 @@ export const useWebRTC = (roomId: string, userName: string) => {
            await pc.setRemoteDescription(new RTCSessionDescription(payload.payload.sdp));
       }
 
-      // Process queued candidates
       while (iceCandidatesQueue.current.length > 0) {
           const c = iceCandidatesQueue.current.shift();
           if(c) pc.addIceCandidate(new RTCIceCandidate(c)).catch(e=>{});
