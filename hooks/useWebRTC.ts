@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { signaling } from '../services/signaling';
 import { SignalPayload } from '../types';
 
-// Robust STUN config including Twilio as backup
 const rtcConfig: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -107,11 +106,12 @@ export const useWebRTC = (roomId: string, userName: string) => {
     if (handshakeInterval.current) clearInterval(handshakeInterval.current);
     
     console.log("👋 Starting Handshake...");
-    setStatusMessage("Searching for peer...");
+    setStatusMessage("Searching...");
     
+    // Immediate Trigger
     signaling.joinRoom(roomId, userName);
 
-    // Aggressive discovery: ping every 2s until connected
+    // Aggressive ping every 1s (reduced from 2s for speed)
     handshakeInterval.current = window.setInterval(() => {
         if (peerConnection.current?.iceConnectionState === 'connected') {
             clearInterval(handshakeInterval.current!);
@@ -119,7 +119,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
         }
         console.log("📡 Pinging room...");
         signaling.joinRoom(roomId, userName);
-    }, 2000);
+    }, 1000);
 
   }, [roomId, userName]);
 
@@ -129,7 +129,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
     if (!roomId || !userName) return;
 
     try {
-      // Use 480p for stability
+      // 480p is the sweet spot for speed vs quality on P2P
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
             width: { ideal: 640 }, 
@@ -149,6 +149,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
       setLocalStream(stream);
       setIsInRoom(true);
       
+      // FIRE IMMEDIATELY
       startHandshake();
       
     } catch (err) {
@@ -193,22 +194,18 @@ export const useWebRTC = (roomId: string, userName: string) => {
       setRemoteUserName(payload.payload.name);
       remoteUserNameRef.current = payload.payload.name;
       
-      // Found peer, stop pinging to reduce noise
-      if (handshakeInterval.current) clearInterval(handshakeInterval.current);
-
       const isCaller = signaling.userId > payload.senderId;
       
       if (isCaller) {
-        console.log("📞 I am Caller. Initiating...");
+        console.log("📞 I am Caller. Instant Initiate.");
         setStatusMessage("Connecting...");
         
         const pc = createPeerConnection();
         
-        // FIX: If we are already offering but connection isn't done, 
-        // resend the offer! This fixes cases where the first offer was lost.
+        // If we have an offer but haven't sent it or it failed, send it now
         if (pc.signalingState === 'have-local-offer') {
-            console.log("⚠️ Resending lost offer...");
             if (pc.localDescription) {
+                console.log("♻️ Resending previous offer");
                 signaling.sendOffer(roomId, payload.senderId, pc.localDescription);
             }
             return;
@@ -232,7 +229,6 @@ export const useWebRTC = (roomId: string, userName: string) => {
       
       const pc = createPeerConnection();
       
-      // Glare handling
       if (pc.signalingState !== 'stable') {
            const amIPolite = signaling.userId < payload.senderId;
            if (!amIPolite) return; 

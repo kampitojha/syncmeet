@@ -15,19 +15,18 @@ class PeerSignalingService {
 
   public joinRoom(roomId: string, name: string) {
     if (this.room) {
-        // Broadcast presence even if already joined (Critical for discovery)
+        // Immediate broadcast if already connected
         this.send('join', roomId, { name });
         return;
     }
 
     try {
-        // Changed AppID to v3 to avoid conflicts with old cached sessions
-        // Added EMQX as primary because it supports secure WSS very well
+        // Using v3-robust app ID for clean slate
         const config = { 
             appId: 'syncmeet-v3-robust',
             brokerUrls: [
-                'wss://broker.emqx.io:8084/mqtt',      // Primary: High reliability
-                'wss://test.mosquitto.org:8081/mqtt',  // Backup: Standard
+                'wss://broker.emqx.io:8084/mqtt',      // Primary
+                'wss://test.mosquitto.org:8081/mqtt',  // Backup
             ] 
         };
 
@@ -43,9 +42,9 @@ class PeerSignalingService {
         });
 
         this.room.onPeerJoin((peerId: string) => {
-          console.log(`👤 Signaling: Peer ${peerId} joined`);
+          console.log(`⚡ Instant: Peer ${peerId} detected`);
           this.emit('peer-joined', { peerId });
-          // Handshake trigger
+          // Immediate Reply
           this.send('join', roomId, { name });
         });
 
@@ -53,10 +52,15 @@ class PeerSignalingService {
              this.emit('leave', { senderId: peerId, roomId });
         });
 
-        // Initial broadcast
-        setTimeout(() => {
-          this.send('join', roomId, { name });
-        }, 1000);
+        // BURST STRATEGY: Send multiple announces quickly to ensure immediate discovery
+        // Fire 0ms (Now)
+        this.send('join', roomId, { name });
+        
+        // Fire 300ms (Backup for packet loss)
+        setTimeout(() => this.send('join', roomId, { name }), 300);
+        
+        // Fire 800ms (Final check)
+        setTimeout(() => this.send('join', roomId, { name }), 800);
 
     } catch (error) {
         console.error("Signaling Init Failed:", error);
