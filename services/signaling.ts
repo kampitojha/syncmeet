@@ -1,22 +1,23 @@
 import { SignalPayload, DrawLinePayload } from '../types';
 // @ts-ignore
-import { joinRoom } from 'trystero';
+import { joinRoom } from 'trystero/mqtt';
 
 /**
- * P2P Signaling Service using Trystero
+ * P2P Signaling Service using Trystero (MQTT Strategy)
+ * MQTT is faster/more reliable for signaling than Torrent/Nostr in many network conditions.
  */
 class PeerSignalingService {
   private room: any = null;
   private sendAction: any = null;
   private listeners: Record<string, Function[]> = {};
   public userId: string;
+  public isConnectedToSignaling: boolean = false;
 
   constructor() {
     this.userId = 'user-' + Math.random().toString(36).substr(2, 9);
   }
 
   public joinRoom(roomId: string, name: string) {
-    // If room already exists, just broadcast presence (Heartbeat)
     if (this.room) {
         if (this.sendAction) {
             this.send('join', roomId, { name });
@@ -25,30 +26,49 @@ class PeerSignalingService {
     } 
 
     try {
-        this.room = joinRoom({ appId: 'syncmeet-v1' }, roomId);
+        // Using public MQTT brokers for signaling
+        const config = { 
+            appId: 'syncmeet-v1',
+            brokerUrls: [
+                'wss://broker.hivemq.com:8884/mqtt', // Secure WebSocket
+                'wss://test.mosquitto.org:8081/mqtt'   // Backup
+            ] 
+        };
+
+        this.room = joinRoom(config, roomId);
+        
+        // Setup actions
         const [send, get] = this.room.makeAction('signal');
         this.sendAction = send;
+        this.isConnectedToSignaling = true;
 
+        // Listen for messages
         get((data: SignalPayload, peerId: string) => {
-          // Basic filter to ensure we don't process our own messages if looped back
           if (data.senderId !== this.userId) {
             this.emit(data.type, data);
           }
         });
 
+        // Peer Joined Event
         this.room.onPeerJoin((peerId: string) => {
-          console.log(`Peer ${peerId} joined signaling layer`);
-          // When a peer joins via Trystero native event, immediately say hello
+          console.log(`📡 Signaling: Peer ${peerId} joined`);
+          this.emit('peer-joined', { peerId });
+          // Announce ourselves immediately
           this.send('join', roomId, { name });
         });
 
-        // Initial broadcast after a short delay to ensure connection
+        this.room.onPeerLeave((peerId: string) => {
+             console.log(`📡 Signaling: Peer ${peerId} left`);
+        });
+
+        // Initial broadcast
         setTimeout(() => {
           this.send('join', roomId, { name });
-        }, 500);
+        }, 1000);
 
     } catch (error) {
         console.error("Signaling Initialization Failed:", error);
+        this.isConnectedToSignaling = false;
     }
   }
 
@@ -115,6 +135,7 @@ class PeerSignalingService {
     }
     this.room = null;
     this.sendAction = null;
+    this.isConnectedToSignaling = false;
   }
 
   private send(type: SignalPayload['type'], roomId: string, payload: any) {

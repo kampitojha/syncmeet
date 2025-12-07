@@ -36,6 +36,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
   // Network & Connection State
   const [connectionState, setConnectionState] = useState<RTCIceConnectionState>('new');
   const [networkQuality, setNetworkQuality] = useState<number>(4); // 0-4 scale
+  const [statusMessage, setStatusMessage] = useState<string>('');
 
   // Refs
   const peerConnection = useRef<RTCPeerConnection | null>(null);
@@ -44,6 +45,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
   const screenTrackRef = useRef<MediaStreamTrack | null>(null);
   const statsInterval = useRef<number | null>(null);
   const discoveryInterval = useRef<number | null>(null);
+  const connectionTimeout = useRef<number | null>(null);
   
   // Logic Refs (to avoid useEffect dependency loops)
   const remoteUserNameRef = useRef<string | null>(null);
@@ -61,6 +63,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
   const processIceQueue = useCallback(async () => {
     if (!peerConnection.current || !peerConnection.current.remoteDescription) return;
     
+    console.log(`🧊 Processing ${iceCandidatesQueue.current.length} buffered ICE candidates`);
     while (iceCandidatesQueue.current.length > 0) {
       const candidate = iceCandidatesQueue.current.shift();
       if (candidate) {
@@ -77,30 +80,25 @@ export const useWebRTC = (roomId: string, userName: string) => {
   const updateBitrate = (pc: RTCPeerConnection, quality: number) => {
     const senders = pc.getSenders();
     const videoSender = senders.find(s => s.track?.kind === 'video');
-    
     if (!videoSender || !videoSender.track) return;
-
     const parameters = videoSender.getParameters();
-    
     if (!parameters.encodings || parameters.encodings.length === 0) {
         parameters.encodings = [{}];
     }
-
     // Map quality (0-4) to Max Bitrate (bps)
     let maxBitrate = undefined;
     if (quality === 3) maxBitrate = 1500000;
     if (quality === 2) maxBitrate = 500000;
     if (quality === 1) maxBitrate = 250000;
     if (quality === 0) maxBitrate = 100000;
-
     parameters.encodings[0].maxBitrate = maxBitrate;
-    
     videoSender.setParameters(parameters).catch(e => console.warn("Bitrate adaptation failed", e));
   };
 
   const createPeerConnection = useCallback(() => {
     if (peerConnection.current) return peerConnection.current;
 
+    console.log("🛠️ Creating new RTCPeerConnection");
     const pc = new RTCPeerConnection(rtcConfig);
     peerConnection.current = pc;
 
@@ -114,26 +112,30 @@ export const useWebRTC = (roomId: string, userName: string) => {
     // Handle Connection State
     pc.oniceconnectionstatechange = () => {
         setConnectionState(pc.iceConnectionState);
-        console.log("ICE Connection State:", pc.iceConnectionState);
+        console.log("🔄 ICE Connection State:", pc.iceConnectionState);
         
-        // Stop discovery if connected
-        if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+        if (pc.iceConnectionState === 'connected') {
+            setStatusMessage('');
             if (discoveryInterval.current) {
                 clearInterval(discoveryInterval.current);
                 discoveryInterval.current = null;
             }
+            if (connectionTimeout.current) {
+                clearTimeout(connectionTimeout.current);
+                connectionTimeout.current = null;
+            }
         } else if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
-            // If failed, maybe restart discovery?
-            if (!discoveryInterval.current && isInRoom) {
-               startDiscovery();
+            setStatusMessage('Connection unstable, retrying...');
+            // Maybe restart ICE?
+            if (pc.iceConnectionState === 'failed') {
+               pc.restartIce();
             }
         }
     };
 
     // Handle Remote Stream (Robust Implementation)
     pc.ontrack = (event) => {
-      console.log("Received remote track:", event.track.kind);
-      
+      console.log("📹 Received remote track:", event.track.kind);
       setRemoteStream(prevStream => {
         const newStream = prevStream ? new MediaStream(prevStream.getTracks()) : new MediaStream();
         if (!newStream.getTracks().find(t => t.id === event.track.id)) {
@@ -143,7 +145,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
       });
     };
 
-    // Add Local Tracks using addTrack (Standard WebRTC)
+    // Add Local Tracks
     const streamToSend = new MediaStream();
     if (localAudioTrack.current) {
         streamToSend.addTrack(localAudioTrack.current);
@@ -160,22 +162,18 @@ export const useWebRTC = (roomId: string, userName: string) => {
   const startDiscovery = useCallback(() => {
       if (discoveryInterval.current) clearInterval(discoveryInterval.current);
       
+      console.log("📡 Starting Peer Discovery...");
+      setStatusMessage("Searching for peer...");
+
       // Immediately announce
-      try {
-        signaling.joinRoom(roomId, userName);
-      } catch (e) {
-        console.warn("Initial discovery announcement failed", e);
-      }
+      signaling.joinRoom(roomId, userName);
       
       discoveryInterval.current = window.setInterval(() => {
           if (peerConnection.current?.iceConnectionState !== 'connected' && peerConnection.current?.iceConnectionState !== 'completed') {
-             try {
-                signaling.joinRoom(roomId, userName); // Re-broadcast join
-             } catch (e) {
-                 console.warn("Discovery heartbeat failed, retrying...", e);
-             }
+             console.log("📡 Sending Heartbeat...");
+             signaling.joinRoom(roomId, userName); 
           }
-      }, 3000);
+      }, 2000);
   }, [roomId, userName]);
 
 
@@ -191,26 +189,20 @@ export const useWebRTC = (roomId: string, userName: string) => {
             setNetworkQuality(0);
             return;
         }
-
         try {
             const stats = await peerConnection.current.getStats();
             let rtt = 0;
-
             stats.forEach(report => {
                 if (report.type === 'candidate-pair' && report.state === 'succeeded') {
                     rtt = report.currentRoundTripTime || 0;
                 }
             });
-
-            // Calculate Quality Score
             let score = 4;
             if (rtt > 0.1) score = 3;
             if (rtt > 0.3) score = 2;
             if (rtt > 0.5) score = 1;
-
             setNetworkQuality(score);
             updateBitrate(peerConnection.current, score);
-
         } catch (e) {
             console.error("Error fetching stats:", e);
         }
@@ -229,29 +221,22 @@ export const useWebRTC = (roomId: string, userName: string) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: true, 
-        audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-        }
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
       });
       
-      const videoTrack = stream.getVideoTracks()[0];
-      const audioTrack = stream.getAudioTracks()[0];
-      localVideoTrack.current = videoTrack;
-      localAudioTrack.current = audioTrack;
+      localVideoTrack.current = stream.getVideoTracks()[0];
+      localAudioTrack.current = stream.getAudioTracks()[0];
       localStreamRef.current = stream;
 
       setLocalStream(stream);
       setIsInRoom(true);
       
-      // Initialize Signaling and start Heartbeat
       try {
         signaling.joinRoom(roomId, userName);
         startDiscovery();
       } catch (signalErr) {
         console.error("Signaling failed to start:", signalErr);
-        // We still keep the user in the room locally so they can retry or see themselves
+        setStatusMessage("Signaling Server Error");
       }
 
     } catch (err) {
@@ -281,9 +266,8 @@ export const useWebRTC = (roomId: string, userName: string) => {
         clearInterval(discoveryInterval.current);
         discoveryInterval.current = null;
     }
-    if (statsInterval.current) {
-        clearInterval(statsInterval.current);
-    }
+    if (statsInterval.current) clearInterval(statsInterval.current);
+    if (connectionTimeout.current) clearTimeout(connectionTimeout.current);
 
     setLocalStream(null);
     setRemoteStream(null);
@@ -292,14 +276,11 @@ export const useWebRTC = (roomId: string, userName: string) => {
     remoteUserNameRef.current = null;
     setConnectionState('new');
     setNetworkQuality(4);
+    setStatusMessage('');
     
     setIsScreenSharing(false);
     setIsCameraOn(true);
     setIsMicOn(true);
-    
-    setRemoteIsMicOn(true);
-    setRemoteIsCameraOn(true);
-    setRemoteIsScreenSharing(false);
   }, [roomId]);
 
   const toggleMic = useCallback(() => {
@@ -324,29 +305,20 @@ export const useWebRTC = (roomId: string, userName: string) => {
 
   const stopScreenSharing = useCallback(() => {
     if (!screenTrackRef.current) return;
-
     screenTrackRef.current.stop();
     screenTrackRef.current = null;
 
     if (peerConnection.current && localVideoTrack.current) {
         const senders = peerConnection.current.getSenders();
         const videoSender = senders.find(s => s.track?.kind === 'video');
-        if (videoSender) {
-            videoSender.replaceTrack(localVideoTrack.current);
-        }
+        if (videoSender) videoSender.replaceTrack(localVideoTrack.current);
     }
-
     if (localVideoTrack.current && localAudioTrack.current) {
-        const newStream = new MediaStream([localVideoTrack.current, localAudioTrack.current]);
-        setLocalStream(newStream);
+        setLocalStream(new MediaStream([localVideoTrack.current, localAudioTrack.current]));
     }
-
     setIsScreenSharing(false);
     signaling.sendScreenShareStatus(roomId, false);
-    
-    if (localVideoTrack.current) {
-        signaling.sendMediaStatus(roomId, 'video', localVideoTrack.current.enabled);
-    }
+    if (localVideoTrack.current) signaling.sendMediaStatus(roomId, 'video', localVideoTrack.current.enabled);
   }, [roomId]);
 
   const toggleScreenShare = useCallback(async () => {
@@ -361,21 +333,11 @@ export const useWebRTC = (roomId: string, userName: string) => {
         if (peerConnection.current) {
             const senders = peerConnection.current.getSenders();
             const videoSender = senders.find(s => s.track?.kind === 'video');
-            if (videoSender) {
-                videoSender.replaceTrack(screenTrack);
-            }
+            if (videoSender) videoSender.replaceTrack(screenTrack);
         }
-
-        if (localAudioTrack.current) {
-            const newStream = new MediaStream([screenTrack, localAudioTrack.current]);
-            setLocalStream(newStream);
-        } else {
-             setLocalStream(new MediaStream([screenTrack]));
-        }
-
-        screenTrack.onended = () => {
-           stopScreenSharing();
-        };
+        setLocalStream(new MediaStream([screenTrack, localAudioTrack.current!]));
+        
+        screenTrack.onended = () => stopScreenSharing();
 
         setIsScreenSharing(true);
         signaling.sendMediaStatus(roomId, 'video', true);
@@ -393,12 +355,13 @@ export const useWebRTC = (roomId: string, userName: string) => {
       if (payload.roomId !== roomId) return;
       if (payload.senderId === signaling.userId) return; 
 
-      console.log("Peer discovered:", payload.payload.name);
+      console.log("👋 Peer discovered:", payload.payload.name);
       
-      // Update UI state but don't depend on it
       setRemoteUserName(payload.payload.name);
       remoteUserNameRef.current = payload.payload.name;
-      
+      setStatusMessage("Connecting to peer...");
+
+      // Send our status
       signaling.sendMediaStatus(roomId, 'audio', localAudioTrack.current?.enabled ?? true);
       signaling.sendMediaStatus(roomId, 'video', isScreenSharingRef.current ? true : (localVideoTrack.current?.enabled ?? true));
       signaling.sendScreenShareStatus(roomId, isScreenSharingRef.current);
@@ -410,14 +373,13 @@ export const useWebRTC = (roomId: string, userName: string) => {
 
       if (isCaller) {
         const pc = createPeerConnection();
-        // Check if we can/should start a connection
+        // Strict check to prevent race conditions or re-offers on active connections
         const canOffer = pc && 
-                         pc.signalingState === 'stable' && 
-                         pc.iceConnectionState !== 'connected' && 
-                         pc.iceConnectionState !== 'completed';
+                         (pc.signalingState === 'stable' || pc.signalingState === 'have-local-offer') &&
+                         (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed');
 
         if (canOffer) {
-            console.log("I am the Caller. sending offer.");
+            console.log("📞 I am the Caller. Sending offer.");
             try {
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
@@ -431,6 +393,9 @@ export const useWebRTC = (roomId: string, userName: string) => {
 
     const handleOffer = async (payload: SignalPayload) => {
       if (payload.roomId !== roomId) return;
+      console.log("📩 Received Offer");
+      setStatusMessage("Negotiating connection...");
+      
       if (!remoteUserNameRef.current) {
           setRemoteUserName("Peer");
           remoteUserNameRef.current = "Peer";
@@ -438,25 +403,26 @@ export const useWebRTC = (roomId: string, userName: string) => {
 
       signaling.sendMediaStatus(roomId, 'audio', localAudioTrack.current?.enabled ?? true);
       signaling.sendMediaStatus(roomId, 'video', isScreenSharingRef.current ? true : (localVideoTrack.current?.enabled ?? true));
-      signaling.sendScreenShareStatus(roomId, isScreenSharingRef.current);
 
       const pc = createPeerConnection();
       if (pc) {
         try {
-            // Rollback if we were trying to be the caller but lost connection or state is weird
-            if (pc.signalingState !== 'stable' && pc.signalingState !== 'have-remote-offer') {
-                 await Promise.all([
+            // Handle Glare: If we have a local offer but receive a remote offer
+            if (pc.signalingState !== 'stable') {
+                console.warn("⚠️ Signaling Glare detected. Rolling back local description.");
+                await Promise.all([
                     pc.setLocalDescription({type: "rollback"}),
                     pc.setRemoteDescription(new RTCSessionDescription(payload.payload.sdp))
-                 ]);
+                ]);
             } else {
-                 await pc.setRemoteDescription(new RTCSessionDescription(payload.payload.sdp));
+                await pc.setRemoteDescription(new RTCSessionDescription(payload.payload.sdp));
             }
             
             await processIceQueue();
 
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
+            console.log("📨 Sending Answer");
             signaling.sendAnswer(roomId, payload.senderId, answer);
         } catch(e) {
             console.error("Error handling offer:", e);
@@ -466,6 +432,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
 
     const handleAnswer = async (payload: SignalPayload) => {
       if (payload.roomId !== roomId) return;
+      console.log("📩 Received Answer");
       if (peerConnection.current) {
         try {
             if (peerConnection.current.signalingState === 'have-local-offer') {
@@ -494,26 +461,19 @@ export const useWebRTC = (roomId: string, userName: string) => {
 
     const handleRemoteLeave = (payload: SignalPayload) => {
       if (payload.roomId !== roomId) return;
-      
+      console.log("👋 Remote Peer Left");
       setRemoteUserName(null);
       remoteUserNameRef.current = null;
       setRemoteStream(null);
-      setRemoteIsMicOn(true);
-      setRemoteIsCameraOn(true);
-      setRemoteIsScreenSharing(false);
-      setNetworkQuality(4);
       setConnectionState('disconnected');
+      setStatusMessage("Peer left. Waiting...");
 
       if (peerConnection.current) {
         peerConnection.current.close();
         peerConnection.current = null;
       }
       iceCandidatesQueue.current = [];
-      
-      // If remote left, restart discovery to wait for them (or someone else) to come back
-      if (!discoveryInterval.current && isInRoom) {
-          startDiscovery();
-      }
+      if (!discoveryInterval.current && isInRoom) startDiscovery();
     };
 
     const handleMediaStatus = (payload: SignalPayload) => {
@@ -538,6 +498,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
     signaling.on('leave', handleRemoteLeave);
     signaling.on('media-status', handleMediaStatus);
     signaling.on('screen-share-status', handleScreenShareStatus);
+    signaling.on('peer-joined', (data: any) => console.log("Peer joined via signaling event", data));
 
     return () => {
       // Detach Listeners
@@ -564,6 +525,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
     remoteIsScreenSharing,
     networkQuality,
     connectionState,
+    statusMessage,
     joinRoom,
     leaveRoom,
     toggleMic,

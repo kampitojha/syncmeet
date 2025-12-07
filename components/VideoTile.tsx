@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { MicOff, VideoOff, MessageSquare, AudioLines, User, Signal, WifiOff } from 'lucide-react';
+import { MicOff, VideoOff, MessageSquare, AudioLines, User, Signal, WifiOff, Loader2 } from 'lucide-react';
 import { useAudioLevel } from '../hooks/useAudioLevel';
 
 interface VideoTileProps {
@@ -14,6 +14,7 @@ interface VideoTileProps {
   networkQuality?: number; 
   connectionState?: RTCIceConnectionState;
   reactions?: string[];
+  statusMessage?: string; // New Prop
 }
 
 const VideoTile: React.FC<VideoTileProps> = ({ 
@@ -27,7 +28,8 @@ const VideoTile: React.FC<VideoTileProps> = ({
   isScreenShare = false,
   networkQuality = 4,
   connectionState = 'connected',
-  reactions = []
+  reactions = [],
+  statusMessage = ''
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioLevel = useAudioLevel(stream, isAudioEnabled ?? true);
@@ -114,11 +116,21 @@ const VideoTile: React.FC<VideoTileProps> = ({
         </div>
       )}
 
-      {/* Reconnecting Overlay */}
-      {isReconnecting && !isLocal && (
+      {/* Connection Status Overlay */}
+      {statusMessage && !isLocal && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center animate-fade-in">
+             <div className="bg-gray-800/80 p-4 rounded-xl border border-white/10 flex flex-col items-center">
+                <Loader2 size={32} className="text-indigo-500 animate-spin mb-3" />
+                <span className="text-white font-medium text-sm">{statusMessage}</span>
+             </div>
+        </div>
+      )}
+      
+      {/* Reconnecting Overlay (Native WebRTC State) */}
+      {!statusMessage && isReconnecting && !isLocal && (
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center">
             <WifiOff size={32} className="text-red-500 mb-2 animate-pulse" />
-            <span className="text-white font-semibold">Reconnecting...</span>
+            <span className="text-white font-semibold">Connection Unstable</span>
         </div>
       )}
 

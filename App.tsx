@@ -35,6 +35,7 @@ const App: React.FC = () => {
     remoteIsScreenSharing,
     networkQuality,
     connectionState,
+    statusMessage, // New Prop
     joinRoom,
     leaveRoom,
     toggleMic,
@@ -232,6 +233,7 @@ const App: React.FC = () => {
                   networkQuality={networkQuality}
                   connectionState={connectionState}
                   reactions={reactions}
+                  statusMessage={statusMessage} // Pass status
                 />
               </div>
             ) : (
@@ -242,6 +244,7 @@ const App: React.FC = () => {
                 </div>
                 <h3 className="text-gray-300 text-lg font-medium mb-1">Waiting for others...</h3>
                 <p className="text-gray-500 text-sm">Share the room ID <span className="text-indigo-400 font-mono bg-indigo-500/10 px-1.5 py-0.5 rounded">{roomId}</span> to invite.</p>
+                {statusMessage && <p className="text-yellow-500 text-xs mt-4 animate-pulse">{statusMessage}</p>}
               </div>
             )}
           </div>
