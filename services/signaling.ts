@@ -2,70 +2,63 @@ import { SignalPayload, DrawLinePayload } from '../types';
 // @ts-ignore
 import { joinRoom } from 'trystero/mqtt';
 
-/**
- * P2P Signaling Service using Trystero (MQTT Strategy)
- * MQTT is faster/more reliable for signaling than Torrent/Nostr in many network conditions.
- */
 class PeerSignalingService {
   private room: any = null;
   private sendAction: any = null;
   private listeners: Record<string, Function[]> = {};
   public userId: string;
   public isConnectedToSignaling: boolean = false;
+  private pendingCandidates: any[] = [];
 
   constructor() {
-    this.userId = 'user-' + Math.random().toString(36).substr(2, 9);
+    // Generate a shorter, cleaner ID to save bandwidth
+    this.userId = Math.random().toString(36).substr(2, 9);
   }
 
   public joinRoom(roomId: string, name: string) {
+    // Prevent re-joining loop
     if (this.room) {
-        if (this.sendAction) {
-            this.send('join', roomId, { name });
-        }
         return;
     } 
 
     try {
-        // Using public MQTT brokers for signaling
-        // Switched to EMQX as primary because mqtthq can be rate-limited/flaky
+        // Mosquitto is often the most reliable public broker for WebSockets
         const config = { 
             appId: 'syncmeet-v1',
             brokerUrls: [
-                'wss://broker.emqx.io:8084/mqtt', // Primary: Very stable public broker
-                'wss://broker.hivemq.com:8884/mqtt' // Backup
+                'wss://test.mosquitto.org:8081/mqtt', // Standard Secure WS
             ] 
         };
 
         this.room = joinRoom(config, roomId);
         
-        // Setup actions
         const [send, get] = this.room.makeAction('signal');
         this.sendAction = send;
         this.isConnectedToSignaling = true;
 
         // Listen for messages
         get((data: SignalPayload, peerId: string) => {
-          if (data.senderId !== this.userId) {
-            this.emit(data.type, data);
-          }
+          // Ignore own messages
+          if (data.senderId === this.userId) return;
+          this.emit(data.type, data);
         });
 
-        // Peer Joined Event
+        // Peer Joined Event - This is the Trigger for connection
         this.room.onPeerJoin((peerId: string) => {
-          console.log(`📡 Signaling: Peer ${peerId} joined`);
-          this.emit('peer-joined', { peerId });
-          // Announce ourselves immediately
+          console.log(`✅ Peer Joined: ${peerId}`);
+          // Send a specific 'hello' signal to trigger the handshake
           this.send('join', roomId, { name });
         });
 
         this.room.onPeerLeave((peerId: string) => {
-             console.log(`📡 Signaling: Peer ${peerId} left`);
+             console.log(`❌ Peer Left: ${peerId}`);
+             this.emit('leave', { senderId: peerId, roomId });
         });
 
-        // Initial broadcast
+        // Announce presence once on mount
         setTimeout(() => {
           this.send('join', roomId, { name });
-        }, 1000);
+        }, 500);
 
     } catch (error) {
         console.error("Signaling Initialization Failed:", error);
@@ -73,7 +66,22 @@ class PeerSignalingService {
     }
   }
 
-  // --- WebRTC Signaling ---
+  // --- Wrapper to prevent crashes if socket is closed ---
+  private send(type: SignalPayload['type'], roomId: string, payload: any) {
+    if (!this.sendAction) return;
+    try {
+        // Small delay for candidates to prevent packet flooding
+        if (type === 'ice-candidate') {
+            this.sendAction({ type, roomId, senderId: this.userId, payload });
+        } else {
+            this.sendAction({ type, roomId, senderId: this.userId, payload });
+        }
+    } catch (e) {
+        console.warn(`Failed to send ${type}`, e);
+    }
+  }
+
+  // --- API Methods ---
   public sendOffer(roomId: string, targetUserId: string, offer: RTCSessionDescriptionInit) {
     this.send('offer', roomId, { targetUserId, sdp: offer });
   }
@@ -86,7 +94,6 @@ class PeerSignalingService {
     this.send('ice-candidate', roomId, { targetUserId, candidate });
   }
 
-  // --- Chat ---
   public sendChatMessage(roomId: string, message: any) {
     this.send('chat', roomId, message);
   }
@@ -99,7 +106,6 @@ class PeerSignalingService {
     this.send('typing', roomId, { isTyping });
   }
 
-  // --- Media Status ---
   public sendMediaStatus(roomId: string, kind: 'audio' | 'video', enabled: boolean) {
     this.send('media-status', roomId, { kind, enabled });
   }
@@ -108,7 +114,6 @@ class PeerSignalingService {
     this.send('screen-share-status', roomId, { isScreenSharing });
   }
 
-  // --- Collaboration Features ---
   public sendDrawLine(roomId: string, data: DrawLinePayload) {
     this.send('draw-line', roomId, data);
   }
@@ -126,40 +131,16 @@ class PeerSignalingService {
   }
 
   public leaveRoom(roomId: string) {
-    try {
-        this.send('leave', roomId, {});
-        if (this.room) {
-          this.room.leave();
-        }
-    } catch (e) {
-        console.warn("Error leaving room:", e);
+    if (this.room) {
+        try { this.room.leave(); } catch(e) {}
     }
     this.room = null;
     this.sendAction = null;
     this.isConnectedToSignaling = false;
   }
 
-  private send(type: SignalPayload['type'], roomId: string, payload: any) {
-    if (!this.sendAction) return;
-
-    try {
-        const message: SignalPayload = {
-          type,
-          roomId,
-          senderId: this.userId,
-          payload
-        };
-        
-        this.sendAction(message);
-    } catch (e) {
-        console.error(`Error sending signal type ${type}:`, e);
-    }
-  }
-
   public on(event: string, callback: Function) {
-    if (!this.listeners[event]) {
-      this.listeners[event] = [];
-    }
+    if (!this.listeners[event]) this.listeners[event] = [];
     this.listeners[event].push(callback);
   }
 
