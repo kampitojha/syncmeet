@@ -2,13 +2,18 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { signaling } from '../services/signaling';
 import { SignalPayload } from '../types';
 
-// STUN configuration
+// Robust STUN configuration with backups
 const rtcConfig: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
     { urls: 'stun:global.stun.twilio.com:3478' }
   ],
   iceCandidatePoolSize: 10,
+  iceTransportPolicy: 'all'
 };
 
 export const useWebRTC = (roomId: string, userName: string) => {
