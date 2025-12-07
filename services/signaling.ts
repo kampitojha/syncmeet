@@ -27,11 +27,12 @@ class PeerSignalingService {
 
     try {
         // Using public MQTT brokers for signaling
+        // Switched to EMQX as primary because mqtthq can be rate-limited/flaky
         const config = { 
             appId: 'syncmeet-v1',
             brokerUrls: [
-                'wss://broker.hivemq.com:8884/mqtt', // Secure WebSocket
-                'wss://test.mosquitto.org:8081/mqtt'   // Backup
+                'wss://broker.emqx.io:8084/mqtt', // Primary: Very stable public broker
+                'wss://broker.hivemq.com:8884/mqtt' // Backup
             ] 
         };
 

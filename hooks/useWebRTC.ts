@@ -173,7 +173,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
              console.log("📡 Sending Heartbeat...");
              signaling.joinRoom(roomId, userName); 
           }
-      }, 2000);
+      }, 5000); // Increased interval to prevent spamming
   }, [roomId, userName]);
 
 
@@ -374,8 +374,9 @@ export const useWebRTC = (roomId: string, userName: string) => {
       if (isCaller) {
         const pc = createPeerConnection();
         // Strict check to prevent race conditions or re-offers on active connections
+        // FIX: Prevent offer spam if we are already negotiating (have-local-offer)
         const canOffer = pc && 
-                         (pc.signalingState === 'stable' || pc.signalingState === 'have-local-offer') &&
+                         pc.signalingState === 'stable' &&
                          (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed');
 
         if (canOffer) {
