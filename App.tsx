@@ -7,7 +7,7 @@ import Whiteboard from './components/Whiteboard';
 import CollaborativeNotes from './components/CollaborativeNotes';
 import { useWebRTC } from './hooks/useWebRTC';
 import { useChat } from './hooks/useChat';
-import { Video, Copy, Users, Sparkles, ArrowRight } from 'lucide-react';
+import { Video, Copy, Users, Sparkles, ArrowRight, RefreshCw } from 'lucide-react';
 import { SignalPayload } from './types';
 
 const App: React.FC = () => {
@@ -15,7 +15,7 @@ const App: React.FC = () => {
   const [roomId, setRoomId] = useState('');
   const [userName, setUserName] = useState('');
   
-  // Tools State (Only one active tool typically, or split screen)
+  // Tools State
   const [activeTool, setActiveTool] = useState<'none' | 'chat' | 'whiteboard' | 'notes'>('none');
 
   // Local Reactions State
@@ -35,9 +35,10 @@ const App: React.FC = () => {
     remoteIsScreenSharing,
     networkQuality,
     connectionState,
-    statusMessage, // New Prop
+    statusMessage, 
     joinRoom,
     leaveRoom,
+    manualReconnect,
     toggleMic,
     toggleCamera,
     toggleScreenShare
@@ -66,7 +67,6 @@ const App: React.FC = () => {
 
   const sendReaction = (emoji: string) => {
       signaling.sendReaction(roomId, emoji);
-      // Show locally too? Maybe not, or yes for feedback
   };
 
   // --- Handlers ---
@@ -85,7 +85,7 @@ const App: React.FC = () => {
     navigator.clipboard.writeText(roomId);
   };
 
-  // Toggle helpers - ensure mutual exclusivity for mobile friendliness
+  // Toggle helpers
   const toggleTool = (tool: 'chat' | 'whiteboard' | 'notes') => {
       setActiveTool(prev => prev === tool ? 'none' : tool);
   };
@@ -234,6 +234,7 @@ const App: React.FC = () => {
                   connectionState={connectionState}
                   reactions={reactions}
                   statusMessage={statusMessage} // Pass status
+                  onRetry={manualReconnect} // Manual Retry
                 />
               </div>
             ) : (
@@ -244,7 +245,20 @@ const App: React.FC = () => {
                 </div>
                 <h3 className="text-gray-300 text-lg font-medium mb-1">Waiting for others...</h3>
                 <p className="text-gray-500 text-sm">Share the room ID <span className="text-indigo-400 font-mono bg-indigo-500/10 px-1.5 py-0.5 rounded">{roomId}</span> to invite.</p>
-                {statusMessage && <p className="text-yellow-500 text-xs mt-4 animate-pulse">{statusMessage}</p>}
+                {statusMessage && (
+                  <div className="mt-4 flex flex-col items-center">
+                    <p className="text-yellow-500 text-xs animate-pulse mb-2">{statusMessage}</p>
+                     {/* Show manual retry if taking too long */}
+                    {(statusMessage.includes('failed') || statusMessage.includes('Searching')) && (
+                        <button 
+                            onClick={manualReconnect}
+                            className="flex items-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-white/10 text-white px-3 py-1.5 rounded-lg text-xs transition-colors"
+                        >
+                            <RefreshCw size={12} /> Retry
+                        </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

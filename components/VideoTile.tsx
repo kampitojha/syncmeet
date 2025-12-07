@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { MicOff, VideoOff, MessageSquare, AudioLines, User, Signal, WifiOff, Loader2 } from 'lucide-react';
+import { MicOff, VideoOff, MessageSquare, AudioLines, User, Signal, WifiOff, Loader2, RefreshCw } from 'lucide-react';
 import { useAudioLevel } from '../hooks/useAudioLevel';
 
 interface VideoTileProps {
@@ -14,7 +14,8 @@ interface VideoTileProps {
   networkQuality?: number; 
   connectionState?: RTCIceConnectionState;
   reactions?: string[];
-  statusMessage?: string; // New Prop
+  statusMessage?: string; 
+  onRetry?: () => void; // New prop
 }
 
 const VideoTile: React.FC<VideoTileProps> = ({ 
@@ -29,12 +30,14 @@ const VideoTile: React.FC<VideoTileProps> = ({
   networkQuality = 4,
   connectionState = 'connected',
   reactions = [],
-  statusMessage = ''
+  statusMessage = '',
+  onRetry
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioLevel = useAudioLevel(stream, isAudioEnabled ?? true);
   const isSpeaking = audioLevel > 5;
   const isReconnecting = connectionState === 'disconnected' || connectionState === 'failed' || connectionState === 'checking';
+  const showRetry = connectionState === 'failed' || connectionState === 'disconnected' || statusMessage.includes("failed");
 
   useEffect(() => {
     const videoEl = videoRef.current;
@@ -119,9 +122,17 @@ const VideoTile: React.FC<VideoTileProps> = ({
       {/* Connection Status Overlay */}
       {statusMessage && !isLocal && (
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center animate-fade-in">
-             <div className="bg-gray-800/80 p-4 rounded-xl border border-white/10 flex flex-col items-center">
+             <div className="bg-gray-800/80 p-6 rounded-xl border border-white/10 flex flex-col items-center max-w-xs text-center">
                 <Loader2 size={32} className="text-indigo-500 animate-spin mb-3" />
-                <span className="text-white font-medium text-sm">{statusMessage}</span>
+                <span className="text-white font-medium text-sm mb-4">{statusMessage}</span>
+                {showRetry && onRetry && (
+                    <button 
+                        onClick={onRetry}
+                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors pointer-events-auto"
+                    >
+                        <RefreshCw size={14} /> Retry Connection
+                    </button>
+                )}
              </div>
         </div>
       )}

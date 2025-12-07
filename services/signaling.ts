@@ -8,25 +8,21 @@ class PeerSignalingService {
   private listeners: Record<string, Function[]> = {};
   public userId: string;
   public isConnectedToSignaling: boolean = false;
-  private pendingCandidates: any[] = [];
 
   constructor() {
-    // Generate a shorter, cleaner ID to save bandwidth
+    // Cleaner ID
     this.userId = Math.random().toString(36).substr(2, 9);
   }
 
   public joinRoom(roomId: string, name: string) {
-    // Prevent re-joining loop
-    if (this.room) {
-        return;
-    } 
+    if (this.room) return;
 
     try {
-        // Mosquitto is often the most reliable public broker for WebSockets
+        // Using HiveMQ - often more reliable for public WebSocket usage
         const config = { 
-            appId: 'syncmeet-v1',
+            appId: 'syncmeet-v2-stable',
             brokerUrls: [
-                'wss://test.mosquitto.org:8081/mqtt', // Standard Secure WS
+                'wss://broker.hivemq.com:8884/mqtt', 
             ] 
         };
 
@@ -36,26 +32,26 @@ class PeerSignalingService {
         this.sendAction = send;
         this.isConnectedToSignaling = true;
 
-        // Listen for messages
+        // Message Listener
         get((data: SignalPayload, peerId: string) => {
-          // Ignore own messages
-          if (data.senderId === this.userId) return;
+          if (data.senderId === this.userId) return; // Ignore self
           this.emit(data.type, data);
         });
 
-        // Peer Joined Event - This is the Trigger for connection
+        // Peer Join Event
         this.room.onPeerJoin((peerId: string) => {
-          console.log(`✅ Peer Joined: ${peerId}`);
-          // Send a specific 'hello' signal to trigger the handshake
+          console.log(`👤 Signaling: Peer ${peerId} joined`);
+          this.emit('peer-joined', { peerId });
+          // Announce self immediately
           this.send('join', roomId, { name });
         });
 
         this.room.onPeerLeave((peerId: string) => {
-             console.log(`❌ Peer Left: ${peerId}`);
+             console.log(`👋 Signaling: Peer ${peerId} left`);
              this.emit('leave', { senderId: peerId, roomId });
         });
 
-        // Announce presence once on mount
+        // Initial broadcast to find existing peers
         setTimeout(() => {
           this.send('join', roomId, { name });
         }, 500);
@@ -66,16 +62,11 @@ class PeerSignalingService {
     }
   }
 
-  // --- Wrapper to prevent crashes if socket is closed ---
+  // --- Send Wrapper ---
   private send(type: SignalPayload['type'], roomId: string, payload: any) {
     if (!this.sendAction) return;
     try {
-        // Small delay for candidates to prevent packet flooding
-        if (type === 'ice-candidate') {
-            this.sendAction({ type, roomId, senderId: this.userId, payload });
-        } else {
-            this.sendAction({ type, roomId, senderId: this.userId, payload });
-        }
+        this.sendAction({ type, roomId, senderId: this.userId, payload });
     } catch (e) {
         console.warn(`Failed to send ${type}`, e);
     }
@@ -94,41 +85,20 @@ class PeerSignalingService {
     this.send('ice-candidate', roomId, { targetUserId, candidate });
   }
 
-  public sendChatMessage(roomId: string, message: any) {
-    this.send('chat', roomId, message);
+  public sendRestartRequest(roomId: string) {
+      this.send('ice-restart', roomId, {});
   }
 
-  public sendChatStatus(roomId: string, status: 'seen', messageIds: string[]) {
-    this.send('chat-status', roomId, { status, messageIds });
-  }
-
-  public sendTyping(roomId: string, isTyping: boolean) {
-    this.send('typing', roomId, { isTyping });
-  }
-
-  public sendMediaStatus(roomId: string, kind: 'audio' | 'video', enabled: boolean) {
-    this.send('media-status', roomId, { kind, enabled });
-  }
-
-  public sendScreenShareStatus(roomId: string, isScreenSharing: boolean) {
-    this.send('screen-share-status', roomId, { isScreenSharing });
-  }
-
-  public sendDrawLine(roomId: string, data: DrawLinePayload) {
-    this.send('draw-line', roomId, data);
-  }
-
-  public sendClearBoard(roomId: string) {
-    this.send('clear-board', roomId, {});
-  }
-
-  public sendNoteUpdate(roomId: string, content: string) {
-    this.send('sync-notes', roomId, { content });
-  }
-
-  public sendReaction(roomId: string, emoji: string) {
-    this.send('reaction', roomId, { emoji });
-  }
+  // Chat & Tools
+  public sendChatMessage(roomId: string, message: any) { this.send('chat', roomId, message); }
+  public sendChatStatus(roomId: string, status: 'seen', messageIds: string[]) { this.send('chat-status', roomId, { status, messageIds }); }
+  public sendTyping(roomId: string, isTyping: boolean) { this.send('typing', roomId, { isTyping }); }
+  public sendMediaStatus(roomId: string, kind: 'audio' | 'video', enabled: boolean) { this.send('media-status', roomId, { kind, enabled }); }
+  public sendScreenShareStatus(roomId: string, isScreenSharing: boolean) { this.send('screen-share-status', roomId, { isScreenSharing }); }
+  public sendDrawLine(roomId: string, data: DrawLinePayload) { this.send('draw-line', roomId, data); }
+  public sendClearBoard(roomId: string) { this.send('clear-board', roomId, {}); }
+  public sendNoteUpdate(roomId: string, content: string) { this.send('sync-notes', roomId, { content }); }
+  public sendReaction(roomId: string, emoji: string) { this.send('reaction', roomId, { emoji }); }
 
   public leaveRoom(roomId: string) {
     if (this.room) {
