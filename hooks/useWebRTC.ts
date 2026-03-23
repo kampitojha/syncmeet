@@ -130,29 +130,54 @@ export const useWebRTC = (roomId: string, userName: string) => {
   const joinRoom = async () => {
     if (!roomId || !userName) return;
     setPermissionError(null);
+    
+    let stream: MediaStream | null = null;
+    
+    // Cascading Handshake Protocol
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: 640, height: 480, frameRate: 24, facingMode: 'user' }, 
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-      });
-      localVideoTrack.current = stream.getVideoTracks()[0];
-      localAudioTrack.current = stream.getAudioTracks()[0];
-      setLocalStream(stream);
-      setIsInRoom(true);
-      
-      // Initial Join
-      signaling.joinRoom(roomId, userName);
-      
-      // FAST heartbeat during discovery
-      if (handshakeInterval.current) clearInterval(handshakeInterval.current);
-      handshakeInterval.current = window.setInterval(() => {
-          signaling.joinRoom(roomId, userName);
-      }, 1500);
-
-    } catch (err: any) { 
-        console.error("PERMISSION_DENIED_", err);
-        setPermissionError(err.name === 'NotAllowedError' ? 'ACCESS_DENIED_BY_USER' : 'HARDWARE_NOT_FOUND_OR_BUSY');
+        // Mode 1: Full Suite (Cam + Mic)
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { width: 640, height: 480, frameRate: 24, facingMode: 'user' }, 
+            audio: { echoCancellation: true, noiseSuppression: true }
+        });
+    } catch (e1) {
+        console.warn("HANDSHAKE_M1_FAILED, FALLING_BACK_TO_AUDIO_ONLY");
+        try {
+            // Mode 2: Audio Optimized (Mic Only)
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: { echoCancellation: true, noiseSuppression: true }
+            });
+            setIsCameraOn(false);
+        } catch (e2) {
+            console.warn("HANDSHAKE_M2_FAILED, FALLING_BACK_TO_VIDEO_ONLY");
+            try {
+                // Mode 3: Video Optimized (Cam Only)
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480, frameRate: 24, facingMode: 'user' }
+                });
+                setIsMicOn(false);
+            } catch (e3) {
+                console.error("HANDSHAKE_M3_FAILED, ENTERING_IN_LISTENER_MODE");
+                // Mode 4: Stealth (Listener Only) - Proceed with null
+                setIsCameraOn(false);
+                setIsMicOn(false);
+            }
+        }
     }
+
+    if (stream) {
+        localVideoTrack.current = stream.getVideoTracks()[0];
+        localAudioTrack.current = stream.getAudioTracks()[0];
+        setLocalStream(stream);
+    }
+    
+    setIsInRoom(true);
+    signaling.joinRoom(roomId, userName);
+    
+    if (handshakeInterval.current) clearInterval(handshakeInterval.current);
+    handshakeInterval.current = window.setInterval(() => {
+        signaling.joinRoom(roomId, userName);
+    }, 1500);
   };
 
   const leaveRoom = useCallback(() => {
