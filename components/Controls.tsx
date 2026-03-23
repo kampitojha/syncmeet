@@ -141,21 +141,28 @@ const Controls: React.FC<ControlsProps> = ({
          </button>
       </div>
 
-      <div className="hidden lg:flex items-center gap-3 group relative px-2">
-         <div className="p-4 rounded-xl bg-white/5 text-white/50 hover:bg-cyan-400 hover:text-black transition-all shadow-xl border border-white/10 cursor-pointer">
+      <div className="relative ml-4 px-2">
+         <button 
+            onClick={() => onToggleTool('reactions')}
+            className={`p-4 rounded-xl transition-all shadow-xl border border-white/10 ${activeTool === 'reactions' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
+            title="Send Reaction"
+         >
             <Smile className={iconClass} strokeWidth={2} />
-         </div>
-         <div className="absolute bottom-[calc(100%+24px)] left-0 glass-card-bright p-4 rounded-[32px] flex gap-3 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transform translate-y-4 group-hover:translate-y-0 transition-all shadow-2xl border border-white/10">
-            {REACTIONS.map(emoji => (
-                <button 
-                  key={emoji}
-                  onClick={() => onSendReaction(emoji)}
-                  className="text-3xl hover:scale-150 transition-transform p-2 active:scale-90"
-                >
-                  {emoji}
-                </button>
-            ))}
-         </div>
+         </button>
+         
+         {activeTool === 'reactions' && (
+           <div className="absolute bottom-[calc(100%+24px)] left-1/2 -translate-x-1/2 glass-card-bright p-4 rounded-[32px] flex gap-3 transform transition-all shadow-2xl border border-white/10 animate-slide-up z-[120]">
+              {REACTIONS.map(emoji => (
+                  <button 
+                    key={emoji}
+                    onClick={() => { onSendReaction(emoji); onToggleTool('none'); }}
+                    className="text-3xl hover:scale-150 transition-transform p-2 active:scale-90"
+                  >
+                    {emoji}
+                  </button>
+              ))}
+           </div>
+         )}
       </div>
 
       <button 
