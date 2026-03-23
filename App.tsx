@@ -265,12 +265,12 @@ const App: React.FC = () => {
                )}
             </div>
 
-            {/* Captions Presentation Overlay */}
+            {/* Captions Presentation Overlay - Floating above controls */}
             {isCaptionsOn && currentCaption && (
-               <div className="absolute bottom-4 md:bottom-10 left-1/2 -translate-x-1/2 z-[100] w-full max-w-4xl px-4 animate-slide-up">
-                  <div className="glass-card-bright p-6 md:p-8 rounded-3xl md:rounded-[32px] border border-cyan-400/20 text-center shadow-2xl backdrop-blur-3xl">
-                      <p className="text-lg md:text-2xl font-black text-white/90 uppercase tracking-tight leading-relaxed italic">
-                         <span className="text-cyan-400 mr-2 md:mr-4 font-light">[{userName.split('-')[1]}]:</span> {currentCaption}
+               <div className="absolute bottom-32 md:bottom-40 left-1/2 -translate-x-1/2 z-[100] w-full max-w-4xl px-4 animate-slide-up pointer-events-none">
+                  <div className="glass-card-bright p-6 md:p-10 rounded-[32px] md:rounded-[48px] border border-cyan-400/30 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-3xl">
+                      <p className="text-xl md:text-3xl font-black text-white uppercase tracking-tight leading-relaxed italic drop-shadow-2xl">
+                         <span className="text-cyan-400 mr-2 md:mr-6 font-light">[{userName.split('-')[1]}]:</span> {currentCaption}
                       </p>
                   </div>
                </div>
