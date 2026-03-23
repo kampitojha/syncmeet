@@ -37,15 +37,15 @@ const Controls: React.FC<ControlsProps> = ({
   const [showReactions, setShowReactions] = useState(false);
 
   return (
-    <div className="relative group/controls flex items-center gap-2">
-      {/* Reactions Popup */}
+    <div className="relative flex items-center gap-4 bg-white p-2">
+      {/* REACTION_PAYLOAD_POPOUT */}
       {showReactions && (
-        <div className="absolute bottom-full mb-6 left-1/2 -translate-x-1/2 brutal-card bg-white p-2 flex gap-2 shadow-[8px_8px_0px_black] z-[300] animate-slide-up whitespace-nowrap border-[4px]">
+        <div className="absolute bottom-full mb-10 left-1/2 -translate-x-1/2 brutal-card bg-white p-4 flex gap-4 shadow-[15px_15px_0px_#000] z-[300] animate-slide-up border-[6px]">
            {['⚡', '🔥', '👏', '❤️', '🎉', '😂', '💯'].map(emoji => (
              <button 
                 key={emoji} 
                 onClick={() => { onSendReaction(emoji); setShowReactions(false); }}
-                className="p-3 text-2xl hover:bg-[#ffdf1e] brutal-card border-2 shadow-[4px_4px_0px_black] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
+                className="w-16 h-16 text-3xl brutal-card border-4 shadow-[6px_6px_0px_#000] hover:bg-[var(--brutal-yellow)] hover:-translate-y-2 transition-all"
              >
                 {emoji}
              </button>
@@ -53,97 +53,74 @@ const Controls: React.FC<ControlsProps> = ({
         </div>
       )}
 
-      {/* Primary Comm Row */}
-      <div className="flex gap-2 border-r-4 border-black pr-4">
-        <button 
-          onClick={onToggleMic}
-          className={`p-4 brutal-btn ${isMicOn ? 'bg-[#00ff9d]' : 'bg-[#ff5e5e] text-white'}`}
-        >
-          {isMicOn ? <Mic size={24} strokeWidth={3} /> : <MicOff size={24} strokeWidth={3} />}
-        </button>
+      {/* CORE_COMM_GROUP */}
+      <div className="flex gap-4 border-r-8 border-black pr-6">
+        <div className="flex flex-col items-center gap-2">
+            <button 
+              onClick={onToggleMic}
+              className={`w-20 h-20 brutal-card border-4 flex items-center justify-center shadow-[6px_6px_0px_#000] ${isMicOn ? 'bg-[var(--brutal-green)] text-white' : 'bg-[var(--brutal-red)] text-white brutal-shake'}`}
+            >
+              {isMicOn ? <Mic size={32} strokeWidth={3} /> : <MicOff size={32} strokeWidth={3} />}
+            </button>
+            <span className="text-[9px] font-black uppercase tracking-widest">{isMicOn ? 'MIC_TX' : 'MIC_OFF'}</span>
+        </div>
 
-        <button 
-          onClick={onToggleCamera}
-          className={`p-4 brutal-btn ${isCameraOn ? 'bg-[#00ff9d]' : 'bg-[#ff5e5e] text-white'}`}
-        >
-          {isCameraOn ? <Video size={24} strokeWidth={3} /> : <VideoOff size={24} strokeWidth={3} />}
-        </button>
+        <div className="flex flex-col items-center gap-2">
+            <button 
+              onClick={onToggleCamera}
+              className={`w-20 h-20 brutal-card border-4 flex items-center justify-center shadow-[6px_6px_0px_#000] ${isCameraOn ? 'bg-[var(--brutal-green)] text-white' : 'bg-[var(--brutal-red)] text-white'}`}
+            >
+              {isCameraOn ? <Video size={32} strokeWidth={3} /> : <VideoOff size={32} strokeWidth={3} />}
+            </button>
+            <span className="text-[9px] font-black uppercase tracking-widest">{isCameraOn ? 'CAM_TX' : 'CAM_OFF'}</span>
+        </div>
       </div>
 
-      {/* Tools Row */}
-      <div className="flex gap-2 px-2 overflow-x-auto no-scrollbar scroll-smooth">
-        <button 
-          onClick={onToggleScreenShare}
-          className={`p-4 brutal-btn ${isScreenSharing ? 'bg-[#ffdf1e]' : 'bg-white'}`}
-        >
-          <ScreenShare size={24} strokeWidth={3} />
-        </button>
+      {/* EXTENDED_TOOLS_GROUP */}
+      <div className="flex gap-4 px-4 overflow-x-auto no-scrollbar scroll-smooth max-w-[50vw]">
+        {[
+            { id: 'share', icon: <ScreenShare size={24} strokeWidth={3} />, action: onToggleScreenShare, active: isScreenSharing, color: '--brutal-yellow' },
+            { id: 'hand', icon: <Hand size={24} strokeWidth={3} />, action: onToggleHandRaise, active: isHandRaised, color: '--brutal-yellow' },
+            { id: 'chat', icon: <MessageSquare size={24} strokeWidth={3} />, action: () => onToggleTool('chat'), active: activeTool === 'chat', color: '--brutal-violet' },
+            { id: 'whiteboard', icon: <PenTool size={24} strokeWidth={3} />, action: () => onToggleTool('whiteboard'), active: activeTool === 'whiteboard', color: '--brutal-cyan' },
+            { id: 'notes', icon: <FileText size={24} strokeWidth={3} />, action: () => onToggleTool('notes'), active: activeTool === 'notes', color: '--brutal-cyan' },
+            { id: 'media', icon: <Tv size={24} strokeWidth={3} />, action: () => onToggleTool('media'), active: activeTool === 'media', color: '--brutal-orange' },
+            { id: 'captions', icon: <Captions size={24} strokeWidth={3} />, action: onToggleCaptions, active: isCaptionsOn, color: '--brutal-violet' },
+            { id: 'rec', icon: <Radio size={24} strokeWidth={3} />, action: onToggleRecording, active: isRecording, color: '--brutal-red' }
+        ].map(tool => (
+            <div key={tool.id} className="flex flex-col items-center gap-2">
+                <button 
+                  onClick={tool.action}
+                  className={`w-16 h-16 brutal-card border-[3px] flex items-center justify-center shadow-[4px_4px_0px_#000] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none ${tool.active ? `bg-[var(${tool.color})] ${tool.color.includes('red') || tool.color.includes('violet') ? 'text-white' : 'text-black'}` : 'bg-white'}`}
+                >
+                  {tool.icon}
+                </button>
+                <span className="text-[8px] font-black uppercase tracking-tighter opacity-40">{tool.id.toUpperCase()}</span>
+            </div>
+        ))}
 
-        <button 
-          onClick={onToggleHandRaise}
-          className={`p-4 brutal-btn ${isHandRaised ? 'bg-[#ffdf1e]' : 'bg-white'}`}
-        >
-          <Hand size={24} strokeWidth={3} className={isHandRaised ? 'brutal-shake' : ''} />
-        </button>
-        
-        <button 
-          onClick={() => onToggleTool('chat')}
-          className={`p-4 brutal-btn ${activeTool === 'chat' ? 'bg-[#ffdf1e]' : 'bg-white'}`}
-        >
-          <MessageSquare size={24} strokeWidth={3} />
-        </button>
-
-        <button 
-          onClick={() => onToggleTool('whiteboard')}
-          className={`p-4 brutal-btn ${activeTool === 'whiteboard' ? 'bg-[#ffdf1e]' : 'bg-white'}`}
-        >
-          <PenTool size={24} strokeWidth={3} />
-        </button>
-
-        <button 
-          onClick={() => onToggleTool('notes')}
-          className={`p-4 brutal-btn ${activeTool === 'notes' ? 'bg-[#ffdf1e]' : 'bg-white'}`}
-        >
-          <FileText size={24} strokeWidth={3} />
-        </button>
-
-        <button 
-          onClick={() => onToggleTool('media')}
-          className={`p-4 brutal-btn ${activeTool === 'media' ? 'bg-[#ffdf1e]' : 'bg-white'}`}
-        >
-          <Tv size={24} strokeWidth={3} />
-        </button>
-
-        <button 
-          onClick={onToggleCaptions}
-          className={`p-4 brutal-btn ${isCaptionsOn ? 'bg-[#a855f7] text-white' : 'bg-white'}`}
-        >
-          <Captions size={24} strokeWidth={3} />
-        </button>
-
-        <button 
-          onClick={onToggleRecording}
-          className={`p-4 brutal-btn ${isRecording ? 'bg-[#ff5e5e] text-white brutal-shake shadow-none' : 'bg-white'}`}
-        >
-          <Radio size={24} strokeWidth={3} />
-        </button>
-
-        <button 
-          onClick={() => setShowReactions(!showReactions)}
-          className={`p-4 brutal-btn ${showReactions ? 'bg-[#ffdf1e]' : 'bg-white'}`}
-        >
-          <Smile size={24} strokeWidth={3} />
-        </button>
+        <div className="flex flex-col items-center gap-2">
+            <button 
+              onClick={() => setShowReactions(!showReactions)}
+              className={`w-16 h-16 brutal-card border-[3px] flex items-center justify-center shadow-[4px_4px_0px_#000] ${showReactions ? 'bg-[var(--brutal-yellow)]' : 'bg-white'}`}
+            >
+              <Smile size={24} strokeWidth={3} />
+            </button>
+            <span className="text-[8px] font-black uppercase opacity-40">REACT</span>
+        </div>
       </div>
 
-      {/* Leave Button */}
-      <div className="pl-4 border-l-4 border-black">
-        <button 
-          onClick={onLeave}
-          className="p-4 brutal-btn bg-[#ff5e5e] text-white hover:bg-black"
-        >
-          <PhoneOff size={24} strokeWidth={3} />
-        </button>
+      {/* TERMINATION_BLOCK */}
+      <div className="pl-6 border-l-8 border-black">
+        <div className="flex flex-col items-center gap-2">
+            <button 
+              onClick={onLeave}
+              className="w-20 h-20 brutal-card bg-[var(--brutal-red)] text-white border-4 border-black shadow-[6px_6px_0px_#000] hover:bg-black hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px]"
+            >
+              <PhoneOff size={32} strokeWidth={3} />
+            </button>
+            <span className="text-[9px] font-black uppercase tracking-widest text-[var(--brutal-red)]">DISCONNECT</span>
+        </div>
       </div>
     </div>
   );

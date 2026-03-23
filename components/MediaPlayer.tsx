@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Tv, X, Globe, Link, MonitorUp } from 'lucide-react';
+import { Play, Pause, Tv, X, Globe, Link, MonitorUp, Zap } from 'lucide-react';
 
 interface MediaPlayerProps {
   onSync: (time: number, state: 'play' | 'pause') => void;
@@ -32,7 +32,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ onSync, syncData, onClose }) 
 
   const loadMedia = (e: React.FormEvent) => {
       e.preventDefault();
-      setActiveUrl(url);
+      if (url.trim()) setActiveUrl(url);
   };
 
   const getYoutubeId = (url: string) => {
@@ -41,43 +41,52 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ onSync, syncData, onClose }) 
     return (match && match[2].length === 11) ? match[2] : null;
   };
 
-  const isYoutube = url.includes('youtube.com') || url.includes('youtu.be');
   const youtubeId = activeUrl ? getYoutubeId(activeUrl) : null;
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0a] font-sans overflow-hidden">
-      <div className="glass-card-bright p-5 flex items-center justify-between border-b border-white/10 z-[70]">
-        <div className="flex items-center gap-4 text-white">
-           <div className="bg-cyan-400 p-2 rounded-xl"> <Tv size={18} className="text-black" /> </div>
-           <span className="font-extrabold text-sm uppercase tracking-widest text-white/90 italic">SYNCCAST_RECEIVER_v1.0</span>
+    <div className="flex flex-col h-full bg-[#f8f8f8] font-mono text-black brutal-grid-dot h-full overflow-hidden">
+      {/* MEDIA_HEADER */}
+      <div className="p-6 bg-white border-b-[6px] border-black flex items-center justify-between z-[70] shadow-[0_6px_0px_#000]">
+        <div className="flex items-center gap-4 text-black">
+           <div className="bg-[var(--brutal-cyan)] p-3 border-4 border-black shadow-[4px_4px_0px_#000]"> 
+             <Tv size={24} strokeWidth={3} /> 
+           </div>
+           <div className="flex flex-col">
+             <span className="font-black text-lg uppercase tracking-tighter italic leading-none">SYNCCAST_ENGINE_v4</span>
+             <span className="text-[9px] font-black uppercase opacity-30 mt-1">PROTO_MEDIA_UPLINK_READY</span>
+           </div>
         </div>
-        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all hover:rotate-90">
-           <X size={20} className="text-white/40 hover:text-white" />
+        <button onClick={onClose} className="brutal-btn p-3 bg-[var(--brutal-red)] text-white hover:bg-black border-4 shadow-[4px_4px_0px_#000]">
+           <X size={24} strokeWidth={3} />
         </button>
       </div>
 
       {!activeUrl ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-gradient-to-br from-[#0a0a0a] to-[#111]">
-              <div className="mb-12 opacity-10 animate-pulse"> <MonitorUp size={100} className="text-cyan-400" strokeWidth={1} /> </div>
-              <p className="text-white/20 font-black uppercase text-[10px] mb-8 tracking-[0.4em] italic">Awaiting Media Interface Link_</p>
-              <form onSubmit={loadMedia} className="w-full max-w-sm flex flex-col gap-6">
+          <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-[#f0f0f0] brutal-grid-dot">
+              <div className="mb-12 opacity-10 animate-bounce"> 
+                <MonitorUp size={120} strokeWidth={1} /> 
+              </div>
+              <h3 className="text-4xl font-black uppercase tracking-tighter italic mb-4">AWAITING_MEDIA_LINK</h3>
+              <p className="max-w-xs font-black uppercase text-[10px] mb-12 tracking-[0.3em] opacity-40">INPUT_SOURCE_URL_FOR_P2P_SYNCHRONIZATION</p>
+              
+              <form onSubmit={loadMedia} className="w-full max-w-lg flex flex-col gap-6">
                   <div className="relative group">
-                      <Link className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-cyan-400 transition-colors" size={18} />
+                      <Link className="absolute left-6 top-1/2 -translate-y-1/2 text-black opacity-20 group-focus-within:opacity-100 transition-opacity" size={24} strokeWidth={3} />
                       <input 
                         type="text" 
                         value={url} 
                         onChange={e => setUrl(e.target.value)}
-                        placeholder="ENTER_RAW_OR_YT_URL_"
-                        className="w-full bg-white/5 border border-white/10 p-6 pl-14 text-white font-bold uppercase text-[10px] outline-none rounded-3xl focus:border-cyan-500/30 focus:bg-white/10 transition-all shadow-inner"
+                        placeholder="SOURCE_UPLINK_URL..."
+                        className="w-full brutal-input p-6 pl-16 text-black font-black uppercase text-sm border-4 focus:bg-[var(--brutal-yellow)]"
                       />
                   </div>
-                  <button type="submit" className="bg-cyan-400 text-black p-6 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-white transition-all shadow-xl shadow-cyan-400/10 active:scale-95">
-                      BOOT_MEDIA_PROTOCOL
+                  <button type="submit" className="w-full py-6 brutal-btn-violet text-xl font-black shadow-[10px_10px_0px_#000]">
+                      BOOT_MEDIA_INTERFACE_
                   </button>
               </form>
           </div>
       ) : (
-          <div className="flex-1 flex flex-col relative group overflow-hidden">
+          <div className="flex-1 flex flex-col relative group overflow-hidden bg-black border-[10px] border-black m-6 shadow-[20px_20px_0px_#000]">
               {youtubeId ? (
                 <iframe
                   src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1`}
@@ -89,23 +98,31 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ onSync, syncData, onClose }) 
                 <video 
                   ref={videoRef}
                   src={activeUrl}
-                  className="w-full h-full object-contain bg-black"
+                  className="w-full h-full object-contain"
                   onPlay={() => handleAction('play')}
                   onPause={() => handleAction('pause')}
                   controls
                 />
               )}
-              <div className="absolute top-6 left-6 glass-card p-3 px-5 rounded-2xl border border-white/10 opacity-0 group-hover:opacity-100 transition-all transform translate-y-4 group-hover:translate-y-0">
-                  <span className="text-cyan-400 text-[9px] font-black uppercase flex items-center gap-3 tracking-widest italic">
-                     <Globe size={12} /> STREAM_SOURCE: {activeUrl.slice(0, 40)}...
+              
+              {/* SOURCE_OVERLAY */}
+              <div className="absolute top-8 left-8 brutal-card bg-white p-4 border-4 border-black shadow-[8px_8px_0px_var(--brutal-cyan)] opacity-0 group-hover:opacity-100 transition-all transform -translate-y-4 group-hover:translate-y-0">
+                  <span className="text-black text-[10px] font-black uppercase flex items-center gap-4 tracking-widest italic lowercase truncate max-w-md">
+                     <Zap size={16} strokeWidth={3} className="text-[var(--brutal-cyan)]" /> {activeUrl}
                   </span>
               </div>
           </div>
       )}
 
-      <div className="glass-card p-4 flex items-center gap-4 border-t border-white/5 bg-white/5 backdrop-blur-3xl">
-         <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
-         <span className="text-[9px] font-bold text-white/20 tracking-[0.3em] uppercase">LINKED_TO_CRYPTO_MESH_SYNC_CORE</span>
+      {/* MEDIA_FOOTER */}
+      <div className="p-6 bg-white border-t-[6px] border-black flex items-center justify-between">
+         <div className="flex items-center gap-4">
+            <div className="w-4 h-4 bg-[var(--brutal-green)] animate-pulse border-2 border-black" />
+            <span className="text-[10px] font-black text-black tracking-[0.3em] uppercase italic opacity-40">LINKED_TO_CRYPTO_MESH_SYNC_CORE_v4</span>
+         </div>
+         <div className="flex gap-2">
+            {[...Array(4)].map((_, i) => <div key={i} className="w-2 h-2 bg-black rotate-45" />)}
+         </div>
       </div>
     </div>
   );

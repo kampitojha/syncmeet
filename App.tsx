@@ -1,20 +1,15 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Video, 
-  Users, 
-  Copy, 
-  ArrowRight,
   Terminal as TerminalIcon,
-  Tv,
-  LayoutDashboard,
-  ShieldCheck,
   Zap,
-  CheckCircle2,
-  Captions as CaptionsIcon,
   Circle,
   Hash,
   Activity,
-  Box
+  Box,
+  Layout,
+  Command as CommandIcon,
+  ShieldAlert
 } from 'lucide-react';
 import VideoTile from './components/VideoTile';
 import Controls from './components/Controls';
@@ -42,7 +37,7 @@ const App: React.FC = () => {
   const [reactions, setReactions] = useState<string[]>([]);
   const [showPalette, setShowPalette] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [syncData, setSyncData] = useState<{ time: number, state: 'play' | 'pause' }>();
+  const [syncData] = useState<{ time: number, state: 'play' | 'pause' }>();
   
   const [isCaptionsOn, setIsCaptionsOn] = useState(false);
   const [currentCaption, setCurrentCaption] = useState('');
@@ -64,7 +59,6 @@ const App: React.FC = () => {
   useCaptions(isCaptionsOn && isMicOn, (text) => {
       setCurrentCaption(text);
       signaling.sendCaption(roomId, text);
-      
       if (captionTimeoutRef.current) clearTimeout(captionTimeoutRef.current);
       captionTimeoutRef.current = setTimeout(() => setCurrentCaption(''), 6000);
   });
@@ -131,7 +125,7 @@ const App: React.FC = () => {
   }, [remotePeers.length]);
 
   const handleCommand = (cmd: string) => {
-      addLog(`CMD_EXEC: ${cmd}`, 'info');
+      addLog(`EXEC: ${cmd}`, 'info');
       switch(cmd.toLowerCase()) {
           case '/record': !isRecording ? startRecording() : stopRecording(); break;
           case '/captions': setIsCaptionsOn(!isCaptionsOn); break;
@@ -172,12 +166,12 @@ const App: React.FC = () => {
   const handleJoin = (e: React.FormEvent) => { 
     e.preventDefault(); 
     if (!userName.trim() || !roomId.trim()) {
-        setFormError('MISSING_DATA');
+        setFormError('MISSING_FIELDS');
         return;
     }
     setFormError(null);
     joinRoom(); 
-    addLog(`BOOTSTRAP_INIT...`, 'info'); 
+    addLog(`INIT_HANDSHAKE_v4`, 'info'); 
   };
 
   const handleLeave = () => { leaveRoom(); clearMessages(); setActiveTool('none'); };
@@ -185,161 +179,207 @@ const App: React.FC = () => {
 
   if (!isInRoom) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 bg-[#f0f0f0] brutal-bg-pattern relative overflow-hidden">
-        {/* Decorative Elements */}
-        <div className="absolute top-20 left-20 w-40 h-40 bg-[#ffdf1e] border-4 border-black -rotate-12 brutal-card -z-0 hidden md:block" />
-        <div className="absolute bottom-20 right-20 w-32 h-32 bg-[#00ff9d] border-4 border-black rotate-12 brutal-card -z-0 hidden md:block" />
-        
-        {/* Error Notification */}
+      <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 md:p-10 bg-[#f0f0f0] brutal-bg-pattern relative overflow-hidden font-mono">
+        {/* Abstract Background Shapes */}
+        <div className="absolute top-10 left-10 w-64 h-64 bg-[var(--brutal-yellow)] border-8 border-black -rotate-12 brutal-card shadow-[20px_20px_0px_#000] -z-0 hidden lg:block" />
+        <div className="absolute top-1/4 right-20 w-48 h-48 bg-[var(--brutal-pink)] border-8 border-black rotate-6 brutal-card shadow-[15px_15px_0px_#000] -z-0 hidden lg:block" />
+        <div className="absolute bottom-10 left-1/4 w-80 h-24 bg-[var(--brutal-blue)] border-8 border-black -rotate-3 brutal-card shadow-[10px_10px_0px_#000] -z-0 hidden lg:block" />
+        <div className="absolute bottom-20 right-10 w-40 h-40 bg-[var(--brutal-violet)] border-8 border-black rotate-12 brutal-card shadow-[25px_25px_0px_#000] -z-0 hidden lg:block" />
+
+        {/* Permission Overlay */}
         {permissionError && (
-            <div className="fixed top-8 z-[200] w-full max-w-md px-6 animate-shake">
-                <div className="brutal-card bg-[#ff5e5e] p-6 border-black">
-                    <div className="flex items-center gap-4">
-                        <ShieldCheck className="text-black w-10 h-10" />
-                        <div>
-                            <h4 className="text-lg font-black uppercase tracking-tighter">HARDWARE_BLOCKED</h4>
-                            <p className="text-[10px] font-bold uppercase mt-1">Permission denied. Check system protocols.</p>
-                        </div>
+            <div className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
+                <div className="brutal-card bg-[var(--brutal-red)] p-10 border-4 border-black max-w-md w-full shadow-[20px_20px_0px_#000]">
+                    <div className="flex flex-col items-center gap-6 text-white">
+                        <ShieldAlert size={80} strokeWidth={3} className="brutal-shake" />
+                        <h2 className="text-4xl font-black uppercase text-center tracking-tighter italic">ACCESS_DENIED</h2>
+                        <p className="text-center font-bold uppercase tracking-widest text-sm opacity-90">Sensor feedback blocked by local admin protocols.</p>
                     </div>
-                    <div className="flex gap-4 mt-6">
-                        <button onClick={joinRoom} className="flex-1 brutal-btn bg-white">RETRY</button>
-                        <button onClick={() => setPermissionError(null)} className="flex-1 brutal-btn bg-black text-white">X</button>
+                    <div className="flex gap-4 mt-10">
+                        <button onClick={joinRoom} className="flex-1 brutal-btn bg-white hover:bg-[#f0f0f0]">RE_INIT</button>
+                        <button onClick={() => setPermissionError(null)} className="flex-1 brutal-btn bg-black text-white hover:bg-zinc-800">CLOSE</button>
                     </div>
                 </div>
             </div>
         )}
 
-        <div className="brutal-card p-8 md:p-12 w-full max-w-lg relative z-10 bg-white">
-          <div className="flex flex-col items-center mb-10">
-            <div className="bg-[#ffdf1e] p-5 mb-6 border-4 border-black shadow-[4px_4px_0px_black]"><Video className="text-black w-10 h-10" /></div>
-            <h1 className="text-6xl md:text-8xl font-black text-black mb-2 tracking-tighter italic">SYNC<span className="text-[#ffdf1e]">MEET</span></h1>
-            <div className="bg-black text-white px-4 py-1 font-black text-[10px] tracking-widest uppercase flex items-center gap-3 mt-2">v.2.0 BRUTAL_MESH_PROT</div>
-          </div>
-          
-          <form onSubmit={handleJoin} className="space-y-4">
-            <div className="relative">
-               <label className="block text-[10px] font-black uppercase mb-1 ml-1">USER_IDENTIFIER</label>
-               <input 
-                 type="text" 
-                 value={userName} 
-                 onChange={(e) => {setUserName(e.target.value); if(formError) setFormError(null);}} 
-                 className={`w-full brutal-input ${formError && !userName.trim() ? 'bg-[#ff5e5e]' : ''}`} 
-                 placeholder="ENTER_NAME" 
-               />
-            </div>
-            <div className="relative">
-               <label className="block text-[10px] font-black uppercase mb-1 ml-1">SESSION_UUID</label>
-               <input 
-                 type="text" 
-                 value={roomId} 
-                 onChange={(e) => {setRoomId(e.target.value); if(formError) setFormError(null);}} 
-                 className={`w-full brutal-input ${formError && !roomId.trim() ? 'bg-[#ff5e5e]' : ''}`} 
-                 placeholder="ROOM_CODE" 
-               />
-            </div>
-            <button type="submit" className="w-full py-5 brutal-btn-primary text-xl font-black mt-4">ESTABLISH_LINK_</button>
-          </form>
-          
-          <div className="mt-8 flex justify-between gap-4">
-            <div className="flex-1 brutal-card bg-[#00ff9d] p-3 text-center border-[3px]">
-              <div className="text-[8px] font-black uppercase">ULTRA_LOW_LATENCY</div>
-            </div>
-            <div className="flex-1 brutal-card bg-[#5eb5ff] p-3 text-center border-[3px]">
-              <div className="text-[8px] font-black uppercase">P2P_ENCRYPTED</div>
-            </div>
-          </div>
+        <div className="relative z-10 w-full max-w-4xl flex flex-col lg:flex-row gap-10 items-stretch">
+           {/* Left Hero Section */}
+           <div className="flex-1 flex flex-col justify-between p-6 bg-black text-white border-[8px] border-black shadow-[20px_20px_0px_var(--brutal-yellow)]">
+              <div>
+                <Activity size={48} className="text-[var(--brutal-yellow)] mb-6" />
+                <h1 className="text-7xl md:text-9xl font-black tracking-tighter italic leading-[0.8] mb-6 glitch-effect">SYNC<br/><span className="text-[var(--brutal-yellow)]">MEET</span></h1>
+                <p className="max-w-xs font-black uppercase tracking-widest text-xs opacity-50 italic">Ultra high-chroma peer-to-peer transmission engine v4.0.ALPHA</p>
+              </div>
+              <div className="mt-20">
+                <div className="flex flex-wrap gap-2">
+                   {['P2P', 'AES_256', 'LOW_LATENCY', 'PROTO_MESH'].map(tag => (
+                       <span key={tag} className="bg-white text-black px-3 py-1 text-[8px] font-black border-2 border-black tracking-tighter">{tag}</span>
+                   ))}
+                </div>
+              </div>
+           </div>
+
+           {/* Right Form Section */}
+           <div className="flex-1 brutal-card p-8 md:p-12 bg-white flex flex-col justify-center border-[8px] shadow-[20px_20px_0px_var(--brutal-violet)]">
+              <div className="flex items-center gap-3 mb-10 border-b-4 border-black pb-4">
+                 <TerminalIcon size={24} strokeWidth={3} />
+                 <h2 className="text-2xl font-black uppercase tracking-tight italic">ESTABLISH_UPLINK</h2>
+              </div>
+              
+              <form onSubmit={handleJoin} className="space-y-6">
+                <div className="group">
+                   <label className="block text-[10px] font-black uppercase mb-1 ml-1 tracking-widest">USER_ID</label>
+                   <input 
+                     type="text" 
+                     value={userName} 
+                     onChange={(e) => {setUserName(e.target.value); if(formError) setFormError(null);}} 
+                     className={`w-full brutal-input ${formError && !userName.trim() ? 'brutal-shake border-[var(--brutal-red)]' : ''}`} 
+                     placeholder="TYPE_IDENTIFIER" 
+                   />
+                </div>
+                <div className="group">
+                   <label className="block text-[10px] font-black uppercase mb-1 ml-1 tracking-widest">SESSION_KEY</label>
+                   <input 
+                     type="text" 
+                     value={roomId} 
+                     onChange={(e) => {setRoomId(e.target.value); if(formError) setFormError(null);}} 
+                     className={`w-full brutal-input ${formError && !roomId.trim() ? 'brutal-shake border-[var(--brutal-red)]' : ''}`} 
+                     placeholder="ENTER_UUID" 
+                   />
+                </div>
+                {formError && (
+                    <div className="bg-[var(--brutal-red)] text-white p-3 font-black text-[10px] uppercase tracking-widest border-2 border-black flex items-center gap-3 animate-shake">
+                        <ShieldAlert size={14} /> ERROR: {formError}
+                    </div>
+                )}
+                <button type="submit" className="w-full py-5 brutal-btn-violet text-2xl font-black shadow-[10px_10px_0px_#000] hover:shadow-none hover:translate-x-[10px] hover:translate-y-[10px]">
+                   BOOT_STREAM_
+                </button>
+              </form>
+
+              <div className="mt-10 pt-10 border-t-2 border-dashed border-black/20 text-center">
+                 <p className="text-[10px] font-black uppercase opacity-30 italic">Developed by the industrial_minimal_labs // 2024</p>
+              </div>
+           </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-[100dvh] w-full bg-[#f0f0f0] brutal-bg-pattern flex flex-col overflow-hidden relative font-mono">
+    <div className="h-[100dvh] w-full bg-[#f8f8f8] brutal-bg-pattern flex flex-col overflow-hidden relative font-mono text-black">
       <CommandPalette isOpen={showPalette} onClose={() => setShowPalette(false)} onCommand={handleCommand} />
       
-      {/* Brutalist Header HUD */}
-      <div className="h-16 border-b-[4px] border-black bg-white flex items-center justify-between px-6 z-[110] shadow-[0_4px_0px_black]">
-        <div className="flex items-center gap-6">
-           <div className="font-black italic text-2xl tracking-tighter select-none">SYNC<span className="bg-[#ffdf1e] px-1 ml-1">MEET</span></div>
-           <div className="hidden md:flex items-center gap-2 bg-[#00ff9d] border-2 border-black px-3 py-0.5 text-[10px] font-black uppercase"> <Hash size={12} /> {roomId} </div>
+      {/* HUD HEADER */}
+      <div className="h-20 border-b-[6px] border-black bg-white flex items-center justify-between px-6 z-[110] shadow-[0_6px_0px_#000]">
+        <div className="flex items-center gap-8">
+           <div className="font-black italic text-3xl tracking-tighter select-none glitch-effect">SYNC<span className="bg-[var(--brutal-yellow)] px-2 ml-1 border-2 border-black">MEET</span></div>
+           <div className="hidden lg:flex items-center gap-3 bg-[var(--brutal-cyan)] border-4 border-black px-4 py-1 text-[11px] font-black uppercase shadow-[4px_4px_0px_#000]"> 
+              <Box size={14} strokeWidth={3} /> {roomId} 
+           </div>
         </div>
         
         <div className="flex items-center gap-4">
            {isRecording && (
-                <div className="bg-[#ff5e5e] border-2 border-black px-4 py-1 flex items-center gap-2 animate-pulse">
-                   <Circle size={8} fill="black" />
-                   <span className="text-[9px] font-black uppercase">REC</span>
+                <div className="bg-[var(--brutal-red)] text-white border-4 border-black px-4 py-1.5 flex items-center gap-3 shadow-[4px_4px_0px_#000] bounce-in">
+                   <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse shadow-[0_0_10px_white]" />
+                   <span className="text-[10px] font-black uppercase tracking-widest">RECORDING</span>
                 </div>
            )}
-           <div className="bg-black text-white px-4 py-1 text-[9px] font-black uppercase"> {new Date().toLocaleTimeString().split(' ')[0]} </div>
+           <div className="hidden md:flex items-center gap-3 bg-black text-white px-5 py-2 text-[10px] font-black uppercase border-4 border-black shadow-[4px_4px_0px_#facc15]">
+              <Circle size={10} fill="var(--brutal-yellow)" className="border-none" /> LIVE_PROTO_STREAM
+           </div>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col relative md:pt-12 pt-8 pb-32 overflow-hidden px-4 md:px-10">
-         <div className={`relative flex-1 transition-all duration-500 flex flex-col ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'lg:mr-[420px]' : ''}`}>
+      <div className="flex-1 flex flex-col relative pt-12 pb-36 overflow-hidden px-6 lg:px-20">
+         {/* ACTIVE TOOL VIEWPORT */}
+         <div className={`relative flex-1 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex flex-col ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'lg:mr-[480px]' : ''}`}>
+            
             {['whiteboard', 'notes', 'media'].includes(activeTool) && (
-                <div className="absolute inset-0 z-[120] lg:z-[60] brutal-card bg-white overflow-hidden shadow-[12px_12px_0px_black]">
-                    <div className="h-10 bg-black text-white flex items-center justify-between px-4 border-b-2 border-black">
-                        <span className="text-[10px] font-black uppercase tracking-widest">{activeTool}_VIEW</span>
-                        <button onClick={() => setActiveTool('none')} className="font-black hover:text-[#ffdf1e]">CLOSE [X]</button>
+                <div className="absolute inset-x-0 inset-y-0 z-[120] lg:z-[60] border-[10px] border-black bg-white shadow-[20px_20px_0px_#000] overflow-hidden flex flex-col animate-slide-up">
+                    <div className="h-12 bg-black text-white flex items-center justify-between px-6 border-b-4 border-black">
+                        <div className="flex items-center gap-3">
+                            <Layout size={18} strokeWidth={3} className="text-[var(--brutal-yellow)]" />
+                            <span className="text-[11px] font-black uppercase tracking-widest italic">{activeTool}_PROTOCOL_INTERFACE</span>
+                        </div>
+                        <button onClick={() => setActiveTool('none')} className="font-black text-xs hover:text-[var(--brutal-red)] transition-colors uppercase">TERMINATE [ESC]</button>
                     </div>
-                    {activeTool === 'whiteboard' && <Whiteboard roomId={roomId} />}
-                    {activeTool === 'notes' && <CollaborativeNotes roomId={roomId} />}
-                    {activeTool === 'media' && <MediaPlayer syncData={syncData} onSync={(t, s) => signaling.sendMediaSync(roomId, { time: t, state: s })} onClose={() => setActiveTool('none')} /> as any}
+                    <div className="flex-1 overflow-hidden">
+                        {activeTool === 'whiteboard' && <Whiteboard roomId={roomId} />}
+                        {activeTool === 'notes' && <CollaborativeNotes roomId={roomId} />}
+                        {activeTool === 'media' && <MediaPlayer syncData={syncData} onSync={(t, s) => signaling.sendMediaSync(roomId, { time: t, state: s })} onClose={() => setActiveTool('none')} />}
+                    </div>
                 </div>
             )}
 
-            {/* MESH_VIEWPORT: Intel-Adaptive Grid Logic */}
-            <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-500
-                ${['whiteboard', 'notes', 'media'].includes(activeTool) ? 'opacity-20 scale-[0.98] blur-xl h-0 overflow-hidden pointer-events-none' : 'w-full h-full'}`}>
+            {/* MESH_VIEWPORT: Intel-Adaptive Grid */}
+            <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-700
+                ${['whiteboard', 'notes', 'media'].includes(activeTool) ? 'opacity-5 scale-[0.95] blur-2xl pointer-events-none' : 'w-full h-full'}`}>
                
-               <div className={`grid gap-6 md:gap-8 w-full max-w-[1600px] h-full transition-all duration-500 mx-auto content-center
-                  ${remotePeers.length === 0 ? 'grid-cols-1 max-w-5xl aspect-video' : 
+               <div className={`grid gap-8 lg:gap-12 w-full max-w-[1800px] h-full transition-all duration-500 mx-auto content-center
+                  ${remotePeers.length === 0 ? 'grid-cols-1 max-w-6xl aspect-[16/9]' : 
                     remotePeers.length === 1 ? 'grid-cols-1 md:grid-cols-2' : 
                     remotePeers.length === 2 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
                     'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
                   
                   {/* LOCAL_NODE */}
-                  <div className="w-full h-full min-h-[220px] md:min-h-[280px]">
+                  <div className="w-full h-full brutal-card-highlight overflow-hidden border-[6px]">
                      <VideoTile stream={localStream} isLocal={true} username={userName.toUpperCase()} isAudioEnabled={isMicOn} isVideoEnabled={isCameraOn} isHandRaised={isHandRaised} isGlitching={isGlitching} isScreenShare={isScreenSharing} />
                   </div>
 
                   {/* REMOTE_NODES */}
                   {remotePeers.map((peer: any) => (
-                     <div key={peer.id} className="w-full h-full min-h-[220px] md:min-h-[280px]">
+                     <div key={peer.id} className="w-full h-full brutal-card-highlight overflow-hidden border-[6px]">
                         <VideoTile stream={peer.stream} username={peer.userName.toUpperCase()} isAudioEnabled={peer.isMicOn} isVideoEnabled={peer.isCameraOn} isHandRaised={peer.isHandRaised} isGlitching={peer.isGlitching} isTyping={peer.isTyping} networkQuality={peer.networkQuality} connectionState={peer.connectionState as any} reactions={reactions} onRetry={manualReconnect as any} />
                      </div>
                   ))}
                </div>
             </div>
 
-            {/* Floating Captions */}
+            {/* FLOATING SUBTITLES */}
             {isCaptionsOn && currentCaption && (
-               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-3xl px-4 animate-slide-up pointer-events-none">
-                  <div className="brutal-card bg-black text-white p-4 border-2 border-white shadow-[8px_8px_0px_#ffdf1e] text-center">
-                      <p className="text-xl font-bold uppercase tracking-tighter">
-                         <span className="text-[#ffdf1e] mr-4">{userName.substring(0, 3)}:</span> {currentCaption}
+               <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[100] w-full max-w-4xl px-6 pointer-events-none drop-shadow-[0_20px_20px_rgba(0,0,0,0.4)]">
+                  <div className="brutal-card bg-black text-white p-6 border-4 border-white shadow-[12px_12px_0px_var(--brutal-cyan)] text-center animate-slide-up">
+                      <p className="text-2xl font-black uppercase tracking-tighter leading-none italic">
+                         <span className="text-[var(--brutal-yellow)] mr-4 border-r-2 border-white/20 pr-4">{userName.substring(0, 3)}:</span> {currentCaption}
                       </p>
                   </div>
                </div>
             )}
          </div>
 
-         {/* Sidebar Tools - Brutalist Overhaul */}
-         <div className={`fixed inset-y-8 right-8 w-full max-w-[400px] z-[150] transition-all duration-300 transform 
-             ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}>
-            <div className="brutal-card h-full bg-white flex flex-col overflow-hidden border-[6px]">
-               <div className="bg-black text-white p-4 font-black uppercase tracking-widest flex items-center justify-between">
-                  <span>TOOL_ACCESS</span>
-                  <button onClick={() => setActiveTool('none')}>[X]</button>
+         {/* SIDEBAR PANEL */}
+         <div className={`fixed inset-y-10 right-10 w-full max-w-[440px] z-[150] transition-all duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] transform 
+             ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'translate-x-0' : 'translate-x-full opacity-0 pointer-events-none'}`}>
+            <div className="brutal-card h-full bg-white flex flex-col overflow-hidden border-[8px] shadow-[20px_20px_0px_#000]">
+               <div className="bg-black text-white p-5 font-black uppercase tracking-[.2em] flex items-center justify-between border-b-4 border-black">
+                  <div className="flex items-center gap-3">
+                     <CommandIcon size={20} strokeWidth={3} className="text-[var(--brutal-yellow)]" />
+                     <span className="text-xs">SYSTEM_ACCESS</span>
+                  </div>
+                  <button onClick={() => setActiveTool('none')} className="hover:text-[var(--brutal-red)] transition-colors">[CLOSE]</button>
                </div>
-               <div className="p-4 grid grid-cols-2 gap-3 border-b-4 border-black bg-[#f0f0f0]">
-                  <button onClick={() => setActiveTool('chat')} className={`brutal-btn py-2 text-[9px] ${activeTool === 'chat' ? 'bg-[#ffdf1e]' : ''}`}>MESSAGES</button>
-                  <button onClick={() => setActiveTool('polls')} className={`brutal-btn py-2 text-[9px] ${activeTool === 'polls' ? 'bg-[#ffdf1e]' : ''}`}>POLLS</button>
-                  <button onClick={() => setActiveTool('dashboard')} className={`brutal-btn py-2 text-[9px] ${activeTool === 'dashboard' ? 'bg-[#ffdf1e]' : ''}`}>TELEMETRY</button>
-                  <button onClick={() => setActiveTool('logs')} className={`brutal-btn py-2 text-[9px] ${activeTool === 'logs' ? 'bg-[#ffdf1e]' : ''}`}>CONSOLE</button>
+               
+               {/* Quick Tool Switcher */}
+               <div className="p-4 grid grid-cols-2 gap-3 border-b-8 border-black bg-[#f0f0f0]">
+                  {[
+                    { id: 'chat', label: 'MESSAGES', color: '--brutal-violet' },
+                    { id: 'polls', label: 'POLLS_ENGINE', color: '--brutal-pink' },
+                    { id: 'dashboard', label: 'TELEMETRY', color: '--brutal-cyan' },
+                    { id: 'logs', label: 'SYS_CONSOLE', color: '--brutal-orange' }
+                  ].map(btn => (
+                    <button 
+                       key={btn.id} 
+                       onClick={() => setActiveTool(btn.id as any)} 
+                       className={`brutal-btn py-3 text-[10px] italic ${activeTool === btn.id ? `bg-[var(${btn.color})] text-white shadow-none translate-x-1 translate-y-1` : 'bg-white'}`}
+                    >
+                       {btn.label}
+                    </button>
+                  ))}
                </div>
-               <div className="flex-1 overflow-hidden custom-scrollbar">
+               <div className="flex-1 overflow-hidden">
                   {activeTool === 'chat' && <Chat roomId={roomId} userName={userName} messages={messages} onSendMessage={sendMessage} onNotifyTyping={notifyTyping} isRemoteTyping={isRemoteTyping} />}
                   {activeTool === 'logs' && <SystemLogs logs={logs} onClear={() => setLogs([])} />}
                   {activeTool === 'polls' && <Polls polls={polls} onVote={handleVote} onCreate={handleCreatePoll} onClear={() => setPolls([])} />}
@@ -349,10 +389,19 @@ const App: React.FC = () => {
          </div>
       </div>
 
-      <div className="fixed bottom-10 left-0 right-0 z-[110] flex justify-center px-4 pointer-events-none">
-         <div className="pointer-events-auto w-full max-w-fit flex gap-4 brutal-card bg-white p-2 border-[4px] border-black shadow-[10px_10px_0px_black]">
+      {/* FIXED CONTROL BAR */}
+      <div className="fixed bottom-12 left-0 right-0 z-[110] flex justify-center px-6 pointer-events-none">
+         <div className="pointer-events-auto flex gap-6 brutal-card bg-white p-4 border-[6px] border-black shadow-[15px_15px_0px_#000] hover:shadow-[20px_20px_0px_#000] transition-all">
             <Controls onToggleMic={toggleMic} isMicOn={isMicOn} onToggleCamera={toggleCamera} isCameraOn={isCameraOn} onToggleScreenShare={toggleScreenShare} isScreenSharing={isScreenSharing} onToggleHandRaise={toggleHandRaise} isHandRaised={isHandRaised} onToggleTool={toggleTool} activeTool={activeTool} onLeave={handleLeave} onSendReaction={handleSendReaction} isRecording={isRecording} onToggleRecording={() => !isRecording ? startRecording() : stopRecording()} isCaptionsOn={isCaptionsOn} onToggleCaptions={() => setIsCaptionsOn(!isCaptionsOn)} />
          </div>
+      </div>
+
+      {/* GLOBAL HUD DECORATION */}
+      <div className="fixed top-24 left-6 hidden lg:flex flex-col gap-4 opacity-40 select-none pointer-events-none">
+         <div className="p-3 border-4 border-black bg-white shadow-[4px_4px_0px_#000]">
+            <Hash size={16} strokeWidth={3} />
+         </div>
+         <div className="w-[4px] h-32 bg-black mx-auto" />
       </div>
     </div>
   );
