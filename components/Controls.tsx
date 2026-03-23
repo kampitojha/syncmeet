@@ -37,13 +37,13 @@ const Controls: React.FC<ControlsProps> = ({
   const [showReactions, setShowReactions] = useState(false);
 
   return (
-    <div className="flex items-center gap-2 md:gap-4 glass-card-bright p-2 md:p-4 rounded-3xl md:rounded-[36px] border border-white/20 select-none no-scrollbar flex-nowrap overflow-x-auto max-w-[90vw] md:max-w-none shadow-2xl">
+    <div className="flex items-center gap-2 md:gap-4 glass-card-bright bg-black/40 p-2 md:p-4 rounded-3xl md:rounded-[36px] border border-white/20 select-none no-scrollbar flex-nowrap overflow-x-auto max-w-[90vw] md:max-w-none shadow-2xl backdrop-blur-2xl">
       {/* Primary Communication Protocols */}
       <div className="flex items-center gap-1 md:gap-2 px-1 border-r border-white/10 flex-shrink-0">
         <button 
           onClick={onToggleMic}
           className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1 group
-            ${isMicOn ? 'bg-white/5 text-cyan-400 hover:bg-white/10' : 'bg-red-500 text-white shadow-lg shadow-red-500/20'}`}
+            ${isMicOn ? 'bg-white/15 text-cyan-400 hover:bg-white/25' : 'bg-red-500 text-white shadow-lg shadow-red-500/20'}`}
         >
           {isMicOn ? <Mic size={20} strokeWidth={2.5} /> : <MicOff size={20} strokeWidth={2.5} />}
           <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">{isMicOn ? 'MUTE' : 'UNMUTE'}</span>
@@ -52,7 +52,7 @@ const Controls: React.FC<ControlsProps> = ({
         <button 
           onClick={onToggleCamera}
           className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1 group
-            ${isCameraOn ? 'bg-white/5 text-cyan-400 hover:bg-white/10' : 'bg-red-500 text-white shadow-lg shadow-red-500/20'}`}
+            ${isCameraOn ? 'bg-white/15 text-cyan-400 hover:bg-white/25' : 'bg-red-500 text-white shadow-lg shadow-red-500/20'}`}
         >
           {isCameraOn ? <Video size={20} strokeWidth={2.5} /> : <VideoOff size={20} strokeWidth={2.5} />}
           <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">{isCameraOn ? 'VIDEO_OFF' : 'VIDEO_ON'}</span>
@@ -64,7 +64,7 @@ const Controls: React.FC<ControlsProps> = ({
         <button 
           onClick={onToggleScreenShare}
           className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-            ${isScreenSharing ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+            ${isScreenSharing ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20 scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
         >
           <ScreenShare size={20} strokeWidth={2.5} />
           <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">SHARE</span>
@@ -73,7 +73,7 @@ const Controls: React.FC<ControlsProps> = ({
         <button 
           onClick={onToggleHandRaise}
           className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-            ${isHandRaised ? 'bg-yellow-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+            ${isHandRaised ? 'bg-yellow-400 text-black shadow-lg shadow-yellow-400/20 scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
         >
           <Hand size={20} strokeWidth={2.5} className={isHandRaised ? 'animate-bounce' : ''} />
           <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">HAND</span>
@@ -85,7 +85,7 @@ const Controls: React.FC<ControlsProps> = ({
         <button 
           onClick={() => onToggleTool('chat')}
           className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1 relative
-            ${activeTool === 'chat' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+            ${activeTool === 'chat' ? 'bg-white text-black scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
         >
           <MessageSquare size={20} strokeWidth={2.5} />
           <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">CHAT</span>
@@ -94,7 +94,7 @@ const Controls: React.FC<ControlsProps> = ({
         <button 
           onClick={() => onToggleTool('whiteboard')}
           className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-            ${activeTool === 'whiteboard' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+            ${activeTool === 'whiteboard' ? 'bg-white text-black scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
         >
           <PenTool size={20} strokeWidth={2.5} />
           <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">DRAW</span>
@@ -103,7 +103,7 @@ const Controls: React.FC<ControlsProps> = ({
         <button 
           onClick={() => onToggleTool('notes')}
           className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-            ${activeTool === 'notes' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+            ${activeTool === 'notes' ? 'bg-white text-black scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
         >
           <FileText size={20} strokeWidth={2.5} />
           <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">NOTES</span>
@@ -112,7 +112,7 @@ const Controls: React.FC<ControlsProps> = ({
         <button 
           onClick={() => onToggleTool('media')}
           className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-            ${activeTool === 'media' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+            ${activeTool === 'media' ? 'bg-white text-black scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
         >
           <Tv size={20} strokeWidth={2.5} />
           <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">CAST</span>
@@ -121,7 +121,7 @@ const Controls: React.FC<ControlsProps> = ({
         <button 
           onClick={onToggleCaptions}
           className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-            ${isCaptionsOn ? 'bg-purple-500 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+            ${isCaptionsOn ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20 scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
         >
           <Captions size={20} strokeWidth={2.5} />
           <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">CAPTIONS</span>
@@ -130,7 +130,7 @@ const Controls: React.FC<ControlsProps> = ({
         <button 
           onClick={onToggleRecording}
           className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-            ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+            ${isRecording ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/20' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
         >
           <Radio size={20} strokeWidth={2.5} />
           <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">RECORD</span>
@@ -140,14 +140,14 @@ const Controls: React.FC<ControlsProps> = ({
           <button 
             onClick={() => setShowReactions(!showReactions)}
             className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-              ${showReactions ? 'bg-white/20 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+              ${showReactions ? 'bg-white text-black scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
           >
             <Smile size={20} strokeWidth={2.5} />
             <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">REACT</span>
           </button>
           
           {showReactions && (
-            <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 glass-card-bright p-3 rounded-2xl flex gap-3 shadow-2xl animate-slide-up border border-white/20 z-[200]">
+            <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 glass-card-bright bg-black/80 p-3 rounded-2xl flex gap-3 shadow-2xl animate-slide-up border border-white/20 z-[200] backdrop-blur-xl">
                {['⚡', '🔥', '👏', '❤️', '🎉', '😂', '💯'].map(emoji => (
                  <button 
                    key={emoji} 
