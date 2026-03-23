@@ -2,157 +2,97 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>SyncMeet</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23ffdf00'/><rect x='20' y='20' width='60' height='60' fill='none' stroke='black' stroke-width='12'/><path d='M45 35 L45 65 L65 50 Z' fill='black'/></svg>">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SyncMeet | Modern Collaboration</title>
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
       :root {
-        --neo-bg: #ffffff;
-        --neo-accent: #ffdf00; /* Vibrant Yellow */
-        --neo-border: #000000;
-        --neo-shadow: #000000;
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --accent-glow: rgba(0, 242, 255, 0.5);
       }
 
       body {
-        font-family: 'Space Grotesk', sans-serif;
-        background-color: var(--neo-bg);
-        color: #000;
+        margin: 0;
+        background-color: #050505;
+        color: #ffffff;
+        font-family: 'Outfit', sans-serif;
         overflow: hidden;
-        overscroll-behavior: none;
-      }
-      
-      .brut-border {
-        border: 4px solid var(--neo-border);
-        box-shadow: 4px 4px 0px 0px var(--neo-shadow);
       }
 
-      .brut-border-lg {
-        border: 6px solid var(--neo-border);
-        box-shadow: 8px 8px 0px 0px var(--neo-shadow);
+      /* Custom Scrollbar for modern look */
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+      /* Glassmorphism Classes */
+      .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
       }
 
-      .brut-btn {
-        background-color: var(--neo-accent);
-        border: 4px solid var(--neo-border);
-        box-shadow: 4px 4px 0px 0px var(--neo-shadow);
-        transition: all 0.1s;
-        font-weight: 700;
-        text-transform: uppercase;
-        cursor: pointer;
+      .glass-card-bright {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(30px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
       }
 
-      .brut-btn:active {
-        box-shadow: 0px 0px 0px 0px var(--neo-shadow);
-        transform: translate(4px, 4px);
+      /* Animations */
+      @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+        100% { transform: translateY(0px); }
       }
 
-      .brut-input {
-        background-color: #fff;
-        border: 4px solid var(--neo-border);
-        padding: 1rem;
-        font-family: 'JetBrains Mono', monospace;
-        outline: none;
+      @keyframes pulse-glow {
+        0% { box-shadow: 0 0 5px rgba(0, 242, 255, 0.2); }
+        50% { box-shadow: 0 0 25px rgba(0, 242, 255, 0.5); }
+        100% { box-shadow: 0 0 5px rgba(0, 242, 255, 0.2); }
       }
 
-      .brut-tile {
-        background-color: #fff;
-        border: 4px solid var(--neo-border);
-        box-shadow: 8px 8px 0px 0px var(--neo-shadow);
+      .animate-float { animation: float 6s ease-in-out infinite; }
+      .pulse-accent { animation: pulse-glow 3s infinite; }
+
+      /* Dynamic Mesh Background */
+      .mesh-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background: 
+          radial-gradient(circle at 0% 0%, #1a1a1a 0%, transparent 50%),
+          radial-gradient(circle at 100% 0%, #0d1b2a 0%, transparent 50%),
+          radial-gradient(circle at 100% 100%, #1b263b 0%, transparent 50%),
+          radial-gradient(circle at 0% 100%, #0a0a0a 0%, transparent 50%);
+        opacity: 0.8;
       }
 
-      /* Floating Emoji Animation for Brutalism */
-      @keyframes float-up {
-        0% { transform: translateY(0) scale(0.5) rotate(0deg); opacity: 0; }
-        10% { opacity: 1; }
-        100% { transform: translateY(-200px) scale(2) rotate(20deg); opacity: 0; }
+      /* Glitch transition (Legacy kept but refined) */
+      .animate-glitch-refined {
+        animation: glitch-anim 0.4s cubic-bezier(.25,.46,.45,.94) both;
       }
-      .animate-float-up {
-        animation: float-up 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-      }
-
-      @keyframes infinite-scroll {
-        from { transform: translateX(0); }
-        to { transform: translateX(-50%); }
-      }
-      .animate-infinite-scroll {
-        display: inline-flex;
-        animation: infinite-scroll 10s linear infinite;
-      }
-
-      /* Glitch Effect for Transitions */
-      @keyframes glitch {
-        0% { transform: translate(0); }
-        20% { transform: translate(-2px, 2px); }
-        40% { transform: translate(-2px, -2px); }
-        60% { transform: translate(2px, 2px); }
-        80% { transform: translate(2px, -2px); }
-        100% { transform: translate(0); }
-      }
-      .animate-glitch {
-        animation: glitch 0.2s cubic-bezier(.25,.46,.45,.94) both infinite;
-      }
-
-      @keyframes rgb-split {
-        0% { text-shadow: none; }
-        25% { text-shadow: 2px 0 red, -2px 0 blue; }
-        50% { text-shadow: -2px 0 red, 2px 0 blue; }
-        75% { text-shadow: 2px 0 red, -2px 0 blue; }
-        100% { text-shadow: none; }
-      }
-      .glitch-text {
-        animation: rgb-split 0.5s infinite;
-      }
-
-      /* Command Palette Styles */
-      .cmd-palette {
-        background: rgba(0, 0, 0, 0.95);
-        color: #ffdf00;
-        font-family: 'JetBrains Mono', monospace;
-        border: 4px solid #ffdf00;
-        box-shadow: 10px 10px 0px 0px #000;
-      }
-
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar {
-        width: 12px;
-        height: 12px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #fff;
-        border-left: 4px solid #000;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: var(--neo-accent);
-        border: 4px solid #000;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #fff;
-      }
-
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
+      @keyframes glitch-anim {
+        0% { transform: translate(0); filter: hue-rotate(0deg); }
+        20% { transform: translate(-2px, 2px); filter: hue-rotate(90deg); }
+        40% { transform: translate(-2px, -2px); filter: hue-rotate(180deg); }
+        60% { transform: translate(2px, 2px); filter: hue-rotate(270deg); }
+        80% { transform: translate(2px, -2px); filter: hue-rotate(360deg); }
+        100% { transform: translate(0); filter: hue-rotate(0deg); }
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
-    "trystero/": "https://aistudiocdn.com/trystero@^0.22.0/"
-  }
-}
-</script>
-</head>
+  </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <div class="mesh-bg"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

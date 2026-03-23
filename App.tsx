@@ -5,7 +5,11 @@ import {
   Copy, 
   ArrowRight,
   Terminal,
-  Tv
+  Tv,
+  LayoutDashboard,
+  ShieldCheck,
+  Zap,
+  CheckCircle2
 } from 'lucide-react';
 import VideoTile from './components/VideoTile';
 import Controls from './components/Controls';
@@ -21,7 +25,7 @@ import { signaling } from './services/signaling';
 import { SignalPayload } from './types';
 
 const App: React.FC = () => {
-  const [roomId, setRoomId] = useState('ROOM-01');
+  const [roomId, setRoomId] = useState('SYNC-P2P-PRO');
   const [userName, setUserName] = useState('PEER-' + Math.random().toString(36).substr(2, 4).toUpperCase());
   const [activeTool, setActiveTool] = useState<'none' | 'chat' | 'whiteboard' | 'notes' | 'logs' | 'media'>('none');
   const [reactions, setReactions] = useState<string[]>([]);
@@ -71,27 +75,23 @@ const App: React.FC = () => {
         setReactions(prev => [...prev, payload.payload.emoji]);
         setTimeout(() => setReactions(prev => prev.slice(1)), 2000);
     };
-
     const handleSystemLog = (payload: SignalPayload) => {
         if (payload.roomId !== roomId) return;
         addLog(payload.payload.message, payload.payload.type);
     };
-
     const handleMediaSync = (payload: SignalPayload) => {
         if (payload.roomId !== roomId) return;
         setSyncData(payload.payload);
-        addLog(`SYNC_PROTO: MEDIA_UPDATE [${payload.payload.state}]`, 'success');
+        addLog(`SYNC: MEDIA_UPDATE [${payload.payload.state}]`, 'success');
     };
-
     signaling.on('reaction', handleReaction);
     signaling.on('system-log', handleSystemLog);
     signaling.on('media-sync', handleMediaSync);
-    signaling.on('peer-joined', (p: any) => addLog(`PEER_DETECTION_ID: ${p.peerId}`, 'success'));
+    signaling.on('peer-joined', (p: any) => addLog(`PEER_ID_CONNECTED: ${p.peerId}`, 'success'));
     signaling.on('leave', (p: any) => {
         const id = p.payload?.senderId || p.senderId;
-        addLog(`PEER_DISCONNECTED_ID: ${id}`, 'warn');
+        addLog(`PEER_ID_REMOVED: ${id}`, 'warn');
     });
-
     return () => {
         signaling.off('reaction', handleReaction);
         signaling.off('system-log', handleSystemLog);
@@ -127,19 +127,18 @@ const App: React.FC = () => {
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
     joinRoom();
-    addLog(`INITIALIZED_SYSTEM: LINKING_PEERS...`, 'info');
+    addLog(`INIT: BOOTSTRAPPING_SESSION_LINK...`, 'info');
   };
 
   const handleLeave = () => {
     leaveRoom();
     clearMessages();
     setActiveTool('none');
-    addLog(`TERMINATED_LINK: SYSTEM_SHUTDOWN`, 'warn');
   };
 
   const copyRoomId = () => {
     navigator.clipboard.writeText(roomId);
-    addLog(`SECURE_DATA: ROOM_ID_COPIED_TO_BUFFER`, 'success');
+    addLog(`SECURE_DATA: ROOM_LINK_BUFFERED`, 'success');
   };
 
   const toggleTool = (tool: typeof activeTool) => {
@@ -152,92 +151,147 @@ const App: React.FC = () => {
 
   if (!isInRoom) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-[#ffdf00] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 0)', backgroundSize: '40px 40px' }} />
-        <div className="brut-border-lg bg-white p-8 md:p-12 w-full max-w-md relative z-10 animate-fade-in shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-          <div className="flex flex-col items-center mb-10">
-            <div className="bg-black p-4 mb-6 shadow-[6px_6px_0px_0px_rgba(255,223,0,1)]">
-              <Video className="text-[#ffdf00] w-12 h-12" />
+      <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 bg-transparent relative overflow-hidden">
+        {/* Decorative Spheres */}
+        <div className="absolute top-[10%] left-[5%] w-64 h-64 bg-cyan-500/10 rounded-full blur-[100px] animate-pulse" />
+        <div className="absolute bottom-[20%] right-[10%] w-96 h-96 bg-purple-500/10 rounded-full blur-[120px] animate-pulse delay-1000" />
+        
+        <div className="glass-card-bright p-8 md:p-14 w-full max-w-lg relative z-10 animate-fade-in rounded-[40px] shadow-2xl overflow-hidden border border-white/10 group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          
+          <div className="flex flex-col items-center mb-12">
+            <div className="bg-white/5 p-5 mb-8 rounded-3xl border border-white/10 shadow-inner group-hover:scale-110 transition-transform duration-500">
+              <Video className="text-cyan-400 w-14 h-14" />
             </div>
-            <h1 className="text-5xl md:text-7xl font-black text-black mb-0 tracking-tighter uppercase italic -skew-x-6">SyncMeet</h1>
-            <span className="bg-black text-[#ffdf00] px-3 py-1 font-black text-xs md:text-sm uppercase tracking-widest mt-4">PRIVATE_P2P_MESH_PROTOCOL</span>
+            <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-2 tracking-tight group-hover:tracking-tighter transition-all duration-700">Sync<span className="text-cyan-400 font-light">Meet</span></h1>
+            <p className="text-white/40 text-sm md:text-base font-medium tracking-widest uppercase flex items-center gap-3">
+               <ShieldCheck size={16} className="text-cyan-400/50" /> Secure P2P Mesh Protocol
+            </p>
           </div>
+
           <form onSubmit={handleJoin} className="space-y-6">
-            <input type="text" value={userName} onChange={(e) => setUserName(e.target.value)} className="brut-input w-full text-xl" placeholder="NAME_" required />
-            <input type="text" value={roomId} onChange={(e) => setRoomId(e.target.value)} className="brut-input w-full text-xl" placeholder="ROOM_ID_" required />
-            <button type="submit" className="brut-btn w-full py-5 text-2xl flex items-center justify-center gap-3">
-              INITIALIZE_LINK_ <ArrowRight size={24} strokeWidth={3} />
+            <div className="space-y-4">
+                <div className="relative group/field">
+                    <input 
+                      type="text" 
+                      value={userName} 
+                      onChange={(e) => setUserName(e.target.value)} 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white/90 font-semibold placeholder:text-white/20 outline-none focus:bg-white/10 focus:border-cyan-500/50 shadow-inner transition-all" 
+                      placeholder="Display Name" 
+                      required 
+                    />
+                </div>
+                <div className="relative group/field">
+                    <input 
+                      type="text" 
+                      value={roomId} 
+                      onChange={(e) => setRoomId(e.target.value)} 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white/90 font-semibold placeholder:text-white/20 outline-none focus:bg-white/10 focus:border-cyan-500/50 shadow-inner transition-all" 
+                      placeholder="Meeting UUID" 
+                      required 
+                    />
+                </div>
+            </div>
+            
+            <button type="submit" className="w-full py-5 rounded-2xl bg-cyan-400 text-black text-xl font-black flex items-center justify-center gap-4 hover:bg-white hover:scale-[1.02] transform transition-all active:scale-95 shadow-xl shadow-cyan-400/20 group/btn">
+              START_SESSION <ArrowRight size={24} className="group-hover/btn:translate-x-2 transition-transform" />
             </button>
           </form>
+
+          <div className="mt-10 flex justify-center gap-6 opacity-40">
+             <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-white"> <Zap size={14} className="text-cyan-400" /> Ultra-Low Latency </div>
+             <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-white"> <LayoutDashboard size={14} className="text-cyan-400" /> Advanced Toolkit </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-[100dvh] w-full bg-[#f0f0f0] flex flex-col overflow-hidden relative font-bold">
+    <div className="h-[100dvh] w-full bg-[#050505] flex flex-col overflow-hidden relative font-sans">
       <CommandPalette isOpen={showPalette} onClose={() => setShowPalette(false)} onCommand={handleCommand} />
-      <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000), linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000)', backgroundPosition: '0 0, 20px 20px', backgroundSize: '40px 40px' }} />
       
-      <div className="absolute top-4 md:top-8 left-4 md:left-8 right-4 md:right-8 z-50 flex flex-wrap gap-4 justify-between items-start pointer-events-none">
-        <div className="pointer-events-auto flex items-center gap-3 bg-[#ffdf00] p-2 md:p-3 brut-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-          <span className="text-sm md:text-lg font-black uppercase text-black italic">LINK: {roomId}</span>
-          <button onClick={copyRoomId} className="flex items-center gap-1.5 text-black hover:bg-black hover:text-white px-2 py-0.5 uppercase text-[10px] md:text-xs border-2 border-black font-bold">COPY_ID</button>
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.1) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+      
+      {/* Top Navigation */}
+      <div className="absolute top-6 left-6 right-6 z-50 flex justify-between items-center pointer-events-none md:top-8 md:left-10 md:right-10">
+        <div className="pointer-events-auto flex items-center gap-4 group">
+            <div className="glass-card-bright p-3 rounded-2xl border border-white/10 group-hover:rotate-12 transition-transform">
+                <Video className="text-cyan-400 w-5 h-5 md:w-6 md:h-6" />
+            </div>
+            <div className="glass-card p-2 md:p-3 px-4 md:px-6 rounded-2xl border border-white/10 flex items-center gap-4 group/chip hover:bg-white/10 transition-colors">
+                <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                    <span className="text-xs md:text-sm font-bold text-white/90 uppercase tracking-widest">{roomId}</span>
+                </div>
+                <button onClick={copyRoomId} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-white/40 hover:text-cyan-400">
+                    <Copy size={14} />
+                </button>
+            </div>
         </div>
-        <div className="pointer-events-auto bg-black text-[#ffdf00] px-4 py-2 text-[10px] uppercase font-black italic -skew-x-12 animate-pulse shadow-[6px_6px_0px_0px_rgba(0,0,0,0.3)]">
-           SYSTEM_OPERATIONAL_LINKED_ [CMD+K]
+        
+        <div className="pointer-events-auto hidden md:flex items-center gap-4 glass-card p-2 px-6 rounded-2xl border border-white/10">
+            <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400">
+                <Terminal size={14} /> SYSTEM_TRANSPARENCY_MODE
+            </div>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col relative overflow-hidden pt-16 md:pt-0">
-        <div className={`relative flex-1 p-4 md:p-10 transition-all duration-300 flex flex-col ${['chat', 'logs'].includes(activeTool) ? 'md:mr-[400px]' : ''}`}>
+      {/* Main Grid Area */}
+      <div className="flex-1 flex flex-col relative overflow-hidden pt-24 md:pt-32">
+        <div className={`relative flex-1 p-6 transition-all duration-700 flex flex-col ${['chat', 'logs'].includes(activeTool) ? 'md:mr-[420px]' : ''}`}>
             
             {['whiteboard', 'notes', 'media'].includes(activeTool) && (
-                <div className="absolute inset-4 md:inset-10 z-[60] animate-fade-in brut-border-lg bg-black overflow-hidden shadow-[12px_12px_0px_0px_rgba(255,223,0,1)]">
+                <div className="absolute inset-6 md:inset-10 z-[60] animate-fade-in glass-card-bright rounded-[40px] overflow-hidden shadow-2xl border border-white/20">
                     {activeTool === 'whiteboard' && <Whiteboard roomId={roomId} />}
                     {activeTool === 'notes' && <CollaborativeNotes roomId={roomId} />}
                     {activeTool === 'media' && <MediaPlayer syncData={syncData} onSync={handleMediaSyncEmit} onClose={() => setActiveTool('none')} />}
-                    <button onClick={() => setActiveTool('none')} className="absolute top-4 right-4 z-[70] p-2 border-4 border-[#ffdf00] bg-black text-[#ffdf00] hover:bg-[#ffdf00] hover:text-black transition-colors"><ArrowRight className="rotate-180 w-6 h-6" strokeWidth={3} /></button>
                 </div>
             )}
 
-            <div className={`grid gap-4 md:gap-8 w-full h-full max-h-[1400px] mx-auto transition-all duration-300 ${remotePeers.length > 0 ? (remotePeers.length === 1 ? 'md:grid-cols-2' : 'grid-cols-2 lg:grid-cols-3') : 'max-w-5xl md:aspect-video'} ${['whiteboard', 'notes', 'media'].includes(activeTool) ? 'opacity-10 grayscale scale-[0.98]' : ''}`}>
+            <div className={`grid gap-6 md:gap-10 w-full h-full max-h-[1400px] mx-auto transition-all duration-700 ${remotePeers.length > 0 ? (remotePeers.length === 1 ? 'md:grid-cols-2' : 'grid-cols-2 lg:grid-cols-3') : 'max-w-6xl md:aspect-video'} ${['whiteboard', 'notes', 'media'].includes(activeTool) ? 'opacity-20 scale-[0.98] blur-xl' : ''}`}>
                <VideoTile stream={localStream} isLocal={true} username={userName} isAudioEnabled={isMicOn} isVideoEnabled={isCameraOn} isHandRaised={isHandRaised} isGlitching={isGlitching} isScreenShare={isScreenSharing} />
                {remotePeers.map(peer => (
                  <VideoTile key={peer.id} stream={peer.stream} username={peer.userName} isAudioEnabled={peer.isMicOn} isVideoEnabled={peer.isCameraOn} isHandRaised={peer.isHandRaised} isGlitching={peer.isGlitching} isTyping={peer.isTyping} networkQuality={peer.networkQuality} connectionState={peer.connectionState} reactions={reactions} onRetry={manualReconnect} />
                ))}
                {remotePeers.length === 0 && (
-                 <div className="hidden md:flex flex-col items-center justify-center bg-white brut-border-lg border-dashed">
-                   <div className="bg-[#ffdf00] p-6 brut-border mb-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"><Users className="text-black w-12 h-12" strokeWidth={3} /></div>
-                   <h3 className="text-black text-3xl font-black uppercase italic -skew-x-3 mb-2">AWAITING_PROTO_LINK...</h3>
+                 <div className="hidden md:flex flex-col items-center justify-center glass-card rounded-[40px] border border-white/5 group shadow-inner">
+                   <div className="p-8 bg-white/5 rounded-full mb-8 group-hover:bg-cyan-500/10 transition-colors">
+                        <Users className="text-white/20 w-16 h-16 group-hover:text-cyan-400 transition-colors" />
+                   </div>
+                   <h3 className="text-white/30 text-2xl font-bold uppercase tracking-widest text-center max-w-xs">Waiting for peers to join...</h3>
+                   <p className="mt-4 text-white/10 text-xs font-medium uppercase text-center flex items-center gap-2"> <CheckCircle2 size={12} /> SECURE_LINK_ACTIVATED</p>
                  </div>
                )}
             </div>
         </div>
 
-        <div className={`fixed top-0 right-0 h-full w-full md:w-[400px] z-[100] transform transition-transform duration-500 bg-white border-l-[6px] border-black shadow-[-10px_0px_40px_rgba(0,0,0,0.5)] ${['chat', 'logs'].includes(activeTool) ? 'translate-x-0' : 'translate-x-full'}`}>
-          <div className="flex h-full flex-col">
-            <div className="bg-black p-4 flex gap-4">
-                <button onClick={() => setActiveTool('chat')} className={`flex-1 py-3 font-black uppercase text-xs italic transition-all ${activeTool === 'chat' ? 'bg-[#ffdf00] text-black shadow-[4px_4px_0px_0px_rgba(255,223,0,0.3)]' : 'bg-transparent text-[#ffdf00] border-2 border-[#ffdf00] opacity-50 hover:opacity-100'}`}>COMMS_MODULE</button>
-                <button onClick={() => setActiveTool('logs')} className={`flex-1 py-3 font-black uppercase text-xs italic transition-all ${activeTool === 'logs' ? 'bg-[#ffdf00] text-black shadow-[4px_4px_0px_0px_rgba(255,223,0,0.3)]' : 'bg-transparent text-[#ffdf00] border-2 border-[#ffdf00] opacity-50 hover:opacity-100'}`}>PROTO_LOGS</button>
-                <button onClick={() => setActiveTool('none')} className="bg-red-500 p-3 border-2 border-black text-white hover:bg-black hover:text-[#ffdf00] transition-colors"><ArrowRight strokeWidth={3} size={20} /></button>
+        {/* Floating Sidebar (Chat/Logs) */}
+        <div className={`fixed top-6 right-6 bottom-6 w-full md:w-[400px] z-[100] transform transition-all duration-700 bg-transparent flex flex-col ${['chat', 'logs'].includes(activeTool) ? 'translate-x-0 opacity-100' : 'translate-x-[450px] opacity-0'}`}>
+          <div className="glass-card-bright h-full rounded-[40px] flex flex-col shadow-2xl border border-white/10 overflow-hidden">
+            <div className="p-6 pb-2 flex gap-4">
+                <button onClick={() => setActiveTool('chat')} className={`flex-1 py-4 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all ${activeTool === 'chat' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>MESSAGES</button>
+                <button onClick={() => setActiveTool('logs')} className={`flex-1 py-4 rounded-2xl font-bold uppercase text-xs tracking-widest transition-all ${activeTool === 'logs' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>CONSOLE</button>
+                <button onClick={() => setActiveTool('none')} className="bg-white/5 p-4 rounded-2xl text-white/40 hover:bg-red-500 hover:text-white transition-all"><ArrowRight size={20} /></button>
             </div>
-            {activeTool === 'chat' && <Chat roomId={roomId} userName={userName} messages={messages} onSendMessage={sendMessage} onNotifyTyping={notifyTyping} isRemoteTyping={isRemoteTyping} />}
-            {activeTool === 'logs' && <SystemLogs logs={logs} onClear={() => setLogs([])} />}
+            <div className="flex-1 overflow-hidden p-3 mt-4">
+                {activeTool === 'chat' && <Chat roomId={roomId} userName={userName} messages={messages} onSendMessage={sendMessage} onNotifyTyping={notifyTyping} isRemoteTyping={isRemoteTyping} />}
+                {activeTool === 'logs' && <SystemLogs logs={logs} onClear={() => setLogs([])} />}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="fixed bottom-6 md:bottom-10 left-1/2 transform -translate-x-1/2 z-[80] w-full max-w-fit px-4 md:px-6 pointer-events-none flex flex-col items-center gap-4">
-        {activeTool === 'none' && (
-            <div className="pointer-events-auto bg-black border-4 border-black text-[#ffdf00] px-4 py-1.5 font-black text-[10px] uppercase italic -rotate-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] animate-slide-up">
-               QUICK_ACCESS_PROTOCOL_DOCK_v3.2_
-            </div>
-        )}
-        <div className="pointer-events-auto flex items-center gap-2 md:gap-4 bg-white p-2 md:p-4 brut-border-lg shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:shadow-[14px_14px_0px_0px_rgba(0,0,0,1)] overflow-x-auto no-scrollbar max-w-full">
+      {/* Modern Tool Dock */}
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[110] w-full max-w-fit px-6 pointer-events-none flex flex-col items-center gap-6">
+        <div className="pointer-events-auto flex items-center gap-2 md:gap-4 glass-card-bright p-3 md:p-5 rounded-[32px] shadow-2xl border border-white/20 transition-all hover:border-cyan-500/30">
             <Controls onToggleMic={toggleMic} isMicOn={isMicOn} onToggleCamera={toggleCamera} isCameraOn={isCameraOn} onToggleScreenShare={toggleScreenShare} isScreenSharing={isScreenSharing} onToggleHandRaise={toggleHandRaise} isHandRaised={isHandRaised} onToggleTool={toggleTool} activeTool={activeTool} onLeave={handleLeave} onSendReaction={(emoji) => signaling.sendReaction(roomId, emoji)} />
-            <button onClick={() => toggleTool('media')} className={`ml-2 md:ml-4 p-2 md:p-3 border-4 border-black transition-colors ${activeTool === 'media' ? 'bg-black text-[#ffdf00]' : 'bg-[#ffdf00] text-black'}`} title="MEDIA_SYNC_MODULE"><Tv className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} /></button>
-            <button onClick={() => setShowPalette(true)} className="ml-2 bg-black text-[#ffdf00] p-2 md:p-3 border-4 border-black hover:bg-[#ffdf00] hover:text-black transition-colors" title="COMMAND_PALETTE"><Terminal className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} /></button>
+            <div className="w-[1px] h-10 bg-white/10 mx-2" />
+            <div className="flex items-center gap-2">
+                <button onClick={() => toggleTool('media')} className={`p-4 rounded-2xl transition-all shadow-sm ${activeTool === 'media' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white hover:bg-white/10'}`} title="Watch Together"><Tv size={22} /></button>
+                <button onClick={() => setShowPalette(true)} className="p-4 rounded-2xl bg-white/5 text-white hover:bg-cyan-400 hover:text-black transition-all shadow-sm" title="Command Center"><Terminal size={22} /></button>
+            </div>
         </div>
       </div>
     </div>

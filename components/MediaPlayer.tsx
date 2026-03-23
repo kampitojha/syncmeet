@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Tv, X, Globe, Link } from 'lucide-react';
+import { Play, Pause, Tv, X, Globe, Link, MonitorUp } from 'lucide-react';
 
 interface MediaPlayerProps {
   onSync: (time: number, state: 'play' | 'pause') => void;
@@ -36,39 +36,39 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ onSync, syncData, onClose }) 
   };
 
   return (
-    <div className="flex flex-col h-full bg-black font-mono border-4 border-black box-border">
-      <div className="bg-[#ffdf00] p-4 flex items-center justify-between border-b-4 border-black">
-        <div className="flex items-center gap-3 text-black">
-           <Tv size={20} strokeWidth={3} />
-           <span className="font-black text-xs md:text-sm uppercase italic tracking-tighter">MEDIA_BROADCAST_RECEIVER_v1.0</span>
+    <div className="flex flex-col h-full bg-[#0a0a0a] font-sans overflow-hidden">
+      <div className="glass-card-bright p-5 flex items-center justify-between border-b border-white/10 z-[70]">
+        <div className="flex items-center gap-4 text-white">
+           <div className="bg-cyan-400 p-2 rounded-xl"> <Tv size={18} className="text-black" /> </div>
+           <span className="font-extrabold text-sm uppercase tracking-widest text-white/90 italic">SYNCCAST_RECEIVER_v1.0</span>
         </div>
-        <button onClick={onClose} className="hover:rotate-90 transition-transform">
-           <X size={20} strokeWidth={3} className="text-black" />
+        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all hover:rotate-90">
+           <X size={20} className="text-white/40 hover:text-white" />
         </button>
       </div>
 
       {!activeUrl ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#111]">
-              <div className="mb-8 opacity-20"> <Tv size={80} className="text-[#ffdf00]" /> </div>
-              <p className="text-[#ffdf00] font-black uppercase text-xs mb-6 italic">AWAITING_MEDIA_SOURCE_INPUT_</p>
-              <form onSubmit={loadMedia} className="w-full max-w-sm flex flex-col gap-4">
-                  <div className="relative">
-                      <Link className="absolute left-4 top-1/2 -translate-y-1/2 text-[#ffdf00]" size={16} />
+          <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-gradient-to-br from-[#0a0a0a] to-[#111]">
+              <div className="mb-12 opacity-10 animate-pulse"> <MonitorUp size={100} className="text-cyan-400" strokeWidth={1} /> </div>
+              <p className="text-white/20 font-black uppercase text-[10px] mb-8 tracking-[0.4em] italic">Awaiting Media Interface Link_</p>
+              <form onSubmit={loadMedia} className="w-full max-w-sm flex flex-col gap-6">
+                  <div className="relative group">
+                      <Link className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-cyan-400 transition-colors" size={18} />
                       <input 
                         type="text" 
                         value={url} 
                         onChange={e => setUrl(e.target.value)}
-                        placeholder="SOURCE_URL_"
-                        className="w-full bg-black/40 border-4 border-[#ffdf00] p-5 pl-12 text-[#ffdf00] font-black uppercase text-xs outline-none"
+                        placeholder="ENTER_SOURCE_URL_"
+                        className="w-full bg-white/5 border border-white/10 p-6 pl-14 text-white font-bold uppercase text-[10px] outline-none rounded-3xl focus:border-cyan-500/30 focus:bg-white/10 transition-all shadow-inner"
                       />
                   </div>
-                  <button type="submit" className="bg-[#ffdf00] text-black p-4 font-black uppercase text-sm hover:translate-x-1 hover:-translate-y-1 transition-transform border-4 border-black shadow-[4px_4px_0px_0px_rgba(255,223,0,0.3)]">
-                      LOAD_MODULE_
+                  <button type="submit" className="bg-cyan-400 text-black p-6 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-white transition-all shadow-xl shadow-cyan-400/10 active:scale-95">
+                      BOOT_MEDIA_PROTOCOL
                   </button>
               </form>
           </div>
       ) : (
-          <div className="flex-1 flex flex-col relative group">
+          <div className="flex-1 flex flex-col relative group overflow-hidden">
               <video 
                 ref={videoRef}
                 src={activeUrl}
@@ -77,17 +77,17 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ onSync, syncData, onClose }) 
                 onPause={() => handleAction('pause')}
                 controls
               />
-              <div className="absolute top-4 left-4 bg-black/80 p-2 border-2 border-[#ffdf00] opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-[#ffdf00] text-[8px] font-black uppercase flex items-center gap-2 italic">
-                     <Globe size={10} /> LINK_ACTIVE: {activeUrl.slice(0, 30)}...
+              <div className="absolute top-6 left-6 glass-card p-3 px-5 rounded-2xl border border-white/10 opacity-0 group-hover:opacity-100 transition-all transform translate-y-4 group-hover:translate-y-0">
+                  <span className="text-cyan-400 text-[9px] font-black uppercase flex items-center gap-3 tracking-widest italic">
+                     <Globe size={12} /> STREAM_SOURCE: {activeUrl.slice(0, 40)}...
                   </span>
               </div>
           </div>
       )}
 
-      <div className="bg-[#ffdf00]/10 p-3 flex items-center gap-3 border-t border-[#ffdf00]/20">
-         <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-         <span className="text-[10px] font-bold text-[#ffdf00]/50 tracking-[0.2em] uppercase">SYNC_CHANNEL_READY</span>
+      <div className="glass-card p-4 flex items-center gap-4 border-t border-white/5 bg-white/5 backdrop-blur-3xl">
+         <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
+         <span className="text-[9px] font-bold text-white/20 tracking-[0.3em] uppercase">LINKED_TO_CRYPTO_MESH_SYNC_CORE</span>
       </div>
     </div>
   );

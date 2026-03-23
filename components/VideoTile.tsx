@@ -11,7 +11,9 @@ import {
   Hand,
   Activity,
   Terminal,
-  Maximize2
+  Maximize2,
+  ShieldAlert,
+  Zap
 } from 'lucide-react';
 import { useAudioLevel } from '../hooks/useAudioLevel';
 import { VideoTileProps } from '../types';
@@ -40,7 +42,6 @@ const VideoTile: React.FC<VideoTileProps> = ({
   useEffect(() => {
     const videoEl = videoRef.current;
     if (videoEl && stream) {
-      // Re-assign srcObject if it's different or if tracks have changed
       if (videoEl.srcObject !== stream) {
           videoEl.srcObject = stream;
       }
@@ -51,7 +52,7 @@ const VideoTile: React.FC<VideoTileProps> = ({
   const shouldMirror = isScreenShare ? false : (isMirrored !== undefined ? isMirrored : isLocal);
 
   const getSignalColor = () => {
-    if (networkQuality >= 4) return "text-green-500";
+    if (networkQuality >= 4) return "text-cyan-400";
     if (networkQuality === 3) return "text-green-400";
     if (networkQuality === 2) return "text-yellow-400";
     return "text-red-500";
@@ -60,26 +61,27 @@ const VideoTile: React.FC<VideoTileProps> = ({
   return (
     <div 
       className={`
-        relative w-full h-full bg-white overflow-hidden transition-all duration-300
+        relative w-full h-full bg-[#0a0a0a] overflow-hidden transition-all duration-700
+        rounded-[40px] border border-white/5
         ${isSpeaking 
-          ? 'border-[8px] md:border-[12px] border-[#ffdf00] z-10' 
-          : 'border-[4px] md:border-[6px] border-black'
+          ? 'shadow-[0_0_50px_rgba(34,211,238,0.2)] border-cyan-500/30' 
+          : 'shadow-2xl'
         }
-        ${isHandRaised ? 'shadow-[0px_0px_50px_rgba(255,223,0,0.5)]' : 'shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]'}
-        ${isGlitching ? 'animate-glitch' : ''}
+        ${isHandRaised ? 'ring-4 ring-cyan-400/50' : ''}
+        ${isGlitching ? 'animate-glitch-refined' : ''}
       `}
     >
-      <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-      
+      {/* Hand Raise Overlay */}
       {isHandRaised && (
-          <div className="absolute top-4 right-4 z-[40] animate-bounce">
-              <div className="bg-[#ffdf00] p-3 md:p-4 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2">
-                  <Hand size={24} fill="currentColor" className="text-black" />
-                  <span className="font-black uppercase text-xs md:text-sm italic">REQUESTING_SPEECH</span>
+          <div className="absolute top-6 right-6 z-[40] animate-bounce">
+              <div className="glass-card-bright p-3 px-5 rounded-2xl border border-white/20 shadow-xl flex items-center gap-3">
+                  <Hand size={20} fill="currentColor" className="text-cyan-400" />
+                  <span className="font-extrabold uppercase text-[10px] tracking-widest text-white">RAISING_HAND</span>
               </div>
           </div>
       )}
 
+      {/* Video Content */}
       <div className={`w-full h-full flex items-center justify-center ${isScreenShare ? 'bg-black' : ''}`}>
         <video
             ref={videoRef}
@@ -87,44 +89,47 @@ const VideoTile: React.FC<VideoTileProps> = ({
             playsInline
             muted={isLocal} 
             className={`
-                w-full h-full transition-transform duration-500
+                w-full h-full transition-all duration-1000
                 ${isScreenShare ? 'object-contain' : 'object-cover'} 
                 ${shouldMirror ? 'scale-x-[-1]' : ''}
-                ${!isVideoEnabled ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}
-                ${isGlitching ? 'grayscale invert' : ''}
+                ${!isVideoEnabled ? 'opacity-0 blur-xl scale-110' : 'opacity-100 blur-0 scale-100'}
+                ${isGlitching ? 'grayscale' : ''}
             `}
         />
       </div>
 
+      {/* Placeholder for Cam Off */}
       {!isVideoEnabled && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center animate-fade-in bg-[#f0f0f0]">
+        <div className="absolute inset-0 flex flex-col items-center justify-center animate-fade-in bg-gradient-to-br from-[#0a0a0a] to-[#111]">
           <div className="relative">
-            <div className={`h-24 w-24 md:h-40 md:w-40 bg-[#ffdf00] border-[6px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center -rotate-3`}>
-              <User className="w-16 h-16 md:w-24 md:h-24" strokeWidth={3} />
+            <div className={`h-32 w-32 md:h-48 md:w-48 bg-white/5 rounded-full border border-white/10 shadow-2xl flex items-center justify-center`}>
+              <User className="w-16 h-16 md:w-24 md:h-24 text-white/10" strokeWidth={1} />
             </div>
             {isSpeaking && !isLocal && (
-               <div className="absolute -inset-4 border-4 border-black animate-ping opacity-20" />
+               <div className="absolute -inset-4 border-2 border-cyan-400/30 rounded-full animate-ping" />
             )}
           </div>
-          <div className="mt-8 bg-black text-[#ffdf00] px-4 py-2 flex items-center gap-3 italic font-black uppercase text-xs md:text-sm">
-             <VideoOff size={20} className="text-[#ffdf00]" /> SIGNAL_LOSS: CAM_DISABLED
+          <div className="mt-10 glass-card p-4 px-6 rounded-2xl flex items-center gap-4 text-white/40 font-bold uppercase text-[10px] tracking-widest border border-white/5">
+             <VideoOff size={16} className="text-cyan-400/50" /> SIGNAL_INTERRUPTED_
           </div>
         </div>
       )}
 
+      {/* Typing Indicator */}
       {isTyping && !isLocal && (
-        <div className="absolute bottom-24 md:bottom-32 left-4 md:left-8 bg-[#ffdf00] border-4 border-black text-black px-4 py-2 text-sm font-black uppercase italic -skew-x-12 z-20 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] animate-bounce">
-            <span className="flex items-center gap-2">
-                <Terminal size={14} strokeWidth={3} /> {username}_TRANS_SYSTEM_INFO
+        <div className="absolute bottom-28 left-8 glass-card-bright p-3 px-6 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400 z-20 shadow-xl animate-pulse">
+            <span className="flex items-center gap-3">
+                <Terminal size={14} /> {username} IS_TRANSMITTING...
             </span>
         </div>
       )}
 
+      {/* Floating Reactions */}
       <div className="absolute inset-0 pointer-events-none z-[45] overflow-hidden">
         {reactions.map((emoji, i) => (
            <div 
              key={i} 
-             className="absolute bottom-0 text-4xl md:text-6xl animate-float-up opacity-0 drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]"
+             className="absolute bottom-0 text-5xl md:text-7xl animate-float-up opacity-0"
              style={{ left: `${Math.random() * 80 + 10}%`, animationDelay: `${i * 0.1}s` }}
            >
              {emoji}
@@ -132,56 +137,61 @@ const VideoTile: React.FC<VideoTileProps> = ({
         ))}
       </div>
 
+      {/* Info Overlay (Negotiating/Lost) */}
       {statusMessage && !isLocal && (
-        <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] z-50 flex items-center justify-center p-6 text-center">
-            <div className="bg-white border-[6px] border-black p-8 shadow-[12px_12px_0px_0px_rgba(255,223,0,1)] max-w-sm w-full">
-              <div className="flex items-center gap-4 mb-6 border-b-4 border-black pb-4">
-                 <RefreshCw className="w-8 h-8 md:w-10 md:h-10 text-black animate-spin" strokeWidth={3} />
-                 <span className="font-black text-lg md:text-xl uppercase italic -skew-x-6">RECONNECTING_PROTOCOL</span>
-              </div>
-              <p className="font-bold text-xs text-black uppercase mb-6 leading-tight">{statusMessage}</p>
-              {onRetry && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-8">
+            <div className="glass-card-bright rounded-[40px] p-10 shadow-2xl border border-white/20 max-w-sm w-full text-center">
+              <div className="flex flex-col items-center gap-6">
+                 <div className="p-5 bg-white/5 rounded-full">
+                     <RefreshCw className="w-12 h-12 text-cyan-400 animate-spin" strokeWidth={2} />
+                 </div>
+                 <h4 className="font-extrabold text-xl text-white uppercase tracking-widest">RECOV_LINK_</h4>
+                 <p className="text-white/40 text-xs font-medium uppercase leading-relaxed tracking-wider">{statusMessage}</p>
+                 {onRetry && (
                  <button 
                   onClick={onRetry}
-                  className="w-full bg-[#ffdf00] border-4 border-black py-4 font-black uppercase text-sm hover:bg-black hover:text-[#ffdf00] transition-colors"
+                  className="mt-4 w-full bg-cyan-400 text-black py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white transition-all shadow-lg shadow-cyan-400/20"
                  >
-                  RESET_CRYPTO_LINK_
+                  RESET_ENCRYPTION_LINK
                  </button>
               )}
+              </div>
            </div>
         </div>
       )}
 
-      <div className="absolute top-4 left-4 z-40 flex flex-col gap-2">
-        <div className="bg-white border-4 border-black px-3 py-1.5 flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-           <span className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2">
-             <span className={`w-2 h-2 rounded-none bg-black ${isSpeaking ? 'animate-pulse' : ''}`} />
-             {username} {isLocal ? '(LOCAL)' : '(REMOTE)'}
+      {/* Peer Label */}
+      <div className="absolute top-6 left-6 z-40 flex flex-col gap-2">
+        <div className="glass-card-bright p-2.5 px-5 rounded-2xl border border-white/10 flex items-center gap-3 shadow-xl">
+           <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-3 text-white/90">
+             <div className={`w-2 h-2 rounded-full ${isSpeaking ? 'bg-cyan-400 animate-pulse' : 'bg-white/20'}`} />
+             {username} {isLocal ? '(HOST)' : ''}
            </span>
         </div>
       </div>
 
+      {/* Bottom Control Bar */}
       <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end z-40 pointer-events-none">
-        <div className={`p-2 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-3 ${isAudioEnabled ? (isSpeaking ? 'bg-[#ffdf00]' : 'bg-white') : 'bg-red-500'}`}>
+        <div className={`p-2.5 px-5 rounded-2xl border border-white/10 shadow-xl flex items-center gap-3 transition-all ${isAudioEnabled ? (isSpeaking ? 'glass-card-bright' : 'glass-card text-white/40') : 'bg-red-500/20 text-red-500'}`}>
           {isAudioEnabled ? (
-            <Activity size={16} strokeWidth={3} className="text-black" />
+            <Activity size={14} strokeWidth={2} className={`${isSpeaking ? 'text-cyan-400' : 'opacity-20'}`} />
           ) : (
-            <MicOff size={16} strokeWidth={3} className="text-white" />
+            <MicOff size={14} strokeWidth={2} />
           )}
-          <span className={`text-[10px] font-black uppercase ${!isAudioEnabled ? 'text-white' : 'text-black'}`}>
-             {isAudioEnabled ? (isSpeaking ? 'SPEAKING' : 'AUDIO_LIVE') : 'MUTED'}
+          <span className="text-[9px] font-black uppercase tracking-[0.2em]">
+             {isAudioEnabled ? (isSpeaking ? 'ACTIVE_SPEECH' : 'AUDIO_ON') : 'MUTED'}
           </span>
         </div>
 
-        <div className="flex gap-3 pointer-events-auto">
+        <div className="flex gap-4 pointer-events-auto">
             {isScreenShare && (
-                <div className="bg-[#ffdf00] border-4 border-black p-2 flex items-center gap-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                    <Maximize2 size={16} strokeWidth={3} className="text-black" />
-                    <span className="text-[10px] font-black uppercase italic">SCREEN_TRANS_</span>
+                <div className="glass-card-bright p-3 rounded-2xl flex items-center gap-3 shadow-xl border border-white/10">
+                    <Maximize2 size={16} strokeWidth={2} className="text-cyan-400" />
+                    <span className="text-[9px] font-black text-white uppercase tracking-widest">SCREEN</span>
                 </div>
             )}
-            <div className={`p-2 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-colors ${getSignalColor().replace('text-', 'bg-')}`}>
-                <Signal size={16} strokeWidth={3} className="text-black" />
+            <div className={`p-3 rounded-2xl glass-card border border-white/10 shadow-xl`}>
+                <Signal size={16} strokeWidth={2} className={getSignalColor()} />
             </div>
         </div>
       </div>

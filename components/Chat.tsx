@@ -40,76 +40,79 @@ const Chat: React.FC<ChatProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-          if (file.size > 1024 * 1024) { alert("ERROR: FILE_TOO_LARGE. MESH_LIMIT: 1MB"); return; }
-          onSendMessage(`FILE_TRANSFER_PROTO: [${file.name}] (${(file.size/1024).toFixed(1)}KB)`);
+          if (file.size > 1024 * 1024) { alert("ERROR: MESH_TRANSFER_LIMIT: 1MB"); return; }
+          onSendMessage(`FILE_PROTO: [${file.name}] (${(file.size/1024).toFixed(1)}KB)`);
       }
   };
 
   return (
-    <div className="flex flex-col h-full bg-white font-mono">
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar">
+    <div className="flex flex-col h-full bg-transparent font-sans text-white/90">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
         {messages.map((msg, i) => (
           <div 
             key={i} 
-            className={`flex flex-col ${msg.senderId === 'local' ? 'items-end' : 'items-start'} animate-slide-in`}
+            className={`flex flex-col ${msg.senderId === 'local' ? 'items-end' : 'items-start'} animate-fade-in`}
           >
-            <div className={`flex items-center gap-2 mb-1.5 ${msg.senderId === 'local' ? 'flex-row-reverse' : ''}`}>
-              <div className="bg-black p-1">
-                <UserIcon size={12} className="text-[#ffdf00]" />
+            <div className={`flex items-center gap-2 mb-2 ${msg.senderId === 'local' ? 'flex-row-reverse' : ''}`}>
+              <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center p-1">
+                <UserIcon size={12} className="text-cyan-400" />
               </div>
-              <span className="text-[10px] font-black uppercase italic tracking-tighter">
-                {msg.senderName} [{msg.timestamp}]
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/30 truncate max-w-[120px]">
+                {msg.senderName} • {msg.timestamp}
               </span>
             </div>
             
             <div className={`
-                max-w-[85%] p-3 md:p-4 border-2 md:border-4 border-black relative
-                ${msg.senderId === 'local' ? 'bg-[#ffdf00] text-black shadow-[-4px_4px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}
+                max-w-[90%] p-4 rounded-2xl border border-white/5 shadow-xl transition-all hover:scale-[1.01]
+                ${msg.senderId === 'local' ? 'bg-cyan-400 text-black font-semibold' : 'bg-white/5 text-white/90 backdrop-blur-md'}
             `}>
-              {msg.text.startsWith('FILE_TRANSFER_PROTO:') ? (
-                  <div className="flex items-center gap-3">
-                      <div className="bg-black p-2 border-2 border-white">
-                         <Paperclip size={16} className="text-[#ffdf00]" />
+              {msg.text.startsWith('FILE_PROTO:') ? (
+                  <div className="flex items-center gap-4">
+                      <div className={`p-2 rounded-xl border ${msg.senderId === 'local' ? 'bg-black text-cyan-400 border-black/10' : 'bg-white/10 text-cyan-400 border-white/10'}`}>
+                         <Paperclip size={16} strokeWidth={2} />
                       </div>
-                      <span className="text-xs font-black uppercase italic">{msg.text.replace('FILE_TRANSFER_PROTO: ', '')}</span>
-                      <Download size={16} className="ml-auto cursor-pointer" />
+                      <div className="flex flex-col">
+                          <span className="text-xs font-black uppercase tracking-tight">{msg.text.replace('FILE_PROTO: ', '')}</span>
+                          <span className="text-[8px] opacity-40 uppercase font-black">Secure Transfer Ready</span>
+                      </div>
+                      <Download size={18} className="ml-4 cursor-pointer opacity-60 hover:opacity-100 transition-opacity" />
                   </div>
               ) : (
-                  <p className="text-xs md:text-sm font-bold uppercase leading-tight break-words">{msg.text}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
               )}
             </div>
           </div>
         ))}
         
         {isRemoteTyping && (
-          <div className="flex items-center gap-2 animate-pulse mb-4">
-             <div className="w-1.5 h-1.5 bg-black" />
-             <div className="w-1.5 h-1.5 bg-black" />
-             <div className="w-1.5 h-1.5 bg-black" />
-             <span className="text-[10px] font-black uppercase italic ml-2">REMOTE_PEER_TRANSMITTING...</span>
+          <div className="flex items-center gap-3 animate-pulse px-2 opacity-40">
+             <div className="flex gap-1.5">
+                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+             </div>
+             <span className="text-[9px] font-black uppercase tracking-widest">TRANSMITTING_DATA</span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 md:p-6 bg-[#f0f0f0] border-t-4 border-black">
-        <form onSubmit={handleSubmit} className="flex gap-2 md:gap-3">
+      <div className="p-6">
+        <form onSubmit={handleSubmit} className="flex gap-3 glass-card p-2 rounded-3xl border border-white/10 shadow-2xl transition-all focus-within:border-cyan-500/30">
           <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-          <button type="button" onClick={() => fileInputRef.current?.click()} className="bg-black text-[#ffdf00] p-3 md:p-4 border-2 md:border-4 border-black hover:bg-white hover:text-black">
-            <Paperclip className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
+          <button type="button" onClick={() => fileInputRef.current?.click()} className="p-4 rounded-2xl bg-white/5 text-white/40 hover:bg-white/10 hover:text-cyan-400 transition-all">
+            <Paperclip size={20} strokeWidth={2} />
           </button>
           
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => { setInput(e.target.value); onNotifyTyping(); }}
-              placeholder="TYPE_PROTO_MSG_"
-              className="w-full bg-white border-2 md:border-4 border-black p-3 md:p-4 text-xs md:text-sm font-black uppercase italic outline-none focus:bg-[#ffdf00]"
-            />
-          </div>
-          <button type="submit" className="bg-black text-[#ffdf00] p-3 md:p-4 border-2 md:border-4 border-black">
-            <Send className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => { setInput(e.target.value); onNotifyTyping(); }}
+            placeholder="Type a message..."
+            className="flex-1 bg-transparent border-none p-4 text-sm text-white placeholder:text-white/20 outline-none"
+          />
+          <button type="submit" className="p-4 rounded-2xl bg-cyan-400 text-black hover:bg-white transition-all shadow-lg shadow-cyan-400/20 active:scale-95 group">
+            <Send size={20} strokeWidth={2} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
           </button>
         </form>
       </div>

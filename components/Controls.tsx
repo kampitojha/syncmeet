@@ -11,7 +11,8 @@ import {
   MonitorUp,
   Smile,
   Hand,
-  Terminal
+  Terminal,
+  Zap
 } from 'lucide-react';
 
 interface ControlsProps {
@@ -45,76 +46,84 @@ const Controls: React.FC<ControlsProps> = ({
   onLeave,
   onSendReaction
 }) => {
-  const iconClass = "w-5 h-5 md:w-6 md:h-6";
+  const iconClass = "w-5 h-5 md:w-6 md:h-6 transition-all duration-300";
 
   return (
-    <div className="flex items-center gap-2 md:gap-4">
-      <div className="flex items-center gap-1.5 md:gap-2">
+    <div className="flex items-center gap-2 md:gap-4 pointer-events-auto">
+      <div className="flex items-center gap-1.5 md:gap-3">
         <button 
           onClick={onToggleMic}
-          className={`brut-btn p-2 md:p-4 ${!isMicOn ? 'bg-red-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
+          className={`p-4 rounded-2xl transition-all duration-500 shadow-xl border border-white/10 ${!isMicOn ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
+          title="Microphone"
         >
-          {isMicOn ? <Mic className={iconClass} strokeWidth={3} /> : <MicOff className={iconClass} strokeWidth={3} />}
+          {isMicOn ? <Mic className={iconClass} strokeWidth={2} /> : <MicOff className={iconClass} strokeWidth={2} />}
         </button>
         <button 
           onClick={onToggleCamera}
-          className={`brut-btn p-2 md:p-4 ${!isCameraOn ? 'bg-red-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
+          className={`p-4 rounded-2xl transition-all duration-500 shadow-xl border border-white/10 ${!isCameraOn ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
+          title="Camera"
         >
-          {isCameraOn ? <VideoIcon className={iconClass} strokeWidth={3} /> : <VideoOff className={iconClass} strokeWidth={3} />}
+          {isCameraOn ? <VideoIcon className={iconClass} strokeWidth={2} /> : <VideoOff className={iconClass} strokeWidth={2} />}
         </button>
         <button 
           onClick={onToggleScreenShare}
-          className={`brut-btn p-2 md:p-4 ${isScreenSharing ? 'bg-[#ffdf00] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
+          className={`p-4 rounded-2xl transition-all duration-500 shadow-xl border border-white/10 ${isScreenSharing ? 'bg-cyan-400 text-black shadow-cyan-400/20' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
+          title="Share Screen"
         >
-          <MonitorUp className={iconClass} strokeWidth={3} />
+          <MonitorUp className={iconClass} strokeWidth={2} />
         </button>
         <button 
           onClick={onToggleHandRaise}
-          className={`brut-btn p-2 md:p-4 ${isHandRaised ? 'bg-[#ffdf00] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
+          className={`p-4 rounded-2xl transition-all duration-500 shadow-xl border border-white/10 ${isHandRaised ? 'bg-cyan-400 text-black shadow-cyan-400/20' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
+          title="Raise Hand"
         >
-          <Hand className={iconClass} strokeWidth={3} fill={isHandRaised ? 'currentColor' : 'none'} />
+          <Hand className={iconClass} strokeWidth={2} fill={isHandRaised ? 'currentColor' : 'none'} />
         </button>
       </div>
 
-      <div className="w-[4px] h-10 bg-black opacity-10 mx-1" />
+      <div className="w-[1px] h-10 bg-white/10 mx-2" />
 
-      <div className="flex items-center gap-1.5 md:gap-2">
+      <div className="flex items-center gap-1.5 md:gap-3">
         <button 
           onClick={() => onToggleTool('chat')}
-          className={`brut-btn p-2 md:p-4 ${activeTool === 'chat' ? 'bg-[#ffdf00] text-black' : 'bg-white text-black'}`}
+          className={`p-4 rounded-2xl transition-all duration-500 shadow-xl border border-white/10 ${activeTool === 'chat' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
+          title="Chat"
         >
-          <MessageSquare className={iconClass} strokeWidth={3} />
+          <MessageSquare className={iconClass} strokeWidth={2} />
         </button>
         <button 
           onClick={() => onToggleTool('whiteboard')}
-          className={`brut-btn p-2 md:p-4 ${activeTool === 'whiteboard' ? 'bg-[#ffdf00] text-black' : 'bg-white text-black'}`}
+          className={`p-4 rounded-2xl transition-all duration-500 shadow-xl border border-white/10 ${activeTool === 'whiteboard' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
+          title="Whiteboard"
         >
-          <PenTool className={iconClass} strokeWidth={3} />
+          <PenTool className={iconClass} strokeWidth={2} />
         </button>
         <button 
           onClick={() => onToggleTool('notes')}
-          className={`brut-btn p-2 md:p-4 ${activeTool === 'notes' ? 'bg-[#ffdf00] text-black' : 'bg-white text-black'}`}
+          className={`p-4 rounded-2xl transition-all duration-500 shadow-xl border border-white/10 ${activeTool === 'notes' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
+          title="Notes"
         >
-          <FileText className={iconClass} strokeWidth={3} />
+          <FileText className={iconClass} strokeWidth={2} />
         </button>
         <button 
           onClick={() => onToggleTool('logs')}
-          className={`brut-btn p-2 md:p-4 ${activeTool === 'logs' ? 'bg-[#ffdf00] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
+          className={`p-4 rounded-2xl transition-all duration-500 shadow-xl border border-white/10 ${activeTool === 'logs' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
+          title="System Console"
         >
-          <Terminal className={iconClass} strokeWidth={3} />
+          <Terminal className={iconClass} strokeWidth={2} />
         </button>
       </div>
 
-      <div className="hidden lg:flex items-center gap-2 group relative ml-2">
-         <div className="brut-btn p-4 bg-white text-black group-hover:bg-[#ffdf00]">
-            <Smile size={24} strokeWidth={3} />
+      <div className="hidden lg:flex items-center gap-3 group relative ml-4 px-2">
+         <div className="p-4 rounded-2xl bg-white/5 text-white/50 hover:bg-cyan-400 hover:text-black transition-all shadow-xl border border-white/10 cursor-pointer">
+            <Smile className={iconClass} strokeWidth={2} />
          </div>
-         <div className="absolute bottom-[calc(100%+16px)] left-0 bg-white border-4 border-black p-3 flex gap-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+         <div className="absolute bottom-[calc(100%+24px)] left-0 glass-card-bright p-4 rounded-[32px] flex gap-3 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transform translate-y-4 group-hover:translate-y-0 transition-all shadow-2xl border border-white/10">
             {REACTIONS.map(emoji => (
                 <button 
                   key={emoji}
                   onClick={() => onSendReaction(emoji)}
-                  className="text-2xl hover:scale-125 transition-transform p-1"
+                  className="text-3xl hover:scale-150 transition-transform p-2 active:scale-90"
                 >
                   {emoji}
                 </button>
@@ -124,9 +133,10 @@ const Controls: React.FC<ControlsProps> = ({
 
       <button 
         onClick={onLeave}
-        className="brut-btn p-2 md:p-4 bg-red-500 text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-[#ffdf00] transition-all ml-2 md:ml-4"
+        className="p-4 rounded-2xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-500 shadow-xl border border-red-500/20 ml-2 md:ml-4"
+        title="Disconnect Session"
       >
-        <PhoneOff className={iconClass} strokeWidth={3} />
+        <PhoneOff className={iconClass} strokeWidth={2} />
       </button>
     </div>
   );
