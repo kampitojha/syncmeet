@@ -1,16 +1,34 @@
 import { joinRoom, selfId, Room } from 'trystero';
-import EventEmitter from 'events';
 
 const config = { appId: 'syncmeet-p2p' };
 
-class PeerSignalingService extends EventEmitter {
+type Listener = (data: any) => void;
+
+class PeerSignalingService {
   userId: string;
   rooms: Record<string, Room> = {};
   actions: Record<string, any> = {};
+  listeners: Record<string, Listener[]> = {};
 
   constructor() {
-    super();
     this.userId = selfId;
+  }
+
+  on(event: string, callback: Listener) {
+    if (!this.listeners[event]) this.listeners[event] = [];
+    this.listeners[event].push(callback);
+    return this;
+  }
+
+  off(event: string, callback: Listener) {
+    if (!this.listeners[event]) return this;
+    this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+    return this;
+  }
+
+  emit(event: string, data: any) {
+    if (!this.listeners[event]) return;
+    this.listeners[event].forEach(cb => cb(data));
   }
 
   joinRoom(roomId: string, name: string) {
@@ -24,7 +42,7 @@ class PeerSignalingService extends EventEmitter {
         'system-log', 'file-transfer', 'media-sync',
         'caption-update', 'poll-update', 'poll-vote',
         'screen-status', 'typing', 'draw-line',
-        'clear-board', 'sync-notes'
+        'clear-board', 'sync-notes', 'chat', 'chat-status'
       ];
 
       types.forEach(type => {
@@ -69,6 +87,10 @@ class PeerSignalingService extends EventEmitter {
   sendDrawLine(r: string, d: any) { this.send(r, 'draw-line', d); }
   sendClearBoard(r: string) { this.send(r, 'clear-board', {}); }
   sendNoteUpdate(r: string, c: string) { this.send(r, 'sync-notes', { content: c }); }
+  sendChatMessage(r: string, d: any) { this.send(r, 'chat', d); }
+  sendChatStatus(r: string, s: string, i: string[]) { this.send(r, 'chat-status', { status: s, messageIds: i }); }
+  sendTyping(r: string, i: boolean) { this.send(r, 'typing', { isTyping: i }); }
+  sendScreenShareStatus(r: string, i: boolean) { this.send(r, 'screen-status', { isScreenSharing: i }); }
 }
 
 export const signaling = new PeerSignalingService();

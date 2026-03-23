@@ -20,7 +20,9 @@ export type SignalPayload = {
     | 'typing'
     | 'draw-line'
     | 'clear-board'
-    | 'sync-notes';
+    | 'sync-notes'
+    | 'chat'
+    | 'chat-status';
   payload: any;
 };
 
@@ -32,10 +34,18 @@ export interface DrawLinePayload {
 }
 
 export interface ChatMessage {
+  id: string;
   senderId: string;
   senderName: string;
   text: string;
-  timestamp: string;
+  timestamp: number;
+  status?: 'sent' | 'delivered' | 'seen';
+  file?: {
+    name: string;
+    type: string;
+    size: number;
+    data: string;
+  };
 }
 
 export interface VideoTileProps {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { signaling } from '../services/signaling';
 import { SignalPayload } from '../types';
-import { FileText, Save, Download, LucideCloudSync } from 'lucide-react';
+import { FileText, Save, Download, RefreshCw } from 'lucide-react';
 
 interface NotesProps {
   roomId: string;
@@ -36,7 +36,7 @@ const CollaborativeNotes: React.FC<NotesProps> = ({ roomId }) => {
         }
     };
     signaling.on('sync-notes', handleSync);
-    return () => signaling.off('sync-notes', handleSync);
+    return () => { signaling.off('sync-notes', handleSync); };
   }, [roomId, content]);
 
   return (
@@ -48,7 +48,7 @@ const CollaborativeNotes: React.FC<NotesProps> = ({ roomId }) => {
             </div>
             <div className="flex items-center gap-4">
                 <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border ${status === 'SYNC_OK' ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/5' : 'border-red-500/30 text-red-500 bg-red-500/5 pulse-accent'}`}>
-                    <LucideCloudSync size={14} className={status === 'SYNCING...' ? 'animate-spin' : ''} /> {status}
+                    <Save size={14} className={status === 'SYNCING...' ? 'animate-spin' : ''} /> {status}
                 </div>
                 <button onClick={handleDownload} className="p-3 bg-cyan-400 text-black rounded-xl hover:bg-white transition-all shadow-lg shadow-cyan-400/10 active:scale-95" title="Export Notes">
                     <Download size={18} strokeWidth={2.5} />
