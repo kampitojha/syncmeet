@@ -231,49 +231,61 @@ const App: React.FC = () => {
           <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400"> <Zap size={14} /> MESH_ENCRYPTED_LINK_{roomId} </div>
       </div>
 
-      <div className="flex-1 flex flex-col relative pt-32 pb-32 overflow-hidden px-10">
-         <div className={`relative flex-1 transition-all duration-700 flex flex-col ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'md:mr-[420px]' : ''}`}>
+      <div className="flex-1 flex flex-col relative md:pt-32 pt-24 pb-32 overflow-hidden px-4 md:px-10">
+         <div className={`relative flex-1 transition-all duration-700 flex flex-col ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'lg:mr-[420px]' : ''}`}>
             {['whiteboard', 'notes', 'media'].includes(activeTool) && (
-                <div className="absolute inset-0 z-[60] animate-fade-in glass-card-bright rounded-[40px] overflow-hidden shadow-2xl border border-white/20">
+                <div className="absolute inset-0 z-[120] lg:z-[60] animate-fade-in glass-card-bright md:rounded-[40px] rounded-2xl overflow-hidden shadow-2xl border border-white/20">
                     {activeTool === 'whiteboard' && <Whiteboard roomId={roomId} />}
                     {activeTool === 'notes' && <CollaborativeNotes roomId={roomId} />}
                     {activeTool === 'media' && <MediaPlayer syncData={syncData} onSync={(t, s) => signaling.sendMediaSync(roomId, { time: t, state: s })} onClose={() => setActiveTool('none')} />}
                 </div>
             )}
 
-            <div className={`grid gap-10 w-full h-full mx-auto transition-all ${remotePeers.length > 0 ? (remotePeers.length === 1 ? 'md:grid-cols-2' : 'grid-cols-2 lg:grid-cols-3') : 'max-w-6xl md:aspect-video'} ${['whiteboard', 'notes', 'media'].includes(activeTool) ? 'opacity-20 scale-[0.98] blur-xl' : ''}`}>
-               <VideoTile stream={localStream} isLocal={true} username={userName} isAudioEnabled={isMicOn} isVideoEnabled={isCameraOn} isHandRaised={isHandRaised} isGlitching={isGlitching} isScreenShare={isScreenSharing} />
+            <div className={`grid gap-4 md:gap-10 w-full h-full mx-auto transition-all 
+                ${remotePeers.length === 0 ? 'max-w-6xl aspect-video' : 
+                  remotePeers.length === 1 ? 'grid-cols-1 md:grid-cols-2' : 
+                  'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'} 
+                ${['whiteboard', 'notes', 'media'].includes(activeTool) ? 'opacity-20 scale-[0.98] blur-xl h-0 pointer-events-none' : ''}`}>
+               
+               <div className="w-full aspect-video md:aspect-auto h-full">
+                  <VideoTile stream={localStream} isLocal={true} username={userName} isAudioEnabled={isMicOn} isVideoEnabled={isCameraOn} isHandRaised={isHandRaised} isGlitching={isGlitching} isScreenShare={isScreenSharing} />
+               </div>
+
                {remotePeers.map(peer => (
-                 <VideoTile key={peer.id} stream={peer.stream} username={peer.userName} isAudioEnabled={peer.isMicOn} isVideoEnabled={peer.isCameraOn} isHandRaised={peer.isHandRaised} isGlitching={peer.isGlitching} isTyping={peer.isTyping} networkQuality={peer.networkQuality} connectionState={peer.connectionState} reactions={reactions} onRetry={manualReconnect} />
+                 <div key={peer.id} className="w-full aspect-video md:aspect-auto h-full">
+                    <VideoTile stream={peer.stream} username={peer.userName} isAudioEnabled={peer.isMicOn} isVideoEnabled={peer.isCameraOn} isHandRaised={peer.isHandRaised} isGlitching={peer.isGlitching} isTyping={peer.isTyping} networkQuality={peer.networkQuality} connectionState={peer.connectionState} reactions={reactions} onRetry={manualReconnect} />
+                 </div>
                ))}
-               {!remotePeers.length && (
-                 <div className="hidden md:flex flex-col items-center justify-center glass-card rounded-[40px] border border-white/5 opacity-40 shadow-inner">
-                   <Users className="text-white/20 w-16 h-16 mb-6" />
-                   <h3 className="text-white/30 text-2xl font-bold uppercase tracking-widest text-center">Awaiting Mesh nodes...</h3>
+               
+               {remotePeers.length === 0 && (
+                 <div className="hidden sm:flex flex-col items-center justify-center glass-card rounded-[32px] md:rounded-[40px] border border-white/5 opacity-40 shadow-inner p-10">
+                   <Users className="text-white/20 w-12 h-12 md:w-16 md:h-16 mb-6" />
+                   <h3 className="text-white/30 text-lg md:text-2xl font-bold uppercase tracking-widest text-center">Awaiting Mesh nodes...</h3>
                  </div>
                )}
             </div>
 
             {/* Captions Presentation Overlay */}
             {isCaptionsOn && currentCaption && (
-               <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[100] w-full max-w-4xl px-4 animate-slide-up">
-                  <div className="glass-card-bright p-8 rounded-[32px] border border-cyan-400/20 text-center shadow-2xl backdrop-blur-3xl">
-                      <p className="text-2xl font-black text-white/90 uppercase tracking-tight leading-relaxed italic">
-                         <span className="text-cyan-400 mr-4 font-light">[{userName.split('-')[1]}]:</span> {currentCaption}
+               <div className="absolute bottom-4 md:bottom-10 left-1/2 -translate-x-1/2 z-[100] w-full max-w-4xl px-4 animate-slide-up">
+                  <div className="glass-card-bright p-6 md:p-8 rounded-3xl md:rounded-[32px] border border-cyan-400/20 text-center shadow-2xl backdrop-blur-3xl">
+                      <p className="text-lg md:text-2xl font-black text-white/90 uppercase tracking-tight leading-relaxed italic">
+                         <span className="text-cyan-400 mr-2 md:mr-4 font-light">[{userName.split('-')[1]}]:</span> {currentCaption}
                       </p>
                   </div>
                </div>
             )}
          </div>
 
-         {/* Right Sidebar Toolings */}
-         <div className={`fixed top-8 right-8 bottom-8 w-full md:w-[400px] z-[100] transform transition-all duration-700 ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'translate-x-0 opacity-100' : 'translate-x-[450px] opacity-0'}`}>
-            <div className="glass-card-bright h-full rounded-[40px] flex flex-col shadow-2xl border border-white/10 overflow-hidden">
-               <div className="p-6 pb-2 grid grid-cols-2 gap-3">
-                  <button onClick={() => setActiveTool('chat')} className={`py-4 rounded-2xl font-bold uppercase text-[9px] tracking-widest transition-all ${activeTool === 'chat' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>MESSAGES</button>
-                  <button onClick={() => setActiveTool('polls')} className={`py-4 rounded-2xl font-bold uppercase text-[9px] tracking-widest transition-all ${activeTool === 'polls' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>POLLS</button>
-                  <button onClick={() => setActiveTool('dashboard')} className={`py-4 rounded-2xl font-bold uppercase text-[9px] tracking-widest transition-all ${activeTool === 'dashboard' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>TELEMETRY</button>
-                  <button onClick={() => setActiveTool('logs')} className={`py-4 rounded-2xl font-bold uppercase text-[9px] tracking-widest transition-all ${activeTool === 'logs' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>CONSOLE</button>
+         {/* Right Sidebar Toolings - Fullscreen on mobile, anchored on desktop */}
+         <div className={`fixed inset-0 lg:inset-y-8 lg:right-8 lg:left-auto lg:w-[400px] z-[150] lg:z-[100] transform transition-all duration-700 ease-in-out p-4 md:p-0
+             ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}>
+            <div className="glass-card-bright h-full md:rounded-[40px] rounded-3xl flex flex-col shadow-2xl border border-white/10 overflow-hidden">
+               <div className="p-4 md:p-6 pb-2 grid grid-cols-2 gap-2 md:gap-3">
+                  <button onClick={() => setActiveTool('chat')} className={`py-3 md:py-4 rounded-xl md:rounded-2xl font-bold uppercase text-[8px] md:text-[9px] tracking-widest transition-all ${activeTool === 'chat' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>MESSAGES</button>
+                  <button onClick={() => setActiveTool('polls')} className={`py-3 md:py-4 rounded-xl md:rounded-2xl font-bold uppercase text-[8px] md:text-[9px] tracking-widest transition-all ${activeTool === 'polls' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>POLLS</button>
+                  <button onClick={() => setActiveTool('dashboard')} className={`py-3 md:py-4 rounded-xl md:rounded-2xl font-bold uppercase text-[8px] md:text-[9px] tracking-widest transition-all ${activeTool === 'dashboard' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>TELEMETRY</button>
+                  <button onClick={() => setActiveTool('logs')} className={`py-3 md:py-4 rounded-xl md:rounded-2xl font-bold uppercase text-[8px] md:text-[9px] tracking-widest transition-all ${activeTool === 'logs' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>CONSOLE</button>
                </div>
                <div className="flex-1 overflow-hidden">
                   {activeTool === 'chat' && <Chat roomId={roomId} userName={userName} messages={messages} onSendMessage={sendMessage} onNotifyTyping={notifyTyping} isRemoteTyping={isRemoteTyping} />}
@@ -281,13 +293,13 @@ const App: React.FC = () => {
                   {activeTool === 'polls' && <Polls polls={polls} onVote={handleVote} onCreate={handleCreatePoll} onClear={() => setPolls([])} />}
                   {activeTool === 'dashboard' && <Dashboard stats={stats} />}
                </div>
-               <button onClick={() => setActiveTool('none')} className="m-6 bg-red-500/10 text-red-500 p-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] hover:bg-red-500 hover:text-white transition-all">TERMINATE_TOOL_VIEW_</button>
+               <button onClick={() => setActiveTool('none')} className="m-4 md:m-6 bg-red-500/10 text-red-500 py-4 md:p-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] hover:bg-red-500 hover:text-white transition-all">EXIT_SIDEBAR_</button>
             </div>
          </div>
       </div>
 
-      <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[110] w-full max-w-fit px-6 pointer-events-none">
-         <div className="pointer-events-auto shadow-[0_0_80px_rgba(0,0,0,0.5)]">
+      <div className="fixed bottom-6 md:bottom-10 left-0 right-0 z-[110] flex justify-center px-4 md:px-0 pointer-events-none">
+         <div className="pointer-events-auto shadow-[0_0_80px_rgba(0,0,0,0.5)] w-full max-w-fit overflow-x-auto custom-scrollbar">
             <Controls onToggleMic={toggleMic} isMicOn={isMicOn} onToggleCamera={toggleCamera} isCameraOn={isCameraOn} onToggleScreenShare={toggleScreenShare} isScreenSharing={isScreenSharing} onToggleHandRaise={toggleHandRaise} isHandRaised={isHandRaised} onToggleTool={toggleTool} activeTool={activeTool} onLeave={handleLeave} onSendReaction={handleSendReaction} isRecording={isRecording} onToggleRecording={() => !isRecording ? startRecording() : stopRecording()} isCaptionsOn={isCaptionsOn} onToggleCaptions={() => setIsCaptionsOn(!isCaptionsOn)} />
          </div>
       </div>
