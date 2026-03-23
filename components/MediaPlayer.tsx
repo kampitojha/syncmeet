@@ -80,9 +80,9 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ onSync, syncData, onClose }) 
           <div className="flex-1 flex flex-col relative group overflow-hidden">
               {youtubeId ? (
                 <iframe
-                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1`}
                   className="w-full h-full border-none"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
               ) : (
