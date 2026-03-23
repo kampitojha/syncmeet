@@ -2,17 +2,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { signaling } from '../services/signaling';
 import { SignalPayload } from '../types';
 
-const rtcConfig: RTCConfiguration = {
-  iceServers: [
-    { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] },
-    { urls: ['stun:stun3.l.google.com:19302', 'stun:stun4.l.google.com:19302'] },
-    { urls: ['stun:stun.l.google.com:19302', 'stun:stun.services.mozilla.com'] },
-    { urls: ['stun:iphone-stun.strato-iphone.de:3478', 'stun:stun.ekiga.net'] },
-    { urls: 'stun:global.stun.twilio.com:3478' }
-  ],
-  iceCandidatePoolSize: 10,
-};
-
 interface RemotePeer {
     id: string;
     userName: string;
@@ -22,7 +11,7 @@ interface RemotePeer {
     isHandRaised: boolean;
     isGlitching: boolean;
     isScreenSharing: boolean;
-    connectionState: RTCIceConnectionState;
+    connectionState: string;
     isTyping: boolean;
     networkQuality: number;
 }
@@ -37,135 +26,28 @@ export const useWebRTC = (roomId: string, userName: string) => {
   const [isHandRaised, setIsHandRaised] = useState(false);
   const [isGlitching, setIsGlitching] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
 
-  // Mesh Refs
-  const peerConnections = useRef<Record<string, RTCPeerConnection>>({});
-  const iceCandidatesQueues = useRef<Record<string, RTCIceCandidateInit[]>>({});
   const localVideoTrack = useRef<MediaStreamTrack | null>(null);
   const localAudioTrack = useRef<MediaStreamTrack | null>(null);
-  const screenTrackRef = useRef<MediaStreamTrack | null>(null);
-  const handshakeInterval = useRef<number | null>(null);
-  const pendingNegotiations = useRef<Record<string, boolean>>({});
-
-  // --- Utility: Set Bitrate Limit ---
-  const applyBestNetworkSettings = async (pc: RTCPeerConnection) => {
-    try {
-        const senders = pc.getSenders();
-        for (const sender of senders) {
-            if (sender.track?.kind === 'video') {
-                const parameters = sender.getParameters();
-                if (!parameters.encodings) parameters.encodings = [{}];
-                parameters.encodings[0].maxBitrate = 500000;
-                parameters.encodings[0].priority = 'high';
-                await sender.setParameters(parameters);
-            }
-        }
-    } catch (e) {}
-  };
-
-  const createPeerConnection = useCallback((peerId: string, peerName: string) => {
-    if (peerConnections.current[peerId]) return peerConnections.current[peerId];
-
-    const pc = new RTCPeerConnection(rtcConfig);
-    peerConnections.current[peerId] = pc;
-    iceCandidatesQueues.current[peerId] = [];
-
-    // Ensure the peer exists in state first
-    setRemotePeers(prev => ({
-        ...prev,
-        [peerId]: prev[peerId] || {
-            id: peerId, userName: peerName, stream: null,
-            isMicOn: true, isCameraOn: true, isHandRaised: false, isGlitching: false,
-            isScreenSharing: false, connectionState: 'new', isTyping: false, networkQuality: 4
-        }
-    }));
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) signaling.sendIceCandidate(roomId, peerId, event.candidate);
-    };
-
-    pc.oniceconnectionstatechange = () => {
-        const state = pc.iceConnectionState;
-        setRemotePeers(prev => ({
-            ...prev,
-            [peerId]: { ...prev[peerId], connectionState: state }
-        }));
-        
-        signaling.emit('system-log', { message: `ICE_PROTOCOL: [${peerId}] State changed to ${state.toUpperCase()}`, type: state === 'connected' ? 'success' : 'info' });
-
-        if (state === 'failed' || state === 'disconnected') {
-            console.warn(`Connection to ${peerId} failed. Attempting restart...`);
-            pc.restartIce();
-        }
-    };
-
-    pc.ontrack = (event) => {
-      console.log(`Received track from ${peerId}:`, event.track.kind);
-      
-      setRemotePeers(prev => {
-          const existingPeer = prev[peerId];
-          const currentTracks = existingPeer?.stream?.getTracks() || [];
-          
-          // Only add if not already present
-          if (!currentTracks.find(t => t.id === event.track.id)) {
-              currentTracks.push(event.track);
-          }
-          
-          // CREATE A NEW STREAM OBJECT TO FORCE REACT TO DETECT THE CHANGE
-          const freshStream = new MediaStream(currentTracks);
-          
-          return {
-              ...prev,
-              [peerId]: { ...existingPeer, stream: freshStream }
-          };
-      });
-    };
-
-    // IMMEDIATELY add local tracks to ensure they are sent in the initial offer
-    if (localStream) {
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-    }
-    
-    return pc;
-  }, [roomId, localStream]);
-
-  const [permissionError, setPermissionError] = useState<string | null>(null);
 
   const joinRoom = async () => {
     if (!roomId || !userName) return;
     setPermissionError(null);
     
     let stream: MediaStream | null = null;
-    
-    // Cascading Handshake Protocol
     try {
-        // Mode 1: Full Suite (Cam + Mic)
         stream = await navigator.mediaDevices.getUserMedia({ 
             video: { width: 640, height: 480, frameRate: 24, facingMode: 'user' }, 
             audio: { echoCancellation: true, noiseSuppression: true }
         });
-    } catch (e1) {
-        console.warn("HANDSHAKE_M1_FAILED, FALLING_BACK_TO_AUDIO_ONLY");
+    } catch (e) {
+        console.warn("FULL_MEDIA_FAILED, TRYING_AUDIO_ONLY");
         try {
-            // Mode 2: Audio Optimized (Mic Only)
-            stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: { echoCancellation: true, noiseSuppression: true }
-            });
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             setIsCameraOn(false);
         } catch (e2) {
-            console.warn("HANDSHAKE_M2_FAILED, FALLING_BACK_TO_VIDEO_ONLY");
-            try {
-                // Mode 3: Video Optimized (Cam Only)
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 640, height: 480, frameRate: 24, facingMode: 'user' }
-                });
-                setIsMicOn(false);
-            } catch (e3) {
-                console.error("HANDSHAKE_M3_FAILED, ENTERING_IN_LISTENER_MODE");
-                // Mode 4: Stealth (Listener Only) - Proceed with null
-                setIsCameraOn(false);
-                setIsMicOn(false);
-            }
+            setIsCameraOn(false); setIsMicOn(false);
         }
     }
 
@@ -175,38 +57,28 @@ export const useWebRTC = (roomId: string, userName: string) => {
         setLocalStream(stream);
     }
     
-    const normalizedRoomId = roomId.trim().toLowerCase();
     setIsInRoom(true);
-    signaling.joinRoom(normalizedRoomId, userName);
-    signaling.emit('system-log', { message: `MESH_PROTOCOL: Joining node pool [${normalizedRoomId}]`, type: 'info' });
-    
-    if (handshakeInterval.current) clearInterval(handshakeInterval.current);
-    handshakeInterval.current = window.setInterval(() => {
-        signaling.joinRoom(normalizedRoomId, userName);
-    }, 3000);
+    signaling.joinRoom(roomId, userName, stream);
   };
 
   const leaveRoom = useCallback(() => {
-    Object.keys(peerConnections.current).forEach(id => {
-        peerConnections.current[id].close();
-    });
+    signaling.leaveRoom();
     if (localStream) localStream.getTracks().forEach(t => t.stop());
-    if (handshakeInterval.current) clearInterval(handshakeInterval.current);
-    peerConnections.current = {};
     setRemotePeers({});
     setLocalStream(null);
     setIsInRoom(false);
-    signaling.leaveRoom(roomId);
-  }, [roomId, localStream]);
+  }, [localStream]);
 
   const toggleScreenShare = async () => {
+    // Integration logic for PeerJS screen sharing
     if (!isScreenSharing) {
         try {
             const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
             const track = stream.getVideoTracks()[0];
-            screenTrackRef.current = track;
             
-            Object.values(peerConnections.current).forEach(pc => {
+            // Replace local track in all active calls
+            Object.values(signaling.calls).forEach(call => {
+                const pc = (call as any).peerConnection as RTCPeerConnection;
                 const sender = pc.getSenders().find(s => s.track?.kind === 'video');
                 if (sender) sender.replaceTrack(track);
             });
@@ -216,8 +88,8 @@ export const useWebRTC = (roomId: string, userName: string) => {
             signaling.sendScreenShareStatus(roomId, true);
 
             track.onended = () => {
-                Object.values(peerConnections.current).forEach(pc => {
-                    const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+                Object.values(signaling.calls).forEach(call => {
+                    const sender = call.peerConnection.getSenders().find(s => s.track?.kind === 'video');
                     if (sender && localVideoTrack.current) sender.replaceTrack(localVideoTrack.current);
                 });
                 setLocalStream(new MediaStream([localVideoTrack.current!, localAudioTrack.current!]));
@@ -226,8 +98,8 @@ export const useWebRTC = (roomId: string, userName: string) => {
             };
         } catch (e) {}
     } else {
-        screenTrackRef.current?.stop();
-        Object.values(peerConnections.current).forEach(pc => {
+        Object.values(signaling.calls).forEach(call => {
+            const pc = (call as any).peerConnection as RTCPeerConnection;
             const sender = pc.getSenders().find(s => s.track?.kind === 'video');
             if (sender && localVideoTrack.current) sender.replaceTrack(localVideoTrack.current);
         });
@@ -238,83 +110,36 @@ export const useWebRTC = (roomId: string, userName: string) => {
   };
 
   useEffect(() => {
-    const handleJoin = async (p: SignalPayload) => {
-      const currentRoom = roomId.trim().toLowerCase();
-      if (p.roomId.trim().toLowerCase() !== currentRoom || p.senderId === signaling.userId) return; 
-      
-      signaling.emit('system-log', { message: `MESH_NODE_DISCOVERED: Signaling with ${p.payload.name || p.senderId}`, type: 'success' });
-      const pc = createPeerConnection(p.senderId, p.payload.name || "PEER");
-      
-      // Only the "polite" peer (higher ID) initiates the offer to avoid glare
-      if (signaling.userId > p.senderId) {
-        if (pc.signalingState !== 'stable') return;
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        signaling.sendOffer(roomId, p.senderId, offer);
-        await applyBestNetworkSettings(pc);
-      }
+    const handleJoin = (p: SignalPayload) => {
+        setRemotePeers(prev => ({
+            ...prev,
+            [p.senderId]: {
+                id: p.senderId, userName: p.payload.name, stream: null,
+                isMicOn: true, isCameraOn: true, isHandRaised: false, isGlitching: false,
+                isScreenSharing: false, connectionState: 'connected', isTyping: false, networkQuality: 4
+            }
+        }));
     };
 
-    const handleOffer = async (p: SignalPayload) => {
-      const currentRoom = roomId.trim().toLowerCase();
-      if (p.roomId.trim().toLowerCase() !== currentRoom || p.payload.targetUserId !== signaling.userId) return;
-      const pc = createPeerConnection(p.senderId, p.senderName || "PEER");
-      
-      const isPolite = signaling.userId < p.senderId;
-      if (pc.signalingState !== 'stable') {
-          if (!isPolite) return; // Ignore if impolite and already busy
-          await pc.setLocalDescription({type: "rollback"}).catch(() => {});
-      }
-      
-      await pc.setRemoteDescription(new RTCSessionDescription(p.payload.sdp));
-      
-      // Process queued candidates
-      const queue = iceCandidatesQueues.current[p.senderId] || [];
-      while (queue.length > 0) {
-          const c = queue.shift();
-          if (c) await pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
-      }
-      
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      signaling.sendAnswer(roomId, p.senderId, answer);
-      await applyBestNetworkSettings(pc);
+    const handleTrack = (p: { peerId: string, stream: MediaStream }) => {
+        setRemotePeers(prev => ({
+            ...prev,
+            [p.peerId]: { ...prev[p.peerId], stream: p.stream }
+        }));
     };
 
-    const handleAnswer = async (p: SignalPayload) => {
-      const currentRoom = roomId.trim().toLowerCase();
-      if (p.roomId.trim().toLowerCase() !== currentRoom || p.payload.targetUserId !== signaling.userId) return;
-      const pc = peerConnections.current[p.senderId];
-      if (pc && pc.signalingState === 'have-local-offer') {
-          await pc.setRemoteDescription(new RTCSessionDescription(p.payload.sdp));
-          const queue = iceCandidatesQueues.current[p.senderId] || [];
-          while (queue.length > 0) {
-              const c = queue.shift();
-              if (c) await pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
-          }
-      }
-    };
-
-    const handleIce = async (p: SignalPayload) => {
-      const currentRoom = roomId.trim().toLowerCase();
-      if (p.roomId.trim().toLowerCase() !== currentRoom) return;
-      const pc = peerConnections.current[p.senderId];
-      if (pc && pc.remoteDescription) {
-          await pc.addIceCandidate(new RTCIceCandidate(p.payload.candidate)).catch(e => {});
-      } else {
-          if (!iceCandidatesQueues.current[p.senderId]) iceCandidatesQueues.current[p.senderId] = [];
-          iceCandidatesQueues.current[p.senderId].push(p.payload.candidate);
-      }
+    const handleLeave = (p: SignalPayload) => {
+        setRemotePeers(prev => {
+            const n = { ...prev };
+            delete n[p.senderId];
+            return n;
+        });
     };
 
     const handleMediaStatus = (p: SignalPayload) => {
         setRemotePeers(prev => prev[p.senderId] ? {
             ...prev, [p.senderId]: { ...prev[p.senderId], [p.payload.kind === 'audio' ? 'isMicOn' : 'isCameraOn']: p.payload.enabled }
         } : prev);
-        if (p.payload.kind === 'video') {
-            setRemotePeers(prev => ({...prev, [p.senderId]: { ...prev[p.senderId], isGlitching: true }}));
-            setTimeout(() => setRemotePeers(prev => ({...prev, [p.senderId]: { ...prev[p.senderId], isGlitching: false }})), 400);
-        }
     };
 
     const handleHandRaise = (p: SignalPayload) => {
@@ -323,67 +148,43 @@ export const useWebRTC = (roomId: string, userName: string) => {
         } : prev);
     };
 
-    const handleLeave = (p: SignalPayload) => {
-        const id = p.payload?.senderId || p.senderId;
-        if (peerConnections.current[id]) { 
-            peerConnections.current[id].close(); 
-            delete peerConnections.current[id]; 
-        }
-        setRemotePeers(prev => { 
-            const n = {...prev}; 
-            delete n[id]; 
-            return n; 
-        });
+    const handleScreenStatus = (p: SignalPayload) => {
+        setRemotePeers(prev => prev[p.senderId] ? {
+            ...prev, [p.senderId]: { ...prev[p.senderId], isScreenSharing: p.payload.isScreenSharing }
+        } : prev);
+    };
+
+    const handleTyping = (p: SignalPayload) => {
+        setRemotePeers(prev => (prev[p.senderId] ? { ...prev[p.senderId], isTyping: p.payload.isTyping } : prev) as any);
     };
 
     signaling.on('join', handleJoin);
-    signaling.on('offer', handleOffer);
-    signaling.on('answer', handleAnswer);
-    signaling.on('ice-candidate', handleIce);
+    signaling.on('track_received', handleTrack);
+    signaling.on('leave', handleLeave);
     signaling.on('media-status', handleMediaStatus);
     signaling.on('hand-raise', handleHandRaise);
-    signaling.on('leave', handleLeave);
+    signaling.on('screen-status', handleScreenStatus);
+    signaling.on('typing', handleTyping);
 
     return () => {
-      signaling.off('join', handleJoin);
-      signaling.off('offer', handleOffer);
-      signaling.off('answer', handleAnswer);
-      signaling.off('ice-candidate', handleIce);
-      signaling.off('media-status', handleMediaStatus);
-      signaling.off('hand-raise', handleHandRaise);
-      signaling.off('leave', handleLeave);
+        signaling.off('join', handleJoin);
+        signaling.off('track_received', handleTrack);
+        signaling.off('leave', handleLeave);
+        signaling.off('media-status', handleMediaStatus);
+        signaling.off('hand-raise', handleHandRaise);
+        signaling.off('screen-status', handleScreenStatus);
+        signaling.off('typing', handleTyping);
     };
-  }, [roomId, createPeerConnection]);
-
-  // --- Auto-Heal Hook ---
-  useEffect(() => {
-    const healInterval = setInterval(() => {
-        Object.entries(peerConnections.current).forEach(([id, pc]) => {
-            const hasStream = remotePeers[id]?.stream && remotePeers[id]?.stream.getTracks().length > 0;
-            const isConnecting = pc.iceConnectionState === 'new' || pc.iceConnectionState === 'checking';
-            
-            // If connection failed OR stuck without tracks for too long
-            if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected' || (isConnecting && !hasStream)) {
-                console.log(`HEALING: Triggering ICE restart for ${id}`);
-                pc.restartIce();
-                signaling.joinRoom(roomId, userName); 
-            }
-        });
-    }, 6000);
-    return () => clearInterval(healInterval);
-  }, [roomId, userName, remotePeers]);
+  }, [roomId]);
 
   return {
     isInRoom, localStream, remotePeers: Object.values(remotePeers),
     isMicOn, isCameraOn, isHandRaised, isGlitching, isScreenSharing,
     permissionError, setPermissionError,
-    joinRoom, leaveRoom, manualReconnect: () => {
-        Object.values(peerConnections.current).forEach(pc => pc.restartIce());
-        signaling.joinRoom(roomId, userName);
-    },
+    joinRoom, leaveRoom, manualReconnect: () => { signaling.joinRoom(roomId, userName, localStream); },
     toggleMic: () => { if(localAudioTrack.current) { localAudioTrack.current.enabled = !localAudioTrack.current.enabled; setIsMicOn(localAudioTrack.current.enabled); signaling.sendMediaStatus(roomId, 'audio', localAudioTrack.current.enabled); } },
     toggleCamera: () => { if(localVideoTrack.current) { localVideoTrack.current.enabled = !localVideoTrack.current.enabled; setIsCameraOn(localVideoTrack.current.enabled); setIsGlitching(true); setTimeout(() => setIsGlitching(false), 400); signaling.sendMediaStatus(roomId, 'video', localVideoTrack.current.enabled); } },
     toggleHandRaise: () => { const s = !isHandRaised; setIsHandRaised(s); signaling.sendHandRaise(roomId, s); },
     toggleScreenShare
-  };
+  } as any;
 };

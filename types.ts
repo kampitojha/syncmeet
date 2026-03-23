@@ -60,7 +60,7 @@ export interface VideoTileProps {
   isTyping?: boolean;
   isScreenShare?: boolean;
   networkQuality?: number;
-  connectionState?: RTCIceConnectionState;
+  connectionState?: any;
   reactions?: string[];
   statusMessage?: string;
   onRetry?: () => void;

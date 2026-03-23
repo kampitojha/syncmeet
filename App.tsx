@@ -51,7 +51,7 @@ const App: React.FC = () => {
     isInRoom, localStream, remotePeers, isMicOn, isCameraOn, isHandRaised, isGlitching, isScreenSharing,
     permissionError, setPermissionError,
     joinRoom, leaveRoom, manualReconnect, toggleMic, toggleCamera, toggleHandRaise, toggleScreenShare
-  } = useWebRTC(roomId, userName);
+  } = useWebRTC(roomId, userName) as any;
 
   const { messages, sendMessage, clearMessages, notifyTyping, isRemoteTyping } = useChat(roomId, signaling.userId, userName, activeTool === 'chat');
 
@@ -293,9 +293,9 @@ const App: React.FC = () => {
                   </div>
 
                   {/* REMOTE_NODES */}
-                  {remotePeers.map(peer => (
+                  {remotePeers.map((peer: any) => (
                      <div key={peer.id} className="w-full h-full min-h-[220px] md:min-h-[280px] animate-fade-in-up">
-                        <VideoTile stream={peer.stream} username={peer.userName} isAudioEnabled={peer.isMicOn} isVideoEnabled={peer.isCameraOn} isHandRaised={peer.isHandRaised} isGlitching={peer.isGlitching} isTyping={peer.isTyping} networkQuality={peer.networkQuality} connectionState={peer.connectionState} reactions={reactions} onRetry={manualReconnect} />
+                        <VideoTile stream={peer.stream} username={peer.userName} isAudioEnabled={peer.isMicOn} isVideoEnabled={peer.isCameraOn} isHandRaised={peer.isHandRaised} isGlitching={peer.isGlitching} isTyping={peer.isTyping} networkQuality={peer.networkQuality} connectionState={peer.connectionState as any} reactions={reactions} onRetry={manualReconnect as any} />
                      </div>
                   ))}
 
