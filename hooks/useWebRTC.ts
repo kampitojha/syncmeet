@@ -125,8 +125,11 @@ export const useWebRTC = (roomId: string, userName: string) => {
     return pc;
   }, [roomId, localStream]);
 
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+
   const joinRoom = async () => {
     if (!roomId || !userName) return;
+    setPermissionError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { width: 640, height: 480, frameRate: 24, facingMode: 'user' }, 
@@ -140,13 +143,16 @@ export const useWebRTC = (roomId: string, userName: string) => {
       // Initial Join
       signaling.joinRoom(roomId, userName);
       
-      // FAST heartbeat during discovery (every 1s) to reduce initial delay
+      // FAST heartbeat during discovery
       if (handshakeInterval.current) clearInterval(handshakeInterval.current);
       handshakeInterval.current = window.setInterval(() => {
           signaling.joinRoom(roomId, userName);
       }, 1500);
 
-    } catch (err) { alert("INITIALIZATION_FAILED: Check hardware permissions."); }
+    } catch (err: any) { 
+        console.error("PERMISSION_DENIED_", err);
+        setPermissionError(err.name === 'NotAllowedError' ? 'ACCESS_DENIED_BY_USER' : 'HARDWARE_NOT_FOUND_OR_BUSY');
+    }
   };
 
   const leaveRoom = useCallback(() => {
@@ -334,6 +340,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
   return {
     isInRoom, localStream, remotePeers: Object.values(remotePeers),
     isMicOn, isCameraOn, isHandRaised, isGlitching, isScreenSharing,
+    permissionError, setPermissionError,
     joinRoom, leaveRoom, manualReconnect: () => {
         Object.values(peerConnections.current).forEach(pc => pc.restartIce());
         signaling.joinRoom(roomId, userName);

@@ -49,6 +49,7 @@ const App: React.FC = () => {
 
   const {
     isInRoom, localStream, remotePeers, isMicOn, isCameraOn, isHandRaised, isGlitching, isScreenSharing,
+    permissionError, setPermissionError,
     joinRoom, leaveRoom, manualReconnect, toggleMic, toggleCamera, toggleHandRaise, toggleScreenShare
   } = useWebRTC(roomId, userName);
 
@@ -80,7 +81,6 @@ const App: React.FC = () => {
     const handleCaption = (payload: SignalPayload) => {
         if (payload.roomId !== roomId) return;
         addLog(`CC: [${payload.senderName}] ${payload.payload.text}`, 'info');
-        // Optionally show on screen
     };
     const handlePollUpdate = (payload: SignalPayload) => {
         if (payload.roomId !== roomId) return;
@@ -97,7 +97,6 @@ const App: React.FC = () => {
             if (poll.id === payload.payload.pollId) {
                 const newOptions = poll.options.map(opt => opt.id === payload.payload.optionId ? { ...opt, votes: opt.votes + 1 } : opt);
                 const updated = { ...poll, options: newOptions, totalVotes: poll.totalVotes + 1 };
-                // If local user is the creator, re-broadcast the update
                 if (poll.creatorName === userName) signaling.sendPollUpdate(roomId, updated);
                 return updated;
             }
@@ -154,13 +153,11 @@ const App: React.FC = () => {
 
   const handleVote = (pollId: string, optionId: string) => {
       signaling.sendPollVote(roomId, pollId, optionId);
-      // Local update
       setPolls(prev => prev.map(p => p.id === pollId ? { ...p, options: p.options.map(o => o.id === optionId ? { ...o, votes: o.votes + 1 } : o), totalVotes: p.totalVotes + 1 } : p));
   };
 
   const handleSendReaction = (emoji: string) => {
       signaling.sendReaction(roomId, emoji);
-      // Fix: local display
       setReactions(prev => [...prev, emoji]);
       setTimeout(() => setReactions(prev => prev.slice(1)), 2000);
   };
@@ -173,6 +170,25 @@ const App: React.FC = () => {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 bg-transparent relative overflow-hidden">
         <div className="absolute top-[10%] left-[5%] w-64 h-64 bg-cyan-500/10 rounded-full blur-[100px] animate-pulse" />
+        
+        {/* Hardware Status Error Overlay */}
+        {permissionError && (
+            <div className="fixed top-12 left-1/2 transform -translate-x-1/2 z-[200] w-full max-w-sm px-6 animate-slide-up">
+                <div className="glass-card-bright p-8 rounded-[32px] border border-red-500/30 shadow-2xl backdrop-blur-3xl overflow-hidden relative">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-red-500/40" />
+                    <div className="flex flex-col items-center text-center">
+                        <div className="p-4 bg-red-500/10 rounded-2xl mb-6 pulse-accent"> <ShieldCheck className="text-red-500 w-10 h-10" /> </div>
+                        <h4 className="text-xl font-black text-white/90 uppercase tracking-[0.2em] mb-4 italic">HARDWARE_BLOCKED_</h4>
+                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest leading-loose mb-8"> {permissionError === 'ACCESS_DENIED_BY_USER' ? 'Session blocked: Please grant camera/mic permissions in your address bar protocol settings.' : 'Hardware conflict: Your devices are busy or not found in the initial handshake.'} </p>
+                        <div className="flex w-full gap-4">
+                            <button onClick={joinRoom} className="flex-1 py-4 bg-cyan-400 text-black rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white transition-all">RETRY_INIT</button>
+                            <button onClick={() => setPermissionError(null)} className="flex-1 py-4 bg-white/5 text-white/40 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all">DISMISS</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
         <div className="glass-card-bright p-8 md:p-14 w-full max-w-lg relative z-10 rounded-[40px] shadow-2xl border border-white/10 group">
           <div className="flex flex-col items-center mb-12">
             <div className="bg-white/5 p-5 mb-8 rounded-3xl border border-white/10 shadow-inner group-hover:scale-110 transition-transform duration-500"><Video className="text-cyan-400 w-14 h-14" /></div>
