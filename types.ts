@@ -26,7 +26,7 @@ export interface SignalPayload {
     | 'chat' | 'typing' | 'chat-status' // Chat
     | 'draw-line' | 'clear-board' // Whiteboard
     | 'sync-notes' // Notes
-    | 'reaction'; // Emojis
+    | 'reaction' | 'hand-raise' | 'system-log' | 'file-transfer' | 'media-sync'; // New Extras
   roomId: string;
   senderId: string;
   senderName?: string;
@@ -60,10 +60,14 @@ export interface VideoTileProps {
   username?: string;
   isAudioEnabled?: boolean;
   isVideoEnabled?: boolean;
+  isHandRaised?: boolean;
+  isGlitching?: boolean;
   isMirrored?: boolean;
   isTyping?: boolean; 
   isScreenShare?: boolean; 
   networkQuality?: number; 
   connectionState?: RTCIceConnectionState;
-  reactions?: string[]; // New: Active reactions to display
+  reactions?: string[]; 
+  statusMessage?: string;
+  onRetry?: () => void;
 }

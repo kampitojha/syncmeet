@@ -1,144 +1,131 @@
-import React, { useState } from 'react';
-import { Mic, MicOff, Video, VideoOff, Monitor, PhoneOff, MessageSquare, MonitorOff, PenTool, FileText, Smile } from 'lucide-react';
+import React from 'react';
+import { 
+  Mic, 
+  MicOff, 
+  Video as VideoIcon, 
+  VideoOff, 
+  PhoneOff, 
+  MessageSquare, 
+  PenTool, 
+  FileText,
+  MonitorUp,
+  Smile,
+  Hand,
+  Terminal
+} from 'lucide-react';
 
 interface ControlsProps {
-  isMicOn: boolean;
-  isCameraOn: boolean;
-  isScreenSharing: boolean;
-  isChatOpen: boolean;
-  isWhiteboardOpen: boolean;
-  isNotesOpen: boolean;
   onToggleMic: () => void;
+  isMicOn: boolean;
   onToggleCamera: () => void;
+  isCameraOn: boolean;
   onToggleScreenShare: () => void;
-  onToggleChat: () => void;
-  onToggleWhiteboard: () => void;
-  onToggleNotes: () => void;
-  onReaction: (emoji: string) => void;
+  isScreenSharing: boolean;
+  onToggleHandRaise: () => void;
+  isHandRaised: boolean;
+  onToggleTool: (tool: any) => void;
+  activeTool: string;
   onLeave: () => void;
+  onSendReaction: (emoji: string) => void;
 }
 
+const REACTIONS = ['🔥', '👍', '❤️', '👏', '😂', '😮', '❓'];
+
 const Controls: React.FC<ControlsProps> = ({
-  isMicOn,
-  isCameraOn,
-  isScreenSharing,
-  isChatOpen,
-  isWhiteboardOpen,
-  isNotesOpen,
   onToggleMic,
+  isMicOn,
   onToggleCamera,
+  isCameraOn,
   onToggleScreenShare,
-  onToggleChat,
-  onToggleWhiteboard,
-  onToggleNotes,
-  onReaction,
+  isScreenSharing,
+  onToggleHandRaise,
+  isHandRaised,
+  onToggleTool,
+  activeTool,
   onLeave,
+  onSendReaction
 }) => {
-  const [showEmojis, setShowEmojis] = useState(false);
-  const emojis = ['👍', '❤️', '😂', '🎉', '👋', '🔥'];
-
-  const baseBtnClass = "group p-4 flex items-center justify-center transition-all duration-75 relative active:translate-x-1 active:translate-y-1 active:shadow-none";
-  
-  const getBtnStyle = (isActive: boolean, type: 'normal' | 'danger' | 'toggle' = 'normal') => {
-    let classes = `${baseBtnClass} border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] `;
-    
-    if (type === 'danger') {
-      return `${classes} bg-[#ff4444] text-white hover:bg-red-600 px-8`;
-    }
-    
-    if (isActive) {
-        return `${classes} bg-black text-[#ffdf00]`;
-    }
-    
-    return `${classes} bg-white text-black hover:bg-[#ffdf00]`;
-  };
-
   return (
-    <div className="relative max-w-[95vw] md:max-w-none mx-auto">
-        {/* Emoji Popover */}
-        {showEmojis && (
-            <div className="absolute bottom-[calc(100%+20px)] left-1/2 -translate-x-1/2 bg-white border-[4px] border-black p-3 flex gap-3 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] animate-fade-in-up z-50 overflow-x-auto max-w-full no-scrollbar">
-                {emojis.map(e => (
-                    <button 
-                        key={e} 
-                        onClick={() => { onReaction(e); setShowEmojis(false); }}
-                        className="text-3xl hover:bg-[#ffdf00] p-2 transition-transform hover:scale-110 active:scale-95 flex-shrink-0"
-                    >
-                        {e}
-                    </button>
-                ))}
-            </div>
-        )}
-
-        <div className="flex items-center gap-4 bg-[#f0f0f0] p-4 border-[6px] border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-x-auto no-scrollbar max-w-full">
+    <div className="flex items-center gap-2 md:gap-4">
+      <div className="flex items-center gap-1.5 md:gap-2">
         <button 
-            onClick={onToggleMic} 
-            className={getBtnStyle(isMicOn)}
-            title={isMicOn ? "Mute" : "Unmute"}
+          onClick={onToggleMic}
+          className={`brut-btn p-2 md:p-4 ${!isMicOn ? 'bg-red-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
         >
-            {isMicOn ? <Mic size={24} strokeWidth={3} /> : <MicOff size={24} strokeWidth={3} />}
+          {isMicOn ? <Mic size={20} md:size={24} strokeWidth={3} /> : <MicOff size={20} md:size={24} strokeWidth={3} />}
         </button>
-
         <button 
-            onClick={onToggleCamera} 
-            className={getBtnStyle(isCameraOn)}
-            title={isCameraOn ? "Turn off camera" : "Turn on camera"}
+          onClick={onToggleCamera}
+          className={`brut-btn p-2 md:p-4 ${!isCameraOn ? 'bg-red-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
         >
-            {isCameraOn ? <Video size={24} strokeWidth={3} /> : <VideoOff size={24} strokeWidth={3} />}
+          {isCameraOn ? <VideoIcon size={20} md:size={24} strokeWidth={3} /> : <VideoOff size={20} md:size={24} strokeWidth={3} />}
         </button>
-
-        <div className="w-1.5 h-12 bg-black mx-1 flex-shrink-0" />
-
         <button 
-            onClick={onToggleScreenShare} 
-            className={getBtnStyle(isScreenSharing)}
-            title="Share Screen"
+          onClick={onToggleScreenShare}
+          className={`brut-btn p-2 md:p-4 ${isScreenSharing ? 'bg-[#ffdf00] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
         >
-            {isScreenSharing ? <MonitorOff size={24} strokeWidth={3} /> : <Monitor size={24} strokeWidth={3} />}
+          <MonitorUp size={20} md:size={24} strokeWidth={3} />
         </button>
-        
         <button 
-            onClick={onToggleWhiteboard} 
-            className={getBtnStyle(isWhiteboardOpen)}
-            title="Whiteboard"
+          onClick={onToggleHandRaise}
+          className={`brut-btn p-2 md:p-4 ${isHandRaised ? 'bg-[#ffdf00] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
         >
-            <PenTool size={24} strokeWidth={3} />
+          <Hand size={20} md:size={24} strokeWidth={3} fill={isHandRaised ? 'currentColor' : 'none'} />
         </button>
+      </div>
 
+      <div className="w-[4px] h-10 bg-black opacity-10 mx-1" />
+
+      <div className="flex items-center gap-1.5 md:gap-2">
         <button 
-            onClick={onToggleNotes} 
-            className={getBtnStyle(isNotesOpen)}
-            title="Shared Notes"
+          onClick={() => onToggleTool('chat')}
+          className={`brut-btn p-2 md:p-4 ${activeTool === 'chat' ? 'bg-[#ffdf00] text-black' : 'bg-white text-black'}`}
         >
-            <FileText size={24} strokeWidth={3} />
+          <MessageSquare size={20} md:size={24} strokeWidth={3} />
         </button>
-
-        <div className="w-1.5 h-12 bg-black mx-1 flex-shrink-0" />
-
         <button 
-            onClick={() => setShowEmojis(!showEmojis)} 
-            className={getBtnStyle(showEmojis)}
-            title="Reactions"
+          onClick={() => onToggleTool('whiteboard')}
+          className={`brut-btn p-2 md:p-4 ${activeTool === 'whiteboard' ? 'bg-[#ffdf00] text-black' : 'bg-white text-black'}`}
         >
+          <PenTool size={20} md:size={24} strokeWidth={3} />
+        </button>
+        <button 
+          onClick={() => onToggleTool('notes')}
+          className={`brut-btn p-2 md:p-4 ${activeTool === 'notes' ? 'bg-[#ffdf00] text-black' : 'bg-white text-black'}`}
+        >
+          <FileText size={20} md:size={24} strokeWidth={3} />
+        </button>
+        <button 
+          onClick={() => onToggleTool('logs')}
+          className={`brut-btn p-2 md:p-4 ${activeTool === 'logs' ? 'bg-[#ffdf00] text-black-active' : 'bg-white text-black'}`}
+        >
+          <Terminal size={20} md:size={24} strokeWidth={3} />
+        </button>
+      </div>
+
+      <div className="hidden lg:flex items-center gap-2 group relative ml-2">
+         <div className="brut-btn p-4 bg-white text-black group-hover:bg-[#ffdf00]">
             <Smile size={24} strokeWidth={3} />
-        </button>
+         </div>
+         <div className="absolute bottom-[calc(100%+16px)] left-0 bg-white border-4 border-black p-3 flex gap-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            {REACTIONS.map(emoji => (
+                <button 
+                  key={emoji}
+                  onClick={() => onSendReaction(emoji)}
+                  className="text-2xl hover:scale-125 transition-transform p-1"
+                >
+                  {emoji}
+                </button>
+            ))}
+         </div>
+      </div>
 
-        <button 
-            onClick={onToggleChat} 
-            className={getBtnStyle(isChatOpen)}
-            title="Chat"
-        >
-            <MessageSquare size={24} strokeWidth={3} />
-        </button>
-
-        <button 
-            onClick={onLeave} 
-            className={getBtnStyle(false, 'danger')}
-            title="Leave Call"
-        >
-            <PhoneOff size={24} strokeWidth={3} />
-        </button>
-        </div>
+      <button 
+        onClick={onLeave}
+        className="brut-btn p-2 md:p-4 bg-red-500 text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-[#ffdf00] transition-all ml-2 md:ml-4"
+      >
+        <PhoneOff size={20} md:size={24} strokeWidth={3} />
+      </button>
     </div>
   );
 };

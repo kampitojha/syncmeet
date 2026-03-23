@@ -104,6 +104,13 @@ class PeerSignalingService {
   public sendClearBoard(roomId: string) { this.send('clear-board', roomId, {}); }
   public sendNoteUpdate(roomId: string, content: string) { this.send('sync-notes', roomId, { content }); }
   public sendReaction(roomId: string, emoji: string) { this.send('reaction', roomId, { emoji }); }
+  public sendHandRaise(roomId: string, isRaised: boolean) { this.send('hand-raise', roomId, { isRaised }); }
+  public sendSystemLog(roomId: string, message: string, type: 'info' | 'warn' | 'error' = 'info') { 
+      this.send('system-log', roomId, { message, type }); 
+  }
+  public sendMediaSync(roomId: string, data: { time: number, state: 'play' | 'pause' }) {
+      this.send('media-sync', roomId, data);
+  }
 
   public leaveRoom(roomId: string) {
     if (this.room) {
