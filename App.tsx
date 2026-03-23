@@ -4,14 +4,17 @@ import {
   Users, 
   Copy, 
   ArrowRight,
-  Terminal,
+  Terminal as TerminalIcon,
   Tv,
   LayoutDashboard,
   ShieldCheck,
   Zap,
   CheckCircle2,
   Captions as CaptionsIcon,
-  Circle
+  Circle,
+  Hash,
+  Activity,
+  Box
 } from 'lucide-react';
 import VideoTile from './components/VideoTile';
 import Controls from './components/Controls';
@@ -41,7 +44,6 @@ const App: React.FC = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [syncData, setSyncData] = useState<{ time: number, state: 'play' | 'pause' }>();
   
-  // New States
   const [isCaptionsOn, setIsCaptionsOn] = useState(false);
   const [currentCaption, setCurrentCaption] = useState('');
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -93,7 +95,6 @@ const App: React.FC = () => {
            if (existing) return prev.map(p => p.id === payload.payload.poll.id ? payload.payload.poll : p);
            return [...prev, payload.payload.poll];
         });
-        addLog(`POLL: NEW_POLL_BROADCAST`, 'success');
     };
     const handlePollVote = (payload: SignalPayload) => {
         if (payload.roomId !== roomId) return;
@@ -113,8 +114,8 @@ const App: React.FC = () => {
     signaling.on('caption-update', handleCaption);
     signaling.on('poll-update', handlePollUpdate);
     signaling.on('poll-vote', handlePollVote);
-    signaling.on('peer-joined', (p: any) => addLog(`PEER_ID_CONNECTED: ${p.peerId}`, 'success'));
-    signaling.on('leave', (p: any) => addLog(`PEER_ID_REMOVED: ${p.payload?.senderId || p.senderId}`, 'warn'));
+    signaling.on('peer-joined', (p: any) => addLog(`PEER_CONNECTED: ${p.peerId}`, 'success'));
+    signaling.on('leave', (p: any) => addLog(`PEER_REMOVED: ${p.payload?.senderId || p.senderId}`, 'warn'));
 
     return () => {
         signaling.off('reaction', handleReaction);
@@ -130,7 +131,7 @@ const App: React.FC = () => {
   }, [remotePeers.length]);
 
   const handleCommand = (cmd: string) => {
-      addLog(`PROTOCOL_EXEC: ${cmd}`, 'info');
+      addLog(`CMD_EXEC: ${cmd}`, 'info');
       switch(cmd.toLowerCase()) {
           case '/record': !isRecording ? startRecording() : stopRecording(); break;
           case '/captions': setIsCaptionsOn(!isCaptionsOn); break;
@@ -139,7 +140,7 @@ const App: React.FC = () => {
           case '/polls': setActiveTool('polls'); break;
           case '/dash': setActiveTool('dashboard'); break;
           case '/leave': handleLeave(); break;
-          default: addLog(`ERROR: UNOWN_CMD_${cmd.toUpperCase()}`, 'error');
+          default: addLog(`ERR: UNKNOWN_${cmd.toUpperCase()}`, 'error');
       }
   };
 
@@ -171,12 +172,12 @@ const App: React.FC = () => {
   const handleJoin = (e: React.FormEvent) => { 
     e.preventDefault(); 
     if (!userName.trim() || !roomId.trim()) {
-        setFormError('MISSING_IDENTIFIERS_');
+        setFormError('MISSING_DATA');
         return;
     }
     setFormError(null);
     joinRoom(); 
-    addLog(`INIT: BOOTSTRAPPING_SESSION_LINK...`, 'info'); 
+    addLog(`BOOTSTRAP_INIT...`, 'info'); 
   };
 
   const handleLeave = () => { leaveRoom(); clearMessages(); setActiveTool('none'); };
@@ -184,93 +185,104 @@ const App: React.FC = () => {
 
   if (!isInRoom) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 bg-transparent relative overflow-hidden">
-        <div className="absolute top-[10%] left-[5%] w-64 h-64 bg-cyan-500/10 rounded-full blur-[100px] animate-pulse" />
+      <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 bg-[#f0f0f0] brutal-bg-pattern relative overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute top-20 left-20 w-40 h-40 bg-[#ffdf1e] border-4 border-black -rotate-12 brutal-card -z-0 hidden md:block" />
+        <div className="absolute bottom-20 right-20 w-32 h-32 bg-[#00ff9d] border-4 border-black rotate-12 brutal-card -z-0 hidden md:block" />
         
-        {/* Hardware Status Error Overlay */}
+        {/* Error Notification */}
         {permissionError && (
-            <div className="fixed top-12 left-1/2 transform -translate-x-1/2 z-[200] w-full max-w-sm px-6 animate-slide-up">
-                <div className="glass-card-bright p-8 rounded-[32px] border border-red-500/30 shadow-2xl backdrop-blur-3xl overflow-hidden relative">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-red-500/40" />
-                    <div className="flex flex-col items-center text-center">
-                        <div className="p-4 bg-red-500/10 rounded-2xl mb-6 pulse-accent"> <ShieldCheck className="text-red-500 w-10 h-10" /> </div>
-                        <h4 className="text-xl font-black text-white/90 uppercase tracking-[0.2em] mb-4 italic">HARDWARE_BLOCKED_</h4>
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest leading-loose mb-8"> {permissionError === 'ACCESS_DENIED_BY_USER' ? 'Session blocked: Please grant camera/mic permissions in your address bar protocol settings.' : 'Hardware conflict: Your devices are busy or not found in the initial handshake.'} </p>
-                        <div className="flex w-full gap-4">
-                            <button onClick={joinRoom} className="flex-1 py-4 bg-cyan-400 text-black rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white transition-all">RETRY_INIT</button>
-                            <button onClick={() => setPermissionError(null)} className="flex-1 py-4 bg-white/5 text-white/40 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all">DISMISS</button>
+            <div className="fixed top-8 z-[200] w-full max-w-md px-6 animate-shake">
+                <div className="brutal-card bg-[#ff5e5e] p-6 border-black">
+                    <div className="flex items-center gap-4">
+                        <ShieldCheck className="text-black w-10 h-10" />
+                        <div>
+                            <h4 className="text-lg font-black uppercase tracking-tighter">HARDWARE_BLOCKED</h4>
+                            <p className="text-[10px] font-bold uppercase mt-1">Permission denied. Check system protocols.</p>
                         </div>
+                    </div>
+                    <div className="flex gap-4 mt-6">
+                        <button onClick={joinRoom} className="flex-1 brutal-btn bg-white">RETRY</button>
+                        <button onClick={() => setPermissionError(null)} className="flex-1 brutal-btn bg-black text-white">X</button>
                     </div>
                 </div>
             </div>
         )}
 
-        <div className="glass-card-bright p-8 md:p-14 w-full max-w-lg relative z-10 rounded-[40px] shadow-2xl border border-white/10 group">
-          <div className="flex flex-col items-center mb-12">
-            <div className="bg-white/5 p-5 mb-8 rounded-3xl border border-white/10 shadow-inner group-hover:scale-110 transition-transform duration-500"><Video className="text-cyan-400 w-14 h-14" /></div>
-            <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-2 tracking-tight group-hover:tracking-tighter transition-all duration-700">Sync<span className="text-cyan-400 font-light">Meet</span></h1>
-            <p className="text-white/40 text-sm md:text-base font-medium tracking-widest uppercase flex items-center gap-3"><ShieldCheck size={16} className="text-cyan-400/50" /> Secure P2P Mesh Protocol</p>
+        <div className="brutal-card p-8 md:p-12 w-full max-w-lg relative z-10 bg-white">
+          <div className="flex flex-col items-center mb-10">
+            <div className="bg-[#ffdf1e] p-5 mb-6 border-4 border-black shadow-[4px_4px_0px_black]"><Video className="text-black w-10 h-10" /></div>
+            <h1 className="text-6xl md:text-8xl font-black text-black mb-2 tracking-tighter italic">SYNC<span className="text-[#ffdf1e]">MEET</span></h1>
+            <div className="bg-black text-white px-4 py-1 font-black text-[10px] tracking-widest uppercase flex items-center gap-3 mt-2">v.2.0 BRUTAL_MESH_PROT</div>
           </div>
-          <form onSubmit={handleJoin} className="space-y-6">
-            <div className="relative group/field">
+          
+          <form onSubmit={handleJoin} className="space-y-4">
+            <div className="relative">
+               <label className="block text-[10px] font-black uppercase mb-1 ml-1">USER_IDENTIFIER</label>
                <input 
                  type="text" 
                  value={userName} 
                  onChange={(e) => {setUserName(e.target.value); if(formError) setFormError(null);}} 
-                 className={`w-full bg-white/5 border rounded-2xl p-5 text-white/90 font-semibold placeholder:text-white/20 outline-none transition-all shadow-inner
-                    ${formError && !userName.trim() ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)] bg-red-500/5' : 'border-white/10 focus:bg-white/10 focus:border-cyan-400/50'}`} 
-                 placeholder="Display Name" 
+                 className={`w-full brutal-input ${formError && !userName.trim() ? 'bg-[#ff5e5e]' : ''}`} 
+                 placeholder="ENTER_NAME" 
                />
-               {formError && !userName.trim() && <span className="absolute -top-6 right-0 text-[8px] font-black text-red-500 tracking-widest uppercase animate-slide-up">MANDATORY_FIELD</span>}
             </div>
-            <div className="relative group/field">
+            <div className="relative">
+               <label className="block text-[10px] font-black uppercase mb-1 ml-1">SESSION_UUID</label>
                <input 
                  type="text" 
                  value={roomId} 
                  onChange={(e) => {setRoomId(e.target.value); if(formError) setFormError(null);}} 
-                 className={`w-full bg-white/5 border rounded-2xl p-5 text-white/90 font-semibold placeholder:text-white/20 outline-none transition-all shadow-inner
-                    ${formError && !roomId.trim() ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)] bg-red-500/5' : 'border-white/10 focus:bg-white/10 focus:border-cyan-400/50'}`} 
-                 placeholder="Meeting UUID" 
+                 className={`w-full brutal-input ${formError && !roomId.trim() ? 'bg-[#ff5e5e]' : ''}`} 
+                 placeholder="ROOM_CODE" 
                />
-               {formError && !roomId.trim() && <span className="absolute -top-6 right-0 text-[8px] font-black text-red-500 tracking-widest uppercase animate-slide-up">MANDATORY_FIELD</span>}
             </div>
-            <button type="submit" className="w-full py-5 rounded-2xl bg-cyan-400 text-black text-xl font-black flex items-center justify-center gap-4 hover:bg-white hover:scale-[1.02] transform transition-all active:scale-95 shadow-xl shadow-cyan-400/20 group/btn">START_SESSION <ArrowRight size={24} className="group-hover/btn:translate-x-2 transition-transform" /></button>
+            <button type="submit" className="w-full py-5 brutal-btn-primary text-xl font-black mt-4">ESTABLISH_LINK_</button>
           </form>
-          <div className="mt-10 flex justify-center gap-6 opacity-40"><div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-white"> <Zap size={14} className="text-cyan-400" /> Ultra-Low Latency </div><div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-white"> <LayoutDashboard size={14} className="text-cyan-400" /> Advanced Toolkit </div></div>
+          
+          <div className="mt-8 flex justify-between gap-4">
+            <div className="flex-1 brutal-card bg-[#00ff9d] p-3 text-center border-[3px]">
+              <div className="text-[8px] font-black uppercase">ULTRA_LOW_LATENCY</div>
+            </div>
+            <div className="flex-1 brutal-card bg-[#5eb5ff] p-3 text-center border-[3px]">
+              <div className="text-[8px] font-black uppercase">P2P_ENCRYPTED</div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-[100dvh] w-full bg-[#050505] flex flex-col overflow-hidden relative font-sans">
+    <div className="h-[100dvh] w-full bg-[#f0f0f0] brutal-bg-pattern flex flex-col overflow-hidden relative font-mono">
       <CommandPalette isOpen={showPalette} onClose={() => setShowPalette(false)} onCommand={handleCommand} />
-      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.1) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
       
-      {/* HUD & Overlays */}
-      <div className="absolute top-8 left-10 flex gap-4 z-[110]">
-         {isRecording && (
-            <div className="glass-card-bright p-3 px-6 rounded-2xl flex items-center gap-4 border border-red-500/30 animate-pulse shadow-lg shadow-red-500/10">
-               <Circle size={12} fill="currentColor" className="text-red-500" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-white/90">RECORDING_IN_PROGRESS</span>
-            </div>
-         )}
-         {isCaptionsOn && (
-            <div className="glass-card-bright p-3 px-6 rounded-2xl flex items-center gap-4 border border-cyan-400/30 shadow-lg shadow-cyan-400/10">
-               <CaptionsIcon size={12} className="text-cyan-400" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-white/90">LIVE_TRANSCRIPTION_ON</span>
-            </div>
-         )}
+      {/* Brutalist Header HUD */}
+      <div className="h-16 border-b-[4px] border-black bg-white flex items-center justify-between px-6 z-[110] shadow-[0_4px_0px_black]">
+        <div className="flex items-center gap-6">
+           <div className="font-black italic text-2xl tracking-tighter select-none">SYNC<span className="bg-[#ffdf1e] px-1 ml-1">MEET</span></div>
+           <div className="hidden md:flex items-center gap-2 bg-[#00ff9d] border-2 border-black px-3 py-0.5 text-[10px] font-black uppercase"> <Hash size={12} /> {roomId} </div>
+        </div>
+        
+        <div className="flex items-center gap-4">
+           {isRecording && (
+                <div className="bg-[#ff5e5e] border-2 border-black px-4 py-1 flex items-center gap-2 animate-pulse">
+                   <Circle size={8} fill="black" />
+                   <span className="text-[9px] font-black uppercase">REC</span>
+                </div>
+           )}
+           <div className="bg-black text-white px-4 py-1 text-[9px] font-black uppercase"> {new Date().toLocaleTimeString().split(' ')[0]} </div>
+        </div>
       </div>
 
-      <div className="absolute top-8 right-10 z-[110] glass-card p-2 px-6 rounded-2xl border border-white/10 flex items-center gap-4">
-          <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400"> <Zap size={14} /> MESH_ENCRYPTED_LINK_{roomId} </div>
-      </div>
-
-      <div className="flex-1 flex flex-col relative md:pt-32 pt-24 pb-32 overflow-hidden px-4 md:px-10">
-         <div className={`relative flex-1 transition-all duration-700 flex flex-col ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'lg:mr-[420px]' : ''}`}>
+      <div className="flex-1 flex flex-col relative md:pt-12 pt-8 pb-32 overflow-hidden px-4 md:px-10">
+         <div className={`relative flex-1 transition-all duration-500 flex flex-col ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'lg:mr-[420px]' : ''}`}>
             {['whiteboard', 'notes', 'media'].includes(activeTool) && (
-                <div className="absolute inset-0 z-[120] lg:z-[60] animate-fade-in glass-card-bright md:rounded-[40px] rounded-2xl overflow-hidden shadow-2xl border border-white/20">
+                <div className="absolute inset-0 z-[120] lg:z-[60] brutal-card bg-white overflow-hidden shadow-[12px_12px_0px_black]">
+                    <div className="h-10 bg-black text-white flex items-center justify-between px-4 border-b-2 border-black">
+                        <span className="text-[10px] font-black uppercase tracking-widest">{activeTool}_VIEW</span>
+                        <button onClick={() => setActiveTool('none')} className="font-black hover:text-[#ffdf1e]">CLOSE [X]</button>
+                    </div>
                     {activeTool === 'whiteboard' && <Whiteboard roomId={roomId} />}
                     {activeTool === 'notes' && <CollaborativeNotes roomId={roomId} />}
                     {activeTool === 'media' && <MediaPlayer syncData={syncData} onSync={(t, s) => signaling.sendMediaSync(roomId, { time: t, state: s })} onClose={() => setActiveTool('none')} /> as any}
@@ -278,70 +290,67 @@ const App: React.FC = () => {
             )}
 
             {/* MESH_VIEWPORT: Intel-Adaptive Grid Logic */}
-            <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-700
-                ${['whiteboard', 'notes', 'media'].includes(activeTool) ? 'opacity-20 scale-[0.98] blur-3xl h-0 overflow-hidden pointer-events-none' : 'w-full h-full'}`}>
+            <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-500
+                ${['whiteboard', 'notes', 'media'].includes(activeTool) ? 'opacity-20 scale-[0.98] blur-xl h-0 overflow-hidden pointer-events-none' : 'w-full h-full'}`}>
                
-               <div className={`grid gap-4 md:gap-8 w-full max-w-[1600px] h-full transition-all duration-500 mx-auto content-center
+               <div className={`grid gap-6 md:gap-8 w-full max-w-[1600px] h-full transition-all duration-500 mx-auto content-center
                   ${remotePeers.length === 0 ? 'grid-cols-1 max-w-5xl aspect-video' : 
                     remotePeers.length === 1 ? 'grid-cols-1 md:grid-cols-2' : 
                     remotePeers.length === 2 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
                     'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
                   
                   {/* LOCAL_NODE */}
-                  <div className="w-full h-full min-h-[220px] md:min-h-[280px] animate-fade-in">
-                     <VideoTile stream={localStream} isLocal={true} username={`${userName} (HOST)`} isAudioEnabled={isMicOn} isVideoEnabled={isCameraOn} isHandRaised={isHandRaised} isGlitching={isGlitching} isScreenShare={isScreenSharing} />
+                  <div className="w-full h-full min-h-[220px] md:min-h-[280px]">
+                     <VideoTile stream={localStream} isLocal={true} username={userName.toUpperCase()} isAudioEnabled={isMicOn} isVideoEnabled={isCameraOn} isHandRaised={isHandRaised} isGlitching={isGlitching} isScreenShare={isScreenSharing} />
                   </div>
 
                   {/* REMOTE_NODES */}
                   {remotePeers.map((peer: any) => (
-                     <div key={peer.id} className="w-full h-full min-h-[220px] md:min-h-[280px] animate-fade-in-up">
-                        <VideoTile stream={peer.stream} username={peer.userName} isAudioEnabled={peer.isMicOn} isVideoEnabled={peer.isCameraOn} isHandRaised={peer.isHandRaised} isGlitching={peer.isGlitching} isTyping={peer.isTyping} networkQuality={peer.networkQuality} connectionState={peer.connectionState as any} reactions={reactions} onRetry={manualReconnect as any} />
+                     <div key={peer.id} className="w-full h-full min-h-[220px] md:min-h-[280px]">
+                        <VideoTile stream={peer.stream} username={peer.userName.toUpperCase()} isAudioEnabled={peer.isMicOn} isVideoEnabled={peer.isCameraOn} isHandRaised={peer.isHandRaised} isGlitching={peer.isGlitching} isTyping={peer.isTyping} networkQuality={peer.networkQuality} connectionState={peer.connectionState as any} reactions={reactions} onRetry={manualReconnect as any} />
                      </div>
                   ))}
-
-                  {remotePeers.length === 0 && (
-                    <div className="hidden md:flex absolute inset-0 items-center justify-center pointer-events-none">
-                       <h3 className="text-white/5 text-[120px] font-black uppercase tracking-[0.5em] select-none rotate-3">SOLO_SYNC</h3>
-                    </div>
-                  )}
                </div>
             </div>
 
-            {/* Captions Presentation Overlay - Floating above controls */}
+            {/* Floating Captions */}
             {isCaptionsOn && currentCaption && (
-               <div className="absolute bottom-32 md:bottom-40 left-1/2 -translate-x-1/2 z-[100] w-full max-w-4xl px-4 animate-slide-up pointer-events-none">
-                  <div className="glass-card-bright p-6 md:p-10 rounded-[32px] md:rounded-[48px] border border-cyan-400/30 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-3xl">
-                      <p className="text-xl md:text-3xl font-black text-white uppercase tracking-tight leading-relaxed italic drop-shadow-2xl">
-                         <span className="text-cyan-400 mr-2 md:mr-6 font-light">[{userName.split('-')[1]}]:</span> {currentCaption}
+               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-3xl px-4 animate-slide-up pointer-events-none">
+                  <div className="brutal-card bg-black text-white p-4 border-2 border-white shadow-[8px_8px_0px_#ffdf1e] text-center">
+                      <p className="text-xl font-bold uppercase tracking-tighter">
+                         <span className="text-[#ffdf1e] mr-4">{userName.substring(0, 3)}:</span> {currentCaption}
                       </p>
                   </div>
                </div>
             )}
          </div>
 
-         {/* Right Sidebar Toolings - Fullscreen on mobile, anchored on desktop */}
-         <div className={`fixed inset-0 lg:inset-y-8 lg:right-8 lg:left-auto lg:w-[400px] z-[150] lg:z-[100] transform transition-all duration-700 ease-in-out p-4 md:p-0
+         {/* Sidebar Tools - Brutalist Overhaul */}
+         <div className={`fixed inset-y-8 right-8 w-full max-w-[400px] z-[150] transition-all duration-300 transform 
              ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}>
-            <div className="glass-card-bright h-full md:rounded-[40px] rounded-3xl flex flex-col shadow-2xl border border-white/10 overflow-hidden">
-               <div className="p-4 md:p-6 pb-2 grid grid-cols-2 gap-2 md:gap-3">
-                  <button onClick={() => setActiveTool('chat')} className={`py-3 md:py-4 rounded-xl md:rounded-2xl font-bold uppercase text-[8px] md:text-[9px] tracking-widest transition-all ${activeTool === 'chat' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>MESSAGES</button>
-                  <button onClick={() => setActiveTool('polls')} className={`py-3 md:py-4 rounded-xl md:rounded-2xl font-bold uppercase text-[8px] md:text-[9px] tracking-widest transition-all ${activeTool === 'polls' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>POLLS</button>
-                  <button onClick={() => setActiveTool('dashboard')} className={`py-3 md:py-4 rounded-xl md:rounded-2xl font-bold uppercase text-[8px] md:text-[9px] tracking-widest transition-all ${activeTool === 'dashboard' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>TELEMETRY</button>
-                  <button onClick={() => setActiveTool('logs')} className={`py-3 md:py-4 rounded-xl md:rounded-2xl font-bold uppercase text-[8px] md:text-[9px] tracking-widest transition-all ${activeTool === 'logs' ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}>CONSOLE</button>
+            <div className="brutal-card h-full bg-white flex flex-col overflow-hidden border-[6px]">
+               <div className="bg-black text-white p-4 font-black uppercase tracking-widest flex items-center justify-between">
+                  <span>TOOL_ACCESS</span>
+                  <button onClick={() => setActiveTool('none')}>[X]</button>
                </div>
-               <div className="flex-1 overflow-hidden">
+               <div className="p-4 grid grid-cols-2 gap-3 border-b-4 border-black bg-[#f0f0f0]">
+                  <button onClick={() => setActiveTool('chat')} className={`brutal-btn py-2 text-[9px] ${activeTool === 'chat' ? 'bg-[#ffdf1e]' : ''}`}>MESSAGES</button>
+                  <button onClick={() => setActiveTool('polls')} className={`brutal-btn py-2 text-[9px] ${activeTool === 'polls' ? 'bg-[#ffdf1e]' : ''}`}>POLLS</button>
+                  <button onClick={() => setActiveTool('dashboard')} className={`brutal-btn py-2 text-[9px] ${activeTool === 'dashboard' ? 'bg-[#ffdf1e]' : ''}`}>TELEMETRY</button>
+                  <button onClick={() => setActiveTool('logs')} className={`brutal-btn py-2 text-[9px] ${activeTool === 'logs' ? 'bg-[#ffdf1e]' : ''}`}>CONSOLE</button>
+               </div>
+               <div className="flex-1 overflow-hidden custom-scrollbar">
                   {activeTool === 'chat' && <Chat roomId={roomId} userName={userName} messages={messages} onSendMessage={sendMessage} onNotifyTyping={notifyTyping} isRemoteTyping={isRemoteTyping} />}
                   {activeTool === 'logs' && <SystemLogs logs={logs} onClear={() => setLogs([])} />}
                   {activeTool === 'polls' && <Polls polls={polls} onVote={handleVote} onCreate={handleCreatePoll} onClear={() => setPolls([])} />}
                   {activeTool === 'dashboard' && <Dashboard stats={stats} />}
                </div>
-               <button onClick={() => setActiveTool('none')} className="m-4 md:m-6 bg-red-500/10 text-red-500 py-4 md:p-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] hover:bg-red-500 hover:text-white transition-all">EXIT_SIDEBAR_</button>
             </div>
          </div>
       </div>
 
-      <div className="fixed bottom-6 md:bottom-10 left-0 right-0 z-[110] flex justify-center px-4 md:px-0 pointer-events-none">
-         <div className="pointer-events-auto w-full max-w-fit">
+      <div className="fixed bottom-10 left-0 right-0 z-[110] flex justify-center px-4 pointer-events-none">
+         <div className="pointer-events-auto w-full max-w-fit flex gap-4 brutal-card bg-white p-2 border-[4px] border-black shadow-[10px_10px_0px_black]">
             <Controls onToggleMic={toggleMic} isMicOn={isMicOn} onToggleCamera={toggleCamera} isCameraOn={isCameraOn} onToggleScreenShare={toggleScreenShare} isScreenSharing={isScreenSharing} onToggleHandRaise={toggleHandRaise} isHandRaised={isHandRaised} onToggleTool={toggleTool} activeTool={activeTool} onLeave={handleLeave} onSendReaction={handleSendReaction} isRecording={isRecording} onToggleRecording={() => !isRecording ? startRecording() : stopRecording()} isCaptionsOn={isCaptionsOn} onToggleCaptions={() => setIsCaptionsOn(!isCaptionsOn)} />
          </div>
       </div>

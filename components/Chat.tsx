@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, User as UserIcon, Terminal, Paperclip, Download } from 'lucide-react';
+import { Send, User as UserIcon, Paperclip, Download } from 'lucide-react';
 import { ChatMessage } from '../types';
 
 interface ChatProps {
@@ -46,73 +46,65 @@ const Chat: React.FC<ChatProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-transparent font-sans text-white/90">
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+    <div className="flex flex-col h-full bg-[#f0f0f0] font-mono text-black">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
         {messages.map((msg, i) => (
           <div 
             key={i} 
-            className={`flex flex-col ${msg.senderId === 'local' ? 'items-end' : 'items-start'} animate-fade-in`}
+            className={`flex flex-col ${msg.senderId === 'local' ? 'items-end' : 'items-start'}`}
           >
-            <div className={`flex items-center gap-2 mb-2 ${msg.senderId === 'local' ? 'flex-row-reverse' : ''}`}>
-              <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center p-1">
-                <UserIcon size={12} className="text-cyan-400" />
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white/30 truncate max-w-[120px]">
+            <div className={`flex items-center gap-2 mb-1 ${msg.senderId === 'local' ? 'flex-row-reverse' : ''}`}>
+              <span className="text-[10px] font-black uppercase tracking-widest text-black/60 truncate max-w-[150px]">
                 {msg.senderName} • {msg.timestamp}
               </span>
             </div>
             
             <div className={`
-                max-w-[90%] p-4 rounded-2xl border border-white/5 shadow-xl transition-all hover:scale-[1.01]
-                ${msg.senderId === 'local' ? 'bg-cyan-400 text-black font-semibold' : 'bg-white/5 text-white/90 backdrop-blur-md'}
+                max-w-[85%] p-3 border-2 border-black shadow-[4px_4px_0px_black] transition-all
+                ${msg.senderId === 'local' ? 'bg-[#ffdf1e]' : 'bg-white'}
             `}>
               {msg.text.startsWith('FILE_PROTO:') ? (
-                  <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-xl border ${msg.senderId === 'local' ? 'bg-black text-cyan-400 border-black/10' : 'bg-white/10 text-cyan-400 border-white/10'}`}>
-                         <Paperclip size={16} strokeWidth={2} />
+                  <div className="flex items-center gap-3">
+                      <div className="p-2 bg-black text-white">
+                         <Paperclip size={14} strokeWidth={3} />
                       </div>
                       <div className="flex flex-col">
-                          <span className="text-xs font-black uppercase tracking-tight">{msg.text.replace('FILE_PROTO: ', '')}</span>
-                          <span className="text-[8px] opacity-40 uppercase font-black">Secure Transfer Ready</span>
+                          <span className="text-[11px] font-black uppercase">{msg.text.replace('FILE_PROTO: ', '')}</span>
+                          <span className="text-[8px] font-black uppercase opacity-60">TRANSFER_MODE_ENABLED</span>
                       </div>
-                      <Download size={18} className="ml-4 cursor-pointer opacity-60 hover:opacity-100 transition-opacity" />
+                      <Download size={16} className="ml-2 cursor-pointer hover:text-[#ffdf1e]" />
                   </div>
               ) : (
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                  <p className="text-sm font-bold leading-tight whitespace-pre-wrap">{msg.text}</p>
               )}
             </div>
           </div>
         ))}
         
         {isRemoteTyping && (
-          <div className="flex items-center gap-3 animate-pulse px-2 opacity-40">
-             <div className="flex gap-1.5">
-                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-             </div>
-             <span className="text-[9px] font-black uppercase tracking-widest">TRANSMITTING_DATA</span>
+          <div className="flex items-center gap-2 px-2 brutal-shake opacity-60">
+             <div className="bg-black text-white px-2 py-0.5 text-[8px] font-black uppercase">DATA_LINK_ACTIVE...</div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-6">
-        <form onSubmit={handleSubmit} className="flex gap-3 glass-card p-2 rounded-3xl border border-white/10 shadow-2xl transition-all focus-within:border-cyan-500/30">
+      <div className="p-4 bg-white border-t-4 border-black">
+        <form onSubmit={handleSubmit} className="flex gap-2">
           <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-          <button type="button" onClick={() => fileInputRef.current?.click()} className="p-4 rounded-2xl bg-white/5 text-white/40 hover:bg-white/10 hover:text-cyan-400 transition-all">
-            <Paperclip size={20} strokeWidth={2} />
+          <button type="button" onClick={() => fileInputRef.current?.click()} className="brutal-btn p-3 bg-[#e0e0e0]">
+            <Paperclip size={20} strokeWidth={3} />
           </button>
           
           <input
             type="text"
             value={input}
             onChange={(e) => { setInput(e.target.value); onNotifyTyping(); }}
-            placeholder="Type a message..."
-            className="flex-1 bg-transparent border-none p-4 text-sm text-white placeholder:text-white/20 outline-none"
+            placeholder="TYPE_MESSAGE..."
+            className="flex-1 brutal-input p-3 text-sm placeholder:text-black/30 bg-white"
           />
-          <button type="submit" className="p-4 rounded-2xl bg-cyan-400 text-black hover:bg-white transition-all shadow-lg shadow-cyan-400/20 active:scale-95 group">
-            <Send size={20} strokeWidth={2} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+          <button type="submit" className="brutal-btn-primary p-3">
+             <Send size={20} strokeWidth={3} />
           </button>
         </form>
       </div>

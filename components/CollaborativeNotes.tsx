@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { signaling } from '../services/signaling';
 import { SignalPayload } from '../types';
-import { FileText, Save, Download, RefreshCw } from 'lucide-react';
+import { FileText, Save, Download } from 'lucide-react';
 
 interface NotesProps {
   roomId: string;
@@ -40,31 +40,36 @@ const CollaborativeNotes: React.FC<NotesProps> = ({ roomId }) => {
   }, [roomId, content]);
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0a] font-sans overflow-hidden">
-        <div className="glass-card-bright p-5 flex items-center justify-between border-b border-white/10 z-[70]">
-            <div className="flex items-center gap-4 text-white">
-                <div className="bg-cyan-400 p-2 rounded-xl"> <FileText size={18} className="text-black" /> </div>
-                <span className="font-extrabold text-sm uppercase tracking-widest text-white/90 italic">SHARED_INTEL_SYSTEM_</span>
+    <div className="flex flex-col h-full bg-white font-mono overflow-hidden text-black">
+        <div className="brutal-card bg-white p-4 flex items-center justify-between border-b-4 border-black z-[70] shadow-none">
+            <div className="flex items-center gap-3">
+                <div className="bg-[#ffdf1e] p-2 border-2 border-black"> <FileText size={18} strokeWidth={3} /> </div>
+                <span className="font-black text-sm uppercase tracking-widest italic">SHARED_NOTES_v4</span>
             </div>
-            <div className="flex items-center gap-4">
-                <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border ${status === 'SYNC_OK' ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/5' : 'border-red-500/30 text-red-500 bg-red-500/5 pulse-accent'}`}>
-                    <Save size={14} className={status === 'SYNCING...' ? 'animate-spin' : ''} /> {status}
+            <div className="flex items-center gap-3">
+                <div className={`px-3 py-1.5 border-2 border-black text-[9px] font-black uppercase tracking-widest flex items-center gap-2 ${status === 'SYNC_OK' ? 'bg-[#00ff9d]' : 'bg-[#ff5e5e] text-white brutal-shake'}`}>
+                    <Save size={14} strokeWidth={3} className={status === 'SYNCING...' ? 'animate-spin' : ''} /> {status}
                 </div>
-                <button onClick={handleDownload} className="p-3 bg-cyan-400 text-black rounded-xl hover:bg-white transition-all shadow-lg shadow-cyan-400/10 active:scale-95" title="Export Notes">
-                    <Download size={18} strokeWidth={2.5} />
+                <button onClick={handleDownload} className="brutal-btn p-2 bg-white" title="Export">
+                    <Download size={18} strokeWidth={3} />
                 </button>
             </div>
         </div>
+        
         <textarea
             value={content}
             onChange={handleChange}
             placeholder="TYPE_PROTOCOLS_HERE_"
-            className="flex-1 w-full bg-[#0a0a0a] text-white/90 p-10 resize-none outline-none font-mono text-lg leading-relaxed placeholder-white/10 custom-scrollbar"
-            style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px)', backgroundSize: '100% 2.8em' }}
+            className="flex-1 w-full bg-white text-black p-8 resize-none outline-none font-bold text-lg leading-relaxed placeholder-black/10 custom-scrollbar"
+            style={{ 
+                backgroundImage: 'linear-gradient(rgba(0,0,0,.05) 1px, transparent 1px)', 
+                backgroundSize: '100% 2.8em' 
+            }}
         />
-        <div className="glass-card p-4 border-t border-white/5 flex items-center gap-4 bg-white/5 backdrop-blur-3xl">
-           <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
-           <span className="text-[9px] font-bold text-white/20 tracking-[0.4em] uppercase italic">P2P_NOTE_SYNC_DATA_STREAMING_ACTIVE</span>
+        
+        <div className="p-3 border-t-4 border-black flex items-center gap-3 bg-[#f0f0f0]">
+           <div className="w-3 h-3 bg-[#ffdf1e] border-2 border-black animate-pulse" />
+           <span className="text-[9px] font-black text-black/40 tracking-widest uppercase italic">P2P_SYNC_STREAMING_v4</span>
         </div>
     </div>
   );

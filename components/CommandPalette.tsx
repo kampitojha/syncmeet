@@ -55,62 +55,64 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ onCommand, onClose, isO
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in font-mono" onClick={onClose}>
       <div 
-        className="cmd-palette w-full max-w-2xl overflow-hidden p-6 md:p-8 animate-slide-up"
+        className="brutal-card bg-white w-full max-w-2xl overflow-hidden p-6 md:p-8 animate-slide-up border-[6px] border-black shadow-[12px_12px_0px_black]"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-8 border-b-4 border-[#ffdf00] pb-4">
+        <div className="flex items-center justify-between mb-8 border-b-4 border-black pb-4">
           <div className="flex items-center gap-3">
-             <Command className="text-[#ffdf00]" size={24} />
-             <span className="font-black text-xl uppercase italic -skew-x-12 tracking-widest">SYSTEM_COMMAND_PALETTE</span>
+             <div className="bg-[#ffdf1e] p-2 border-2 border-black">
+                <Command className="text-black" size={24} strokeWidth={3} />
+             </div>
+             <span className="font-black text-xl uppercase tracking-widest">COMMAND_PALETTE</span>
           </div>
-          <button onClick={onClose} className="hover:rotate-90 transition-transform">
+          <button onClick={onClose} className="brutal-btn p-2 hover:bg-[#ff5e5e] hover:text-white transition-all">
              <X size={24} strokeWidth={3} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="relative mb-6">
-          <Terminal className="absolute left-4 top-1/2 -translate-y-1/2 text-[#ffdf00] opacity-50" size={20} />
+          <Terminal className="absolute left-4 top-1/2 -translate-y-1/2 text-black opacity-40" size={20} />
           <input
             ref={inputRef}
             type="text"
             value={input}
             onChange={e => { setInput(e.target.value); setSelectedIndex(0); }}
             onKeyDown={handleKeyDown}
-            placeholder="TYPE_PROTO_COMMAND_HERE..."
-            className="w-full bg-black/40 border-4 border-[#ffdf00] p-5 pl-14 text-[#ffdf00] font-black uppercase text-lg italic outline-none focus:shadow-[0px_0px_20px_#ffdf00]"
+            placeholder="TYPE_COMMAND_HERE..."
+            className="w-full brutal-input p-5 pl-14 text-black font-black uppercase text-lg italic outline-none"
           />
         </form>
 
-        <div className="space-y-4 max-h-[300px] overflow-y-auto pr-4 custom-scrollbar">
+        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
           {filteredCommands.length > 0 ? (
               filteredCommands.map((c, i) => (
                 <div 
                   key={c.cmd}
                   onClick={() => { setSelectedIndex(i); handleSubmit(); }}
                   className={`
-                    p-4 border-2 flex items-center justify-between cursor-pointer transition-all
-                    ${i === selectedIndex ? 'bg-[#ffdf00] text-black border-black scale-[1.02]' : 'bg-transparent text-[#ffdf00] border-[#ffdf00]/30 hover:border-[#ffdf00]'}
+                    p-4 border-2 border-black flex items-center justify-between cursor-pointer transition-all
+                    ${i === selectedIndex ? 'bg-[#ffdf1e] shadow-[4px_4px_0px_black] -translate-y-1' : 'bg-white hover:bg-[#f0f0f0] shadow-none'}
                   `}
                 >
                   <div className="flex items-center gap-4">
                     <span className="font-black text-lg italic">{c.cmd}</span>
-                    <span className="text-[10px] md:text-xs font-bold opacity-70 tracking-tighter">{c.desc}</span>
+                    <span className="text-[10px] md:text-xs font-black opacity-50 tracking-widest">{c.desc}</span>
                   </div>
                   {i === selectedIndex && <ArrowRight size={18} strokeWidth={3} />}
                 </div>
               ))
           ) : (
-              <div className="text-center py-10 border-2 border-dashed border-[#ffdf00]/20 italic opacity-50 font-black">
-                  NO_MATCHING_COMMANDS_FOUND
+              <div className="text-center py-10 border-4 border-dashed border-black/20 italic font-black opacity-40">
+                  NO_MATCHING_COMMANDS
               </div>
           )}
         </div>
 
-        <div className="mt-8 flex justify-between items-center text-[10px] font-bold opacity-30">
-           <span className="italic flex items-center gap-2"> <Zap size={10} /> ENCRYPTED_TERMINAL_LINK</span>
-           <span>SYNCMEET_v3.2_PROTO</span>
+        <div className="mt-8 flex justify-between items-center text-[10px] font-black opacity-30 tracking-widest uppercase">
+           <span className="italic flex items-center gap-2"> <Zap size={10} strokeWidth={3} /> ENCRYPTED_LINK_v4.5</span>
+           <span>SYNCMEET_BRUTAL_v2.0</span>
         </div>
       </div>
     </div>

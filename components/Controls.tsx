@@ -37,145 +37,113 @@ const Controls: React.FC<ControlsProps> = ({
   const [showReactions, setShowReactions] = useState(false);
 
   return (
-    <div className="relative group/controls">
-      {/* Reactions Popup - Rendered outside the scrolling container to prevent clipping */}
+    <div className="relative group/controls flex items-center gap-2">
+      {/* Reactions Popup */}
       {showReactions && (
-        <div className="absolute bottom-full mb-6 left-1/2 -translate-x-1/2 glass-card-bright bg-black/90 p-3 rounded-[32px] flex gap-3 shadow-[0_0_100px_rgba(0,0,0,0.8)] animate-slide-up border border-white/20 z-[300] backdrop-blur-3xl whitespace-nowrap">
+        <div className="absolute bottom-full mb-6 left-1/2 -translate-x-1/2 brutal-card bg-white p-2 flex gap-2 shadow-[8px_8px_0px_black] z-[300] animate-slide-up whitespace-nowrap border-[4px]">
            {['⚡', '🔥', '👏', '❤️', '🎉', '😂', '💯'].map(emoji => (
              <button 
-               key={emoji} 
-               onClick={() => { onSendReaction(emoji); setShowReactions(false); }}
-               className="p-4 text-2xl hover:scale-150 active:scale-90 transition-all hover:bg-white/10 rounded-2xl"
+                key={emoji} 
+                onClick={() => { onSendReaction(emoji); setShowReactions(false); }}
+                className="p-3 text-2xl hover:bg-[#ffdf1e] brutal-card border-2 shadow-[4px_4px_0px_black] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
              >
-               {emoji}
+                {emoji}
              </button>
            ))}
         </div>
       )}
 
-      {/* Main Controls Container */}
-      <div className="flex items-center glass-card-bright bg-black/40 rounded-3xl md:rounded-[36px] border border-white/20 select-none shadow-2xl backdrop-blur-2xl overflow-hidden max-w-[95vw] md:max-w-none">
-        {/* Scrollable Action Row */}
-        <div className="flex items-center gap-1 md:gap-4 p-2 md:p-4 overflow-x-auto no-scrollbar flex-nowrap w-full">
-            {/* Primary Communication Protocols */}
-            <div className="flex items-center gap-1 md:gap-2 px-1 border-r border-white/10 flex-shrink-0">
-                <button 
-                onClick={onToggleMic}
-                className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1 group
-                    ${isMicOn ? 'bg-white/15 text-cyan-400 hover:bg-white/25' : 'bg-red-500 text-white shadow-lg shadow-red-500/20'}`}
-                >
-                {isMicOn ? <Mic size={20} strokeWidth={2.5} /> : <MicOff size={20} strokeWidth={2.5} />}
-                <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">{isMicOn ? 'MUTE' : 'UNMUTE'}</span>
-                </button>
+      {/* Primary Comm Row */}
+      <div className="flex gap-2 border-r-4 border-black pr-4">
+        <button 
+          onClick={onToggleMic}
+          className={`p-4 brutal-btn ${isMicOn ? 'bg-[#00ff9d]' : 'bg-[#ff5e5e] text-white'}`}
+        >
+          {isMicOn ? <Mic size={24} strokeWidth={3} /> : <MicOff size={24} strokeWidth={3} />}
+        </button>
 
-                <button 
-                onClick={onToggleCamera}
-                className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1 group
-                    ${isCameraOn ? 'bg-white/15 text-cyan-400 hover:bg-white/25' : 'bg-red-500 text-white shadow-lg shadow-red-500/20'}`}
-                >
-                {isCameraOn ? <Video size={20} strokeWidth={2.5} /> : <VideoOff size={20} strokeWidth={2.5} />}
-                <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">{isCameraOn ? 'VIDEO_OFF' : 'VIDEO_ON'}</span>
-                </button>
-            </div>
+        <button 
+          onClick={onToggleCamera}
+          className={`p-4 brutal-btn ${isCameraOn ? 'bg-[#00ff9d]' : 'bg-[#ff5e5e] text-white'}`}
+        >
+          {isCameraOn ? <Video size={24} strokeWidth={3} /> : <VideoOff size={24} strokeWidth={3} />}
+        </button>
+      </div>
 
-            {/* Collaboration Suite */}
-            <div className="flex items-center gap-1 md:gap-2 px-1 border-r border-white/10 flex-shrink-0">
-                <button 
-                onClick={onToggleScreenShare}
-                className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-                    ${isScreenSharing ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/20 scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
-                >
-                <ScreenShare size={20} strokeWidth={2.5} />
-                <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">SHARE</span>
-                </button>
+      {/* Tools Row */}
+      <div className="flex gap-2 px-2 overflow-x-auto no-scrollbar scroll-smooth">
+        <button 
+          onClick={onToggleScreenShare}
+          className={`p-4 brutal-btn ${isScreenSharing ? 'bg-[#ffdf1e]' : 'bg-white'}`}
+        >
+          <ScreenShare size={24} strokeWidth={3} />
+        </button>
 
-                <button 
-                onClick={onToggleHandRaise}
-                className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-                    ${isHandRaised ? 'bg-yellow-400 text-black shadow-lg shadow-yellow-400/20 scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
-                >
-                <Hand size={20} strokeWidth={2.5} className={isHandRaised ? 'animate-bounce' : ''} />
-                <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">HAND</span>
-                </button>
-            </div>
+        <button 
+          onClick={onToggleHandRaise}
+          className={`p-4 brutal-btn ${isHandRaised ? 'bg-[#ffdf1e]' : 'bg-white'}`}
+        >
+          <Hand size={24} strokeWidth={3} className={isHandRaised ? 'brutal-shake' : ''} />
+        </button>
+        
+        <button 
+          onClick={() => onToggleTool('chat')}
+          className={`p-4 brutal-btn ${activeTool === 'chat' ? 'bg-[#ffdf1e]' : 'bg-white'}`}
+        >
+          <MessageSquare size={24} strokeWidth={3} />
+        </button>
 
-            {/* Advanced Logic Modules */}
-            <div className="flex items-center gap-1 md:gap-2 px-1 flex-shrink-0">
-                <button 
-                onClick={() => onToggleTool('chat')}
-                className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1 relative
-                    ${activeTool === 'chat' ? 'bg-white text-black scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
-                >
-                <MessageSquare size={20} strokeWidth={2.5} />
-                <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">CHAT</span>
-                </button>
+        <button 
+          onClick={() => onToggleTool('whiteboard')}
+          className={`p-4 brutal-btn ${activeTool === 'whiteboard' ? 'bg-[#ffdf1e]' : 'bg-white'}`}
+        >
+          <PenTool size={24} strokeWidth={3} />
+        </button>
 
-                <button 
-                onClick={() => onToggleTool('whiteboard')}
-                className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-                    ${activeTool === 'whiteboard' ? 'bg-white text-black scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
-                >
-                <PenTool size={20} strokeWidth={2.5} />
-                <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">DRAW</span>
-                </button>
+        <button 
+          onClick={() => onToggleTool('notes')}
+          className={`p-4 brutal-btn ${activeTool === 'notes' ? 'bg-[#ffdf1e]' : 'bg-white'}`}
+        >
+          <FileText size={24} strokeWidth={3} />
+        </button>
 
-                <button 
-                onClick={() => onToggleTool('notes')}
-                className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-                    ${activeTool === 'notes' ? 'bg-white text-black scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
-                >
-                <FileText size={20} strokeWidth={2.5} />
-                <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">NOTES</span>
-                </button>
+        <button 
+          onClick={() => onToggleTool('media')}
+          className={`p-4 brutal-btn ${activeTool === 'media' ? 'bg-[#ffdf1e]' : 'bg-white'}`}
+        >
+          <Tv size={24} strokeWidth={3} />
+        </button>
 
-                <button 
-                onClick={() => onToggleTool('media')}
-                className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-                    ${activeTool === 'media' ? 'bg-white text-black scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
-                >
-                <Tv size={20} strokeWidth={2.5} />
-                <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">CAST</span>
-                </button>
+        <button 
+          onClick={onToggleCaptions}
+          className={`p-4 brutal-btn ${isCaptionsOn ? 'bg-[#a855f7] text-white' : 'bg-white'}`}
+        >
+          <Captions size={24} strokeWidth={3} />
+        </button>
 
-                <button 
-                onClick={onToggleCaptions}
-                className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-                    ${isCaptionsOn ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20 scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
-                >
-                <Captions size={20} strokeWidth={2.5} />
-                <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">CAPTIONS</span>
-                </button>
+        <button 
+          onClick={onToggleRecording}
+          className={`p-4 brutal-btn ${isRecording ? 'bg-[#ff5e5e] text-white brutal-shake shadow-none' : 'bg-white'}`}
+        >
+          <Radio size={24} strokeWidth={3} />
+        </button>
 
-                <button 
-                onClick={onToggleRecording}
-                className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
-                    ${isRecording ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/20' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
-                >
-                <Radio size={20} strokeWidth={2.5} />
-                <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">RECORD</span>
-                </button>
+        <button 
+          onClick={() => setShowReactions(!showReactions)}
+          className={`p-4 brutal-btn ${showReactions ? 'bg-[#ffdf1e]' : 'bg-white'}`}
+        >
+          <Smile size={24} strokeWidth={3} />
+        </button>
+      </div>
 
-                <button 
-                    onClick={() => setShowReactions(!showReactions)}
-                    className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1 flex-shrink-0
-                    ${showReactions ? 'bg-white text-black scale-105' : 'bg-white/15 text-white shadow-inner hover:bg-white/25'}`}
-                >
-                    <Smile size={20} strokeWidth={2.5} />
-                    <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">REACT</span>
-                </button>
-            </div>
-
-            {/* Termination Protocol */}
-            <div className="flex-shrink-0 pl-1">
-                <button 
-                onClick={onLeave}
-                className="p-3 md:p-5 rounded-2xl md:rounded-3xl bg-red-500 text-white hover:bg-red-600 transition-all active:scale-90 flex flex-col items-center gap-1 shadow-lg shadow-red-500/20 group"
-                >
-                <PhoneOff size={20} strokeWidth={2.5} className="group-hover:rotate-12 transition-transform" />
-                <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">LEAVE</span>
-                </button>
-            </div>
-        </div>
+      {/* Leave Button */}
+      <div className="pl-4 border-l-4 border-black">
+        <button 
+          onClick={onLeave}
+          className="p-4 brutal-btn bg-[#ff5e5e] text-white hover:bg-black"
+        >
+          <PhoneOff size={24} strokeWidth={3} />
+        </button>
       </div>
     </div>
   );

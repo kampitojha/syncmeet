@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { signaling } from '../services/signaling';
 import { DrawLinePayload, SignalPayload } from '../types';
-import { Eraser, Trash2, PenTool, Download, Palette, Type } from 'lucide-react';
+import { Eraser, Trash2, Download } from 'lucide-react';
 
 interface WhiteboardProps {
   roomId: string;
@@ -10,7 +10,7 @@ interface WhiteboardProps {
 const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [color, setColor] = useState('#00f2ff');
+  const [color, setColor] = useState('#000000');
   const [lineWidth, setLineWidth] = useState(4);
   const [prevPos, setPrevPos] = useState<{ x: number, y: number } | null>(null);
 
@@ -34,7 +34,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
         
         const ctx = canvas.getContext('2d');
         if (ctx) {
-            ctx.fillStyle = "#0a0a0a";
+            ctx.fillStyle = "#ffffff";
             ctx.fillRect(0,0, canvas.width, canvas.height);
             ctx.drawImage(tempCanvas, 0, 0);
         }
@@ -106,7 +106,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (ctx) {
-        ctx.fillStyle = "#0a0a0a";
+        ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
     if (emit) signaling.sendClearBoard(roomId);
@@ -144,21 +144,50 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
   }, [roomId]);
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0a] overflow-hidden relative group font-sans">
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 flex items-center gap-4 glass-card-bright p-3 px-6 rounded-[2rem] border border-white/10 z-[70] shadow-2xl transition-all hover:border-cyan-400/30">
-            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 cursor-pointer bg-transparent border-none rounded-full overflow-hidden" />
-            <div className="w-[1px] h-8 bg-white/10 mx-1" />
+    <div className="flex flex-col h-full bg-white overflow-hidden relative group font-mono text-black">
+        {/* Toolbar */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 brutal-card bg-white p-2 border-4 border-black z-[70] shadow-[6px_6px_0px_black]">
+            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 brutal-card border-2 cursor-pointer bg-white" />
+            <div className="w-[2px] h-8 bg-black mx-1" />
+            
             {[2, 6, 12, 24].map(w => (
-                <button key={w} onClick={() => { setLineWidth(w); if (color === '#0a0a0a') setColor('#00f2ff'); }} className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${lineWidth === w && color !== '#0a0a0a' ? 'bg-cyan-400 text-black' : 'hover:bg-white/10 text-white/40'}`}>
-                    <div className="bg-current rounded-full" style={{ width: Math.min(w, 14), height: Math.min(w, 14) }} />
+                <button 
+                  key={w} 
+                  onClick={() => { setLineWidth(w); if (color === '#ffffff') setColor('#000000'); }} 
+                  className={`w-8 h-8 brutal-card border-2 flex items-center justify-center transition-all ${lineWidth === w && color !== '#ffffff' ? 'bg-[#ffdf1e]' : 'bg-white hover:bg-[#e0e0e0]'}`}
+                >
+                    <div className="bg-black rounded-full" style={{ width: Math.min(w/2, 14), height: Math.min(w/2, 14) }} />
                 </button>
             ))}
-            <div className="w-[1px] h-8 bg-white/10 mx-1" />
-            <button onClick={() => { setColor('#0a0a0a'); setLineWidth(40); }} className={`p-2 rounded-xl transition-all ${color === '#0a0a0a' ? 'bg-cyan-400 text-black' : 'text-white/40 hover:bg-white/10 hover:text-white'}`} title="Eraser"> <Eraser size={20} strokeWidth={2.5} /> </button>
-            <button onClick={() => clearBoard(true)} className="p-2 rounded-xl text-white/40 hover:bg-red-500 hover:text-white transition-all"> <Trash2 size={20} strokeWidth={2.5} /> </button>
-            <div className="w-[1px] h-8 bg-white/10 mx-1" />
-            <button onClick={exportBoard} className="p-2 rounded-xl bg-cyan-400 text-black hover:bg-white transition-all shadow-lg shadow-cyan-400/20" title="Export Board"> <Download size={20} strokeWidth={2.5} /> </button>
+            
+            <div className="w-[2px] h-8 bg-black mx-1" />
+            
+            <button 
+              onClick={() => { setColor('#ffffff'); setLineWidth(40); }} 
+              className={`p-2 brutal-card border-2 transition-all ${color === '#ffffff' ? 'bg-[#ffdf1e]' : 'bg-white hover:bg-[#e0e0e0]'}`} 
+              title="Eraser"
+            > 
+              <Eraser size={20} strokeWidth={3} /> 
+            </button>
+            
+            <button 
+              onClick={() => clearBoard(true)} 
+              className="p-2 brutal-card border-2 bg-white hover:bg-[#ff5e5e] hover:text-white transition-all"
+            > 
+              <Trash2 size={20} strokeWidth={3} /> 
+            </button>
+            
+            <div className="w-[2px] h-8 bg-black mx-1" />
+            
+            <button 
+              onClick={exportBoard} 
+              className="brutal-btn-primary p-2" 
+              title="Export"
+            > 
+              <Download size={20} strokeWidth={3} /> 
+            </button>
         </div>
+
         <div 
             className="flex-1 relative overflow-hidden" 
             onMouseMove={updateCursor} 
@@ -174,27 +203,25 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
                 onTouchStart={startDrawing} 
                 onTouchMove={draw} 
                 onTouchEnd={stopDrawing} 
-                className="w-full h-full block touch-none" 
+                className="w-full h-full block touch-none cursor-none bg-white" 
             />
             
             {/* Visual Virtual Cursor */}
             {cursorPos && (
                 <div 
-                    className="absolute pointer-events-none transition-transform duration-75 z-[65] rounded-full border border-white/40 shadow-xl flex items-center justify-center"
+                    className="absolute pointer-events-none z-[65] border-2 border-black"
                     style={{ 
                         left: cursorPos.x, 
                         top: cursorPos.y, 
                         width: Math.max(lineWidth, 8), 
                         height: Math.max(lineWidth, 8),
                         transform: 'translate(-50%, -50%)',
-                        backgroundColor: color === '#0a0a0a' ? 'rgba(255,255,255,0.1)' : color
+                        backgroundColor: color === '#ffffff' ? 'rgba(0,0,0,0.1)' : color
                     }}
-                >
-                    {color === '#0a0a0a' && <div className="w-1 h-1 bg-white rounded-full" />}
-                </div>
+                />
             )}
 
-             <div className="absolute bottom-8 right-10 glass-card p-2 px-5 rounded-2xl border border-white/5 text-[9px] font-black uppercase tracking-[0.3em] italic text-white/20 pointer-events-none"> MESH_DRAW_ENGINE_v4 </div>
+             <div className="absolute bottom-4 right-4 bg-black text-white p-2 font-black uppercase text-[8px] tracking-widest shadow-[4px_4px_0px_#ffdf1e]"> MESH_WHITEBOARD_v4 </div>
         </div>
     </div>
   );
