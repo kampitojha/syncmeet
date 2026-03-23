@@ -273,28 +273,34 @@ const App: React.FC = () => {
                 </div>
             )}
 
-            <div className={`grid gap-4 md:gap-10 w-full h-full mx-auto transition-all 
-                ${remotePeers.length === 0 ? 'max-w-6xl aspect-video' : 
-                  remotePeers.length === 1 ? 'grid-cols-1 md:grid-cols-2' : 
-                  'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'} 
-                ${['whiteboard', 'notes', 'media'].includes(activeTool) ? 'opacity-20 scale-[0.98] blur-xl h-0 pointer-events-none' : ''}`}>
+            {/* MESH_VIEWPORT: Intel-Adaptive Grid Logic */}
+            <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-700
+                ${['whiteboard', 'notes', 'media'].includes(activeTool) ? 'opacity-20 scale-[0.98] blur-3xl h-0 overflow-hidden pointer-events-none' : 'w-full h-full'}`}>
                
-               <div className="w-full aspect-video md:aspect-auto h-full">
-                  <VideoTile stream={localStream} isLocal={true} username={userName} isAudioEnabled={isMicOn} isVideoEnabled={isCameraOn} isHandRaised={isHandRaised} isGlitching={isGlitching} isScreenShare={isScreenSharing} />
-               </div>
+               <div className={`grid gap-4 md:gap-8 w-full max-w-[1600px] h-full transition-all duration-500 mx-auto content-center
+                  ${remotePeers.length === 0 ? 'grid-cols-1 max-w-5xl aspect-video' : 
+                    remotePeers.length === 1 ? 'grid-cols-1 md:grid-cols-2' : 
+                    remotePeers.length === 2 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
+                    'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
+                  
+                  {/* LOCAL_NODE */}
+                  <div className="w-full h-full min-h-[220px] md:min-h-[280px] animate-fade-in">
+                     <VideoTile stream={localStream} isLocal={true} username={`${userName} (HOST)`} isAudioEnabled={isMicOn} isVideoEnabled={isCameraOn} isHandRaised={isHandRaised} isGlitching={isGlitching} isScreenShare={isScreenSharing} />
+                  </div>
 
-               {remotePeers.map(peer => (
-                 <div key={peer.id} className="w-full aspect-video md:aspect-auto h-full">
-                    <VideoTile stream={peer.stream} username={peer.userName} isAudioEnabled={peer.isMicOn} isVideoEnabled={peer.isCameraOn} isHandRaised={peer.isHandRaised} isGlitching={peer.isGlitching} isTyping={peer.isTyping} networkQuality={peer.networkQuality} connectionState={peer.connectionState} reactions={reactions} onRetry={manualReconnect} />
-                 </div>
-               ))}
-               
-               {remotePeers.length === 0 && (
-                 <div className="hidden sm:flex flex-col items-center justify-center glass-card rounded-[32px] md:rounded-[40px] border border-white/5 opacity-40 shadow-inner p-10">
-                   <Users className="text-white/20 w-12 h-12 md:w-16 md:h-16 mb-6" />
-                   <h3 className="text-white/30 text-lg md:text-2xl font-bold uppercase tracking-widest text-center">Awaiting Mesh nodes...</h3>
-                 </div>
-               )}
+                  {/* REMOTE_NODES */}
+                  {remotePeers.map(peer => (
+                     <div key={peer.id} className="w-full h-full min-h-[220px] md:min-h-[280px] animate-fade-in-up">
+                        <VideoTile stream={peer.stream} username={peer.userName} isAudioEnabled={peer.isMicOn} isVideoEnabled={peer.isCameraOn} isHandRaised={peer.isHandRaised} isGlitching={peer.isGlitching} isTyping={peer.isTyping} networkQuality={peer.networkQuality} connectionState={peer.connectionState} reactions={reactions} onRetry={manualReconnect} />
+                     </div>
+                  ))}
+
+                  {remotePeers.length === 0 && (
+                    <div className="hidden md:flex absolute inset-0 items-center justify-center pointer-events-none">
+                       <h3 className="text-white/5 text-[120px] font-black uppercase tracking-[0.5em] select-none rotate-3">SOLO_SYNC</h3>
+                    </div>
+                  )}
+               </div>
             </div>
 
             {/* Captions Presentation Overlay - Floating above controls */}
@@ -331,7 +337,7 @@ const App: React.FC = () => {
       </div>
 
       <div className="fixed bottom-6 md:bottom-10 left-0 right-0 z-[110] flex justify-center px-4 md:px-0 pointer-events-none">
-         <div className="pointer-events-auto shadow-[0_0_80px_rgba(0,0,0,0.5)] w-full max-w-fit overflow-x-auto custom-scrollbar">
+         <div className="pointer-events-auto w-full max-w-fit">
             <Controls onToggleMic={toggleMic} isMicOn={isMicOn} onToggleCamera={toggleCamera} isCameraOn={isCameraOn} onToggleScreenShare={toggleScreenShare} isScreenSharing={isScreenSharing} onToggleHandRaise={toggleHandRaise} isHandRaised={isHandRaised} onToggleTool={toggleTool} activeTool={activeTool} onLeave={handleLeave} onSendReaction={handleSendReaction} isRecording={isRecording} onToggleRecording={() => !isRecording ? startRecording() : stopRecording()} isCaptionsOn={isCaptionsOn} onToggleCaptions={() => setIsCaptionsOn(!isCaptionsOn)} />
          </div>
       </div>
