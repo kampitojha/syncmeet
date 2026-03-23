@@ -1,10 +1,12 @@
-import { selfId } from 'trystero';
-import { getPeerManager } from './peer-manager';
+import { joinRoom, selfId, Room } from 'trystero';
 import EventEmitter from 'events';
+
+const config = { appId: 'syncmeet-p2p' };
 
 class PeerSignalingService extends EventEmitter {
   userId: string;
-  peerManagers: Record<string, any> = {};
+  rooms: Record<string, Room> = {};
+  actions: Record<string, any> = {};
 
   constructor() {
     super();
@@ -12,87 +14,61 @@ class PeerSignalingService extends EventEmitter {
   }
 
   joinRoom(roomId: string, name: string) {
-    if (!this.peerManagers[roomId]) {
-      this.peerManagers[roomId] = getPeerManager(roomId);
-      this.setupListeners(roomId);
+    if (!this.rooms[roomId]) {
+      const room = joinRoom(config, roomId);
+      this.rooms[roomId] = room;
+
+      const types = [
+        'join', 'offer', 'answer', 'ice-candidate', 
+        'media-status', 'reaction', 'hand-raise', 
+        'system-log', 'file-transfer', 'media-sync',
+        'caption-update', 'poll-update', 'poll-vote',
+        'screen-status', 'typing', 'draw-line',
+        'clear-board', 'sync-notes'
+      ];
+
+      types.forEach(type => {
+        const [send, receive] = room.makeAction(type);
+        this.actions[`${roomId}_${type}`] = send;
+        receive((payload: any, senderId: string) => {
+          this.emit(type, { roomId, senderId, payload });
+        });
+      });
+
+      room.onPeerJoin((peerId: string) => this.emit('peer-joined', { peerId }));
+      room.onPeerLeave((peerId: string) => this.emit('leave', { senderId: peerId }));
     }
-    this.send(roomId, 'join', { name });
   }
 
   leaveRoom(roomId: string) {
-    this.send(roomId, 'leave', { senderId: this.userId });
-    if (this.peerManagers[roomId]) {
-      this.peerManagers[roomId].leave();
-      delete this.peerManagers[roomId];
-    }
-  }
-
-  private setupListeners(roomId: string) {
-    const pm = this.peerManagers[roomId];
-    const types = [
-      'join', 'offer', 'answer', 'ice-candidate', 
-      'media-status', 'reaction', 'hand-raise', 
-      'system-log', 'file-transfer', 'media-sync',
-      'caption-update', 'poll-update', 'poll-vote',
-      'screen-status', 'typing'
-    ];
-
-    types.forEach(type => {
-      pm.on(type, (payload: any, senderId: string) => {
-        this.emit(type, { roomId, senderId, payload });
-      });
-    });
+      if (this.rooms[roomId]) {
+          this.rooms[roomId].leave();
+          delete this.rooms[roomId];
+      }
   }
 
   send(roomId: string, type: string, payload: any) {
-    if (this.peerManagers[roomId]) {
-      this.peerManagers[roomId].send(type, payload);
+    const action = this.actions[`${roomId}_${type}`];
+    if (action) {
+      action(payload);
     }
   }
 
-  sendOffer(roomId: string, targetUserId: string, sdp: RTCSessionDescriptionInit) {
-    this.send(roomId, 'offer', { targetUserId, sdp });
-  }
-
-  sendAnswer(roomId: string, targetUserId: string, sdp: RTCSessionDescriptionInit) {
-    this.send(roomId, 'answer', { targetUserId, sdp });
-  }
-
-  sendIceCandidate(roomId: string, targetUserId: string, candidate: RTCIceCandidate) {
-    this.send(roomId, 'ice-candidate', { targetUserId, candidate });
-  }
-
-  sendMediaStatus(roomId: string, kind: 'audio' | 'video', enabled: boolean) {
-    this.send(roomId, 'media-status', { kind, enabled });
-  }
-
-  sendReaction(roomId: string, emoji: string) {
-    this.send(roomId, 'reaction', { emoji });
-  }
-
-  sendHandRaise(roomId: string, isRaised: boolean) {
-    this.send(roomId, 'hand-raise', { isRaised });
-  }
-
-  sendSystemLog(roomId: string, message: string, type: 'info' | 'warn' | 'error' | 'success' = 'info') {
-    this.send(roomId, 'system-log', { message, type });
-  }
-
-  sendMediaSync(roomId: string, data: { time: number, state: 'play' | 'pause' }) {
-    this.send(roomId, 'media-sync', data);
-  }
-
-  sendCaption(roomId: string, text: string) {
-    this.send(roomId, 'caption-update', { text });
-  }
-
-  sendPollUpdate(roomId: string, poll: any) {
-    this.send(roomId, 'poll-update', { poll });
-  }
-
-  sendPollVote(roomId: string, pollId: string, optionId: string) {
-    this.send(roomId, 'poll-vote', { pollId, optionId });
-  }
+  // Predefined protocols
+  sendOffer(r: string, t: string, s: any) { this.send(r, 'offer', { targetUserId: t, sdp: s }); }
+  sendAnswer(r: string, t: string, s: any) { this.send(r, 'answer', { targetUserId: t, sdp: s }); }
+  sendIceCandidate(r: string, t: string, c: any) { this.send(r, 'ice-candidate', { targetUserId: t, candidate: c }); }
+  sendMediaStatus(r: string, k: any, e: boolean) { this.send(r, 'media-status', { kind: k, enabled: e }); }
+  sendReaction(r: string, e: string) { this.send(r, 'reaction', { emoji: e }); }
+  sendHandRaise(r: string, i: boolean) { this.send(r, 'hand-raise', { isRaised: i }); }
+  sendSystemLog(r: string, m: string, t: any = 'info') { this.send(r, 'system-log', { message: m, type: t }); }
+  sendMediaSync(r: string, d: any) { this.send(r, 'media-sync', d); }
+  sendCaption(r: string, t: string) { this.send(r, 'caption-update', { text: t }); }
+  sendPollUpdate(r: string, p: any) { this.send(r, 'poll-update', { poll: p }); }
+  sendPollVote(r: string, p: string, o: string) { this.send(r, 'poll-vote', { pollId: p, optionId: o }); }
+  sendDrawLine(r: string, d: any) { this.send(r, 'draw-line', d); }
+  sendClearBoard(r: string) { this.send(r, 'clear-board', {}); }
+  sendNoteUpdate(r: string, c: string) { this.send(r, 'sync-notes', { content: c }); }
 }
 
 export const signaling = new PeerSignalingService();

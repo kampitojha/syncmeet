@@ -14,6 +14,8 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
   const [lineWidth, setLineWidth] = useState(4);
   const [prevPos, setPrevPos] = useState<{ x: number, y: number } | null>(null);
 
+  const [cursorPos, setCursorPos] = useState<{ x: number, y: number } | null>(null);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -70,27 +72,34 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
     setPrevPos(currPos);
   };
 
-  const startDrawing = (e: any) => {
+  const updateCursor = (e: any) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
     const y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
-    setIsDrawing(true);
-    setPrevPos({ x, y });
+    setCursorPos({ x, y });
+    return { x, y };
+  };
+
+  const startDrawing = (e: any) => {
+    const pos = updateCursor(e);
+    if (pos) {
+        setIsDrawing(true);
+        setPrevPos(pos);
+    }
   };
 
   const draw = (e: any) => {
-    if (!isDrawing) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
-    const y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
-    drawLine({ x, y }, { color, width: lineWidth }, true);
+    const pos = updateCursor(e);
+    if (!isDrawing || !pos) return;
+    drawLine(pos, { color, width: lineWidth }, true);
   };
 
-  const stopDrawing = () => { setIsDrawing(false); setPrevPos(null); };
+  const stopDrawing = () => { 
+    setIsDrawing(false); 
+    setPrevPos(null); 
+  };
 
   const clearBoard = (emit: boolean = true) => {
     const canvas = canvasRef.current;
@@ -150,8 +159,41 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
             <div className="w-[1px] h-8 bg-white/10 mx-1" />
             <button onClick={exportBoard} className="p-2 rounded-xl bg-cyan-400 text-black hover:bg-white transition-all shadow-lg shadow-cyan-400/20" title="Export Board"> <Download size={20} strokeWidth={2.5} /> </button>
         </div>
-        <div className="flex-1 relative cursor-crosshair">
-            <canvas ref={canvasRef} onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing} onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={stopDrawing} className="w-full h-full block touch-none" />
+        <div 
+            className="flex-1 relative overflow-hidden" 
+            onMouseMove={updateCursor} 
+            onMouseLeave={() => setCursorPos(null)}
+            style={{ cursor: 'none' }}
+        >
+            <canvas 
+                ref={canvasRef} 
+                onMouseDown={startDrawing} 
+                onMouseMove={draw} 
+                onMouseUp={stopDrawing} 
+                onMouseLeave={stopDrawing} 
+                onTouchStart={startDrawing} 
+                onTouchMove={draw} 
+                onTouchEnd={stopDrawing} 
+                className="w-full h-full block touch-none" 
+            />
+            
+            {/* Visual Virtual Cursor */}
+            {cursorPos && (
+                <div 
+                    className="absolute pointer-events-none transition-transform duration-75 z-[65] rounded-full border border-white/40 shadow-xl flex items-center justify-center"
+                    style={{ 
+                        left: cursorPos.x, 
+                        top: cursorPos.y, 
+                        width: Math.max(lineWidth, 8), 
+                        height: Math.max(lineWidth, 8),
+                        transform: 'translate(-50%, -50%)',
+                        backgroundColor: color === '#0a0a0a' ? 'rgba(255,255,255,0.1)' : color
+                    }}
+                >
+                    {color === '#0a0a0a' && <div className="w-1 h-1 bg-white rounded-full" />}
+                </div>
+            )}
+
              <div className="absolute bottom-8 right-10 glass-card p-2 px-5 rounded-2xl border border-white/5 text-[9px] font-black uppercase tracking-[0.3em] italic text-white/20 pointer-events-none"> MESH_DRAW_ENGINE_v4 </div>
         </div>
     </div>

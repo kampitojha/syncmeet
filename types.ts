@@ -17,9 +17,19 @@ export type SignalPayload = {
     | 'poll-update'
     | 'poll-vote'
     | 'screen-status'
-    | 'typing';
+    | 'typing'
+    | 'draw-line'
+    | 'clear-board'
+    | 'sync-notes';
   payload: any;
 };
+
+export interface DrawLinePayload {
+  prev: { x: number, y: number };
+  curr: { x: number, y: number };
+  color: string;
+  width: number;
+}
 
 export interface ChatMessage {
   senderId: string;
