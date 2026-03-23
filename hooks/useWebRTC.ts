@@ -34,7 +34,6 @@ export const useWebRTC = (roomId: string, userName: string) => {
   const [isMicOn, setIsMicOn] = useState(true);
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string>('');
 
   // Mesh Refs
   const peerConnections = useRef<Record<string, RTCPeerConnection>>({});
@@ -43,33 +42,29 @@ export const useWebRTC = (roomId: string, userName: string) => {
   const localAudioTrack = useRef<MediaStreamTrack | null>(null);
   const handshakeInterval = useRef<number | null>(null);
 
-  // --- Utility: Set Bitrate Limit for Stability ---
+  // --- Utility: Set Bitrate Limit ---
   const setBitrateLimit = async (pc: RTCPeerConnection, maxBitrate: number) => {
-    const senders = pc.getSenders();
-    for (const sender of senders) {
-        if (sender.track?.kind === 'video') {
-            const parameters = sender.getParameters();
-            if (!parameters.encodings) parameters.encodings = [{}];
-            parameters.encodings[0].maxBitrate = maxBitrate;
-            try {
+    try {
+        const senders = pc.getSenders();
+        for (const sender of senders) {
+            if (sender.track?.kind === 'video') {
+                const parameters = sender.getParameters();
+                if (!parameters.encodings) parameters.encodings = [{}];
+                parameters.encodings[0].maxBitrate = maxBitrate;
                 await sender.setParameters(parameters);
-                console.log(`📉 Bitrate set to ${maxBitrate/1000}kbps`);
-            } catch (e) {
-                console.warn("Bitrate adjustment failed:", e);
             }
         }
-    }
+    } catch (e) {}
   };
 
   // --- Connection Core ---
   const createPeerConnection = useCallback((peerId: string) => {
-    if (peerConnections.current[peerId]) {
-        return peerConnections.current[peerId];
-    }
+    if (peerConnections.current[peerId]) return peerConnections.current[peerId];
 
-    console.log(`🛠️ Connecting to Peer: ${peerId}`);
+    console.log(`🛠️ Creating PC for Peer: ${peerId}`);
     const pc = new RTCPeerConnection(rtcConfig);
     peerConnections.current[peerId] = pc;
+    iceCandidatesQueues.current[peerId] = [];
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
@@ -82,15 +77,11 @@ export const useWebRTC = (roomId: string, userName: string) => {
             ...prev,
             [peerId]: { ...prev[peerId], connectionState: pc.iceConnectionState }
         }));
-        
-        if (pc.iceConnectionState === 'failed') {
-            console.warn(`❌ Peer ${peerId} failed, re-negotiating...`);
-            pc.restartIce();
-        }
+        if (pc.iceConnectionState === 'failed') pc.restartIce();
     };
 
     pc.ontrack = (event) => {
-      console.log(`📹 Remote Stream from ${peerId}`);
+      console.log(`📹 Track received from ${peerId}`);
       const stream = event.streams[0] || new MediaStream([event.track]);
       setRemotePeers(prev => ({
           ...prev,
@@ -98,6 +89,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
       }));
     };
 
+    // Add local tracks
     if (localStream) {
         localStream.getTracks().forEach(track => {
             pc.addTrack(track, localStream);
@@ -107,21 +99,19 @@ export const useWebRTC = (roomId: string, userName: string) => {
     return pc;
   }, [roomId, localStream]);
 
-  // --- Handshake ---
   const startHandshake = useCallback(() => {
     if (handshakeInterval.current) clearInterval(handshakeInterval.current);
     signaling.joinRoom(roomId, userName);
     handshakeInterval.current = window.setInterval(() => {
         signaling.joinRoom(roomId, userName);
-    }, 1500); 
+    }, 2000); 
   }, [roomId, userName]);
 
-  // --- Main Actions ---
   const joinRoom = async () => {
     if (!roomId || !userName) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: 640, height: 480, frameRate: 24 }, // Locked high-stability res
+        video: { width: 640, height: 480, frameRate: 24 }, 
         audio: { echoCancellation: true, noiseSuppression: true }
       });
       localVideoTrack.current = stream.getVideoTracks()[0];
@@ -129,10 +119,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
       setLocalStream(stream);
       setIsInRoom(true);
       startHandshake();
-    } catch (err) {
-      console.error("Media Error:", err);
-      alert("System access required for protocol.");
-    }
+    } catch (err) { alert("Access Denied: Camera/Mic required."); }
   };
 
   const leaveRoom = useCallback(() => {
@@ -151,35 +138,27 @@ export const useWebRTC = (roomId: string, userName: string) => {
     const handleJoin = async (payload: SignalPayload) => {
       if (payload.roomId !== roomId || payload.senderId === signaling.userId) return; 
 
-      // Initialize peer object if not exists
       if (!remotePeers[payload.senderId]) {
           setRemotePeers(prev => ({
               ...prev,
               [payload.senderId]: {
                   id: payload.senderId,
-                  userName: payload.payload.name || "PEER-02",
+                  userName: payload.payload.name || "PEER",
                   stream: null,
-                  isMicOn: true,
-                  isCameraOn: true,
-                  isScreenSharing: false,
-                  connectionState: 'new',
-                  isTyping: false,
-                  networkQuality: 4
+                  isMicOn: true, isCameraOn: true, isScreenSharing: false,
+                  connectionState: 'new', isTyping: false, networkQuality: 4
               }
           }));
       }
 
-      const isCaller = signaling.userId > payload.senderId;
-      if (isCaller) {
+      // Caller Logic
+      if (signaling.userId > payload.senderId) {
         const pc = createPeerConnection(payload.senderId);
         if (pc.signalingState !== 'stable') return;
-        try {
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            signaling.sendOffer(roomId, payload.senderId, offer);
-            // Limit outbound bitrate to 500kbps per peer for stability
-            await setBitrateLimit(pc, 500000);
-        } catch (e) { console.error(e); }
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        signaling.sendOffer(roomId, payload.senderId, offer);
+        await setBitrateLimit(pc, 500000);
       }
     };
 
@@ -187,12 +166,22 @@ export const useWebRTC = (roomId: string, userName: string) => {
       if (payload.roomId !== roomId || payload.payload.targetUserId !== signaling.userId) return;
       const pc = createPeerConnection(payload.senderId);
       
+      const offer = new RTCSessionDescription(payload.payload.sdp);
+      const isPolite = signaling.userId < payload.senderId;
+
       if (pc.signalingState !== 'stable') {
-           if (signaling.userId > payload.senderId) return; // Wait for rollback
+           if (!isPolite) return;
            await pc.setLocalDescription({type: "rollback"});
       }
       
-      await pc.setRemoteDescription(new RTCSessionDescription(payload.payload.sdp));
+      await pc.setRemoteDescription(offer);
+      
+      // Process Queued ICE
+      while (iceCandidatesQueues.current[payload.senderId]?.length > 0) {
+          const candidate = iceCandidatesQueues.current[payload.senderId].shift();
+          if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {});
+      }
+
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       signaling.sendAnswer(roomId, payload.senderId, answer);
@@ -204,35 +193,43 @@ export const useWebRTC = (roomId: string, userName: string) => {
       const pc = peerConnections.current[payload.senderId];
       if (pc && pc.signalingState === 'have-local-offer') {
           await pc.setRemoteDescription(new RTCSessionDescription(payload.payload.sdp));
+          // Process Queued ICE
+          while (iceCandidatesQueues.current[payload.senderId]?.length > 0) {
+              const candidate = iceCandidatesQueues.current[payload.senderId].shift();
+              if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {});
+          }
       }
     };
 
-    const handleIce = (payload: SignalPayload) => {
-      const pc = peerConnections.current[payload.senderId];
-      if (pc && pc.remoteDescription) {
-          pc.addIceCandidate(new RTCIceCandidate(payload.payload.candidate)).catch(e => {});
+    const handleIce = async (payload: SignalPayload) => {
+      if (payload.roomId !== roomId) return;
+      const peerId = payload.senderId;
+      const candidate = payload.payload.candidate;
+      const pc = peerConnections.current[peerId];
+
+      if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {});
+      } else {
+          if (!iceCandidatesQueues.current[peerId]) iceCandidatesQueues.current[peerId] = [];
+          iceCandidatesQueues.current[peerId].push(candidate);
       }
     };
 
     const handleMediaStatus = (payload: SignalPayload) => {
-        setRemotePeers(prev => ({
-            ...prev,
-            [payload.senderId]: {
-                ...prev[payload.senderId],
-                [payload.payload.kind === 'audio' ? 'isMicOn' : 'isCameraOn']: payload.payload.enabled
-            }
-        }));
-    };
-
-    const handleTyping = (payload: SignalPayload) => {
-        setRemotePeers(prev => ({
-            ...prev,
-            [payload.senderId]: { ...prev[payload.senderId], isTyping: payload.payload.isTyping }
-        }));
+        setRemotePeers(prev => {
+            if (!prev[payload.senderId]) return prev;
+            return {
+                ...prev,
+                [payload.senderId]: {
+                    ...prev[payload.senderId],
+                    [payload.payload.kind === 'audio' ? 'isMicOn' : 'isCameraOn']: payload.payload.enabled
+                }
+            };
+        });
     };
 
     const handleLeave = (payload: SignalPayload) => {
-        const peerId = payload.payload.senderId;
+        const peerId = payload.payload?.senderId || payload.senderId;
         if (peerConnections.current[peerId]) {
             peerConnections.current[peerId].close();
             delete peerConnections.current[peerId];
@@ -249,7 +246,6 @@ export const useWebRTC = (roomId: string, userName: string) => {
     signaling.on('answer', handleAnswer);
     signaling.on('ice-candidate', handleIce);
     signaling.on('media-status', handleMediaStatus);
-    signaling.on('typing', handleTyping);
     signaling.on('leave', handleLeave);
 
     return () => {
@@ -258,18 +254,17 @@ export const useWebRTC = (roomId: string, userName: string) => {
       signaling.off('answer', handleAnswer);
       signaling.off('ice-candidate', handleIce);
       signaling.off('media-status', handleMediaStatus);
-      signaling.off('typing', handleTyping);
       signaling.off('leave', handleLeave);
     };
   }, [roomId, createPeerConnection, remotePeers]);
 
   return {
-    isInRoom,
-    localStream,
+    isInRoom, localStream,
     remotePeers: Object.values(remotePeers),
     isMicOn, isCameraOn, isScreenSharing,
-    statusMessage,
-    joinRoom, leaveRoom, manualReconnect: () => {},
+    joinRoom, leaveRoom, manualReconnect: () => {
+        Object.values(peerConnections.current).forEach(pc => pc.restartIce());
+    },
     toggleMic: () => {
         if(localAudioTrack.current) {
             localAudioTrack.current.enabled = !localAudioTrack.current.enabled;
@@ -284,9 +279,6 @@ export const useWebRTC = (roomId: string, userName: string) => {
             signaling.sendMediaStatus(roomId, 'video', localVideoTrack.current.enabled);
         }
     },
-    toggleScreenShare: async () => {
-        // Simple screen share trigger (requires mesh sender update logic)
-        alert("SCREEN_SHARE_FEATURE: Mesh-Optimization in Progress.");
-    }
+    toggleScreenShare: () => {}
   };
 };
