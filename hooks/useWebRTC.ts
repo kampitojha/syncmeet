@@ -5,7 +5,9 @@ import { SignalPayload } from '../types';
 const rtcConfig: RTCConfiguration = {
   iceServers: [
     { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] },
-    { urls: ['stun:stun.l.google.com:19302', 'stun:stun3.l.google.com:19302'] },
+    { urls: ['stun:stun3.l.google.com:19302', 'stun:stun4.l.google.com:19302'] },
+    { urls: ['stun:stun.l.google.com:19302', 'stun:stun.services.mozilla.com'] },
+    { urls: ['stun:iphone-stun.strato-iphone.de:3478', 'stun:stun.ekiga.net'] },
     { urls: 'stun:global.stun.twilio.com:3478' }
   ],
   iceCandidatePoolSize: 10,
@@ -89,6 +91,8 @@ export const useWebRTC = (roomId: string, userName: string) => {
             [peerId]: { ...prev[peerId], connectionState: state }
         }));
         
+        signaling.emit('system-log', { message: `ICE_PROTOCOL: [${peerId}] State changed to ${state.toUpperCase()}`, type: state === 'connected' ? 'success' : 'info' });
+
         if (state === 'failed' || state === 'disconnected') {
             console.warn(`Connection to ${peerId} failed. Attempting restart...`);
             pc.restartIce();
@@ -171,13 +175,15 @@ export const useWebRTC = (roomId: string, userName: string) => {
         setLocalStream(stream);
     }
     
+    const normalizedRoomId = roomId.trim().toLowerCase();
     setIsInRoom(true);
-    signaling.joinRoom(roomId, userName);
+    signaling.joinRoom(normalizedRoomId, userName);
+    signaling.emit('system-log', { message: `MESH_PROTOCOL: Joining node pool [${normalizedRoomId}]`, type: 'info' });
     
     if (handshakeInterval.current) clearInterval(handshakeInterval.current);
     handshakeInterval.current = window.setInterval(() => {
-        signaling.joinRoom(roomId, userName);
-    }, 1500);
+        signaling.joinRoom(normalizedRoomId, userName);
+    }, 3000);
   };
 
   const leaveRoom = useCallback(() => {
@@ -233,8 +239,10 @@ export const useWebRTC = (roomId: string, userName: string) => {
 
   useEffect(() => {
     const handleJoin = async (p: SignalPayload) => {
-      if (p.roomId !== roomId || p.senderId === signaling.userId) return; 
+      const currentRoom = roomId.trim().toLowerCase();
+      if (p.roomId.trim().toLowerCase() !== currentRoom || p.senderId === signaling.userId) return; 
       
+      signaling.emit('system-log', { message: `MESH_NODE_DISCOVERED: Signaling with ${p.payload.name || p.senderId}`, type: 'success' });
       const pc = createPeerConnection(p.senderId, p.payload.name || "PEER");
       
       // Only the "polite" peer (higher ID) initiates the offer to avoid glare
@@ -248,7 +256,8 @@ export const useWebRTC = (roomId: string, userName: string) => {
     };
 
     const handleOffer = async (p: SignalPayload) => {
-      if (p.roomId !== roomId || p.payload.targetUserId !== signaling.userId) return;
+      const currentRoom = roomId.trim().toLowerCase();
+      if (p.roomId.trim().toLowerCase() !== currentRoom || p.payload.targetUserId !== signaling.userId) return;
       const pc = createPeerConnection(p.senderId, p.senderName || "PEER");
       
       const isPolite = signaling.userId < p.senderId;
@@ -273,7 +282,8 @@ export const useWebRTC = (roomId: string, userName: string) => {
     };
 
     const handleAnswer = async (p: SignalPayload) => {
-      if (p.roomId !== roomId || p.payload.targetUserId !== signaling.userId) return;
+      const currentRoom = roomId.trim().toLowerCase();
+      if (p.roomId.trim().toLowerCase() !== currentRoom || p.payload.targetUserId !== signaling.userId) return;
       const pc = peerConnections.current[p.senderId];
       if (pc && pc.signalingState === 'have-local-offer') {
           await pc.setRemoteDescription(new RTCSessionDescription(p.payload.sdp));
@@ -286,7 +296,8 @@ export const useWebRTC = (roomId: string, userName: string) => {
     };
 
     const handleIce = async (p: SignalPayload) => {
-      if (p.roomId !== roomId) return;
+      const currentRoom = roomId.trim().toLowerCase();
+      if (p.roomId.trim().toLowerCase() !== currentRoom) return;
       const pc = peerConnections.current[p.senderId];
       if (pc && pc.remoteDescription) {
           await pc.addIceCandidate(new RTCIceCandidate(p.payload.candidate)).catch(e => {});

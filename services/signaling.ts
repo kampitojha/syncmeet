@@ -1,6 +1,18 @@
 import { joinRoom, selfId, Room } from 'trystero';
 
-const config = { appId: 'syncmeet-p2p' };
+// --- MESH_PROTOCOL_V4: Ultra-Discovery signaling pool ---
+const config = { 
+  appId: 'sync-meet-industrial-v4', // Fresh namespace to clear any legacy state
+  trackerUrls: [
+    'wss://tracker.openwebtorrent.com',
+    'wss://tracker.btorrent.xyz',
+    'wss://tracker.files.fm:7073/announce',
+    'wss://tracker.webtorrent.dev',
+    'wss://tracker.fastcast.nz',
+    'wss://tracker.novage.com.ua:8443/announce', // Alternative global tracker
+    'wss://tracker.gbitt.info:443/announce'       // High availability tracker
+  ]
+};
 
 type Listener = (data: any) => void;
 
@@ -32,7 +44,13 @@ class PeerSignalingService {
   }
 
   joinRoom(roomId: string, name: string) {
-    if (!this.rooms[roomId]) {
+    // Robust room re-entry logic
+    if (this.rooms[roomId]) {
+        console.log(`MESH_PROTOCOL: Signaling already active for ${roomId}`);
+        return;
+    }
+
+    try {
       const room = joinRoom(config, roomId);
       this.rooms[roomId] = room;
 
@@ -53,8 +71,21 @@ class PeerSignalingService {
         });
       });
 
-      room.onPeerJoin((peerId: string) => this.emit('peer-joined', { peerId }));
-      room.onPeerLeave((peerId: string) => this.emit('leave', { senderId: peerId }));
+      room.onPeerJoin((peerId: string) => {
+          console.log(`MESH_PROTOCOL: Peer ${peerId} discovered on tracker mesh`);
+          this.emit('peer-joined', { peerId });
+          // Immediate broadcast after joining to settle presence
+          setTimeout(() => this.send(roomId, 'join', { name }), 500);
+      });
+
+      room.onPeerLeave((peerId: string) => {
+          console.log(`MESH_PROTOCOL: Peer ${peerId} lost contact`);
+          this.emit('leave', { senderId: peerId });
+      });
+
+    } catch (error) {
+        console.error("MESH_PROTOCOL_CRITICAL_FAILURE", error);
+        this.emit('system-log', { message: `PROTOCOL_JOIN_FAILURE: Check network firewall`, type: 'error' });
     }
   }
 
@@ -68,7 +99,11 @@ class PeerSignalingService {
   send(roomId: string, type: string, payload: any) {
     const action = this.actions[`${roomId}_${type}`];
     if (action) {
-      action(payload);
+      try {
+        action(payload);
+      } catch (e) {
+        console.warn(`SIGNAL_MESSAGING_FAILURE: [${type}]`, e);
+      }
     }
   }
 
