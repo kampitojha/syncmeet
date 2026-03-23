@@ -93,59 +93,59 @@ const App: React.FC = () => {
   // --- Landing Screen ---
   if (!isInRoom) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-gray-900 via-gray-900 to-indigo-950 animate-gradient relative overflow-hidden">
-        {/* Background Blobs */}
-        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-600/20 rounded-full blur-3xl" />
+      <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-[#ffdf00] relative overflow-hidden">
+        {/* Decorative Grid Lines */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 0)', backgroundSize: '40px 40px' }} />
+        <div className="absolute top-10 left-10 w-32 h-32 border-8 border-black rotate-12 -z-10" />
+        <div className="absolute bottom-10 right-10 w-48 h-48 border-8 border-black -rotate-6 -z-10" />
 
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-md relative z-10 transition-all hover:shadow-indigo-500/10 hover:border-white/20">
-          <div className="flex flex-col items-center mb-8">
-            <div className="bg-gradient-to-tr from-indigo-500 to-purple-500 p-4 rounded-2xl shadow-lg mb-6 transform rotate-3 hover:rotate-6 transition-transform">
-              <Video className="text-white w-8 h-8" />
+        <div className="brut-border-lg bg-white p-8 md:p-12 w-full max-w-md relative z-10">
+          <div className="flex flex-col items-center mb-10">
+            <div className="bg-black p-4 mb-6 shadow-[4px_4px_0px_0px_rgba(255,223,0,1)]">
+              <Video className="text-[#ffdf00] w-10 h-10" />
             </div>
-            <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">SyncMeet</h1>
-            <p className="text-gray-400 text-center">Premium, low-latency video collaboration.</p>
+            <h1 className="text-4xl md:text-6xl font-black text-black mb-0 tracking-tighter uppercase italic -skew-x-6">SyncMeet</h1>
+            <p className="text-black font-bold uppercase tracking-widest text-sm bg-[#ffdf00] px-2 mt-2">P2P VIDEO PROTOCOL</p>
           </div>
           
-          <form onSubmit={handleJoin} className="space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">Display Name</label>
+          <form onSubmit={handleJoin} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-sm font-black text-black uppercase tracking-tighter">Your Name_</label>
               <input 
                 type="text" 
                 value={userName} 
                 onChange={(e) => setUserName(e.target.value)}
-                className="w-full bg-gray-900/50 border border-gray-700 text-white rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all placeholder-gray-600"
-                placeholder="Enter your name"
+                className="brut-input w-full text-lg"
+                placeholder="TYPE_HERE"
                 required
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">Room ID</label>
+            <div className="space-y-2">
+              <label className="text-sm font-black text-black uppercase tracking-tighter">Room ID_</label>
               <div className="relative">
                 <input 
                   type="text" 
                   value={roomId} 
                   onChange={(e) => setRoomId(e.target.value)}
-                  className="w-full bg-gray-900/50 border border-gray-700 text-white rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all placeholder-gray-600"
-                  placeholder="e.g. daily-standup"
+                  className="brut-input w-full text-lg"
+                  placeholder="ROOM_NAME"
                   required
                 />
-                <div className="absolute right-3 top-3.5 text-gray-500 pointer-events-none">
-                  <Sparkles size={18} />
-                </div>
               </div>
             </div>
             <button 
               type="submit" 
-              className="group w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 mt-4"
+              className="brut-btn w-full py-5 text-2xl flex items-center justify-center gap-3 active:bg-black active:text-[#ffdf00]"
             >
-              Join Session
-              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              INITIALIZE_
+              <ArrowRight size={24} strokeWidth={3} />
             </button>
           </form>
 
-          <div className="mt-8 text-xs text-gray-500 text-center border-t border-gray-800 pt-4">
-            <p>Secure • Peer-to-Peer • No Sign-up Required</p>
+          <div className="mt-10 pt-6 border-t-[4px] border-black flex flex-wrap justify-center gap-4 text-[10px] font-bold uppercase">
+             <span>• SECURE</span>
+             <span>• P2P</span>
+             <span>• NO_LOGS</span>
           </div>
         </div>
       </div>
@@ -154,61 +154,75 @@ const App: React.FC = () => {
 
   // --- Room View ---
   return (
-    <div className="h-[100dvh] w-full bg-[#030712] flex flex-col overflow-hidden relative">
+    <div className="h-[100dvh] w-full bg-[#f0f0f0] flex flex-col overflow-hidden relative font-bold">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000), linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000)', backgroundPosition: '0 0, 20px 20px', backgroundSize: '40px 40px' }} />
       
       {/* Navbar */}
-      <div className="absolute top-0 left-0 right-0 z-50 p-4 flex justify-between items-start pointer-events-none">
-        <div className="pointer-events-auto flex items-center gap-3 bg-gray-900/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/5 shadow-lg">
+      <div className="absolute top-4 md:top-8 left-4 md:left-8 right-4 md:right-8 z-50 flex flex-wrap gap-4 justify-between items-start pointer-events-none">
+        <div className="pointer-events-auto flex items-center gap-3 bg-[#ffdf00] p-2 md:p-3 brut-border">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-sm font-semibold text-gray-200 tracking-tight">{roomId}</span>
+            <div className="w-3 md:w-4 h-3 md:h-4 rounded-none bg-black animate-pulse" />
+            <span className="text-sm md:text-lg font-black uppercase text-black italic">ROOM: {roomId}</span>
           </div>
-          <div className="h-4 w-px bg-gray-700" />
+          <div className="h-4 md:h-6 w-1 bg-black" />
           <button 
             onClick={copyRoomId} 
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors group"
+            className="flex items-center gap-1.5 text-black hover:bg-black hover:text-white px-2 py-0.5 transition-colors uppercase text-[10px] md:text-xs"
           >
-            <Copy size={12} className="group-hover:scale-110 transition-transform" />
-            <span>Copy</span>
+            <Copy size={12} strokeWidth={3} />
+            <span>COPY_ID</span>
           </button>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex relative overflow-hidden">
+      <div className="flex-1 flex flex-col relative overflow-hidden pt-16 md:pt-0">
         
-        {/* Main Grid: Adapts based on Active Tool */}
+        {/* Main Grid */}
         <div 
           className={`
-            relative flex-1 p-4 md:p-6 transition-all duration-500 ease-in-out flex flex-col
-            ${activeTool !== 'none' ? 'mr-0 md:mr-[360px]' : ''}
+            relative flex-1 p-4 md:p-10 transition-all duration-300 ease-[cubic-bezier(0.87,0,0.13,1)] flex flex-col
+            ${activeTool !== 'none' ? 'md:mr-[400px]' : ''}
           `}
         >
-            {/* If Whiteboard/Notes are active, they take center stage on Mobile, or squeeze Video on Desktop */}
+            {/* Whiteboard/Notes Overlay */}
             {activeTool === 'whiteboard' && (
-                <div className="absolute inset-4 md:inset-6 z-20 animate-fade-in">
+                <div className="absolute inset-4 md:inset-10 z-[60] animate-fade-in brut-border-lg bg-white overflow-hidden">
                     <Whiteboard roomId={roomId} />
+                    <button 
+                        onClick={() => setActiveTool('none')}
+                        className="absolute top-2 right-2 md:top-4 md:right-4 z-[70] p-1.5 md:p-2 border-[3px] md:border-4 border-black bg-white hover:bg-[#ffdf00]"
+                    >
+                        <ArrowRight className="rotate-180 w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
+                    </button>
                 </div>
             )}
 
             {activeTool === 'notes' && (
-                <div className="absolute inset-4 md:inset-6 z-20 animate-fade-in">
+                <div className="absolute inset-4 md:inset-10 z-[60] animate-fade-in brut-border-lg bg-white overflow-hidden">
                     <CollaborativeNotes roomId={roomId} />
+                    <button 
+                        onClick={() => setActiveTool('none')}
+                        className="absolute top-2 right-2 md:top-4 md:right-4 z-[70] p-1.5 md:p-2 border-[3px] md:border-4 border-black bg-white hover:bg-[#ffdf00]"
+                    >
+                        <ArrowRight className="rotate-180 w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
+                    </button>
                 </div>
             )}
 
-            {/* Video Grid - Hides if tool is active on mobile, or shrinks on desktop */}
+            {/* Video Grid */}
             <div className={`
-                grid gap-4 md:gap-6 w-full h-full max-h-[1200px] mx-auto transition-all duration-500
+                grid gap-4 md:gap-8 w-full h-full max-h-[1400px] mx-auto transition-all duration-300
                 ${remoteStream 
                     ? 'grid-rows-2 md:grid-rows-1 md:grid-cols-2' 
-                    : 'grid-cols-1 max-w-4xl h-full md:h-auto md:aspect-video' 
+                    : 'grid-cols-1 max-w-5xl h-full md:h-auto md:aspect-video' 
                 }
-                ${(activeTool === 'whiteboard' || activeTool === 'notes') ? 'hidden md:grid opacity-20 pointer-events-none' : ''}
+                ${(activeTool === 'whiteboard' || activeTool === 'notes') ? 'hidden md:grid opacity-10 grayscale scale-[0.98]' : ''}
             `}>
             
             {/* Local Video */}
-            <div className="relative w-full h-full min-h-0">
+            <div className="relative w-full h-full min-h-0 brut-tile">
               <VideoTile 
                 stream={localStream} 
                 isLocal={true} 
@@ -222,10 +236,10 @@ const App: React.FC = () => {
 
             {/* Remote Video */}
             {remoteStream ? (
-               <div className="relative w-full h-full min-h-0">
+               <div className="relative w-full h-full min-h-0 brut-tile">
                 <VideoTile 
                   stream={remoteStream} 
-                  username={remoteUserName || "Peer"} 
+                  username={remoteUserName || "PEER-01"} 
                   isAudioEnabled={remoteIsMicOn}
                   isVideoEnabled={remoteIsCameraOn}
                   isTyping={isRemoteTyping}
@@ -233,32 +247,18 @@ const App: React.FC = () => {
                   networkQuality={networkQuality}
                   connectionState={connectionState}
                   reactions={reactions}
-                  statusMessage={statusMessage} // Pass status
-                  onRetry={manualReconnect} // Manual Retry
+                  statusMessage={statusMessage}
+                  onRetry={manualReconnect}
                 />
               </div>
             ) : (
               // Waiting State
-              <div className="hidden md:flex flex-col items-center justify-center bg-gray-900/40 backdrop-blur-sm rounded-3xl border border-gray-800 border-dashed animate-fade-in">
-                <div className="bg-gray-800/50 p-4 rounded-full mb-4 animate-pulse">
-                  <Users className="text-indigo-400" size={32} />
+              <div className="hidden md:flex flex-col items-center justify-center bg-white brut-border-lg border-dashed animate-fade-in px-4 text-center">
+                <div className="bg-[#ffdf00] p-4 md:p-6 brut-border mb-6">
+                  <Users className="text-black w-8 h-8 md:w-12 md:h-12" strokeWidth={3} />
                 </div>
-                <h3 className="text-gray-300 text-lg font-medium mb-1">Waiting for others...</h3>
-                <p className="text-gray-500 text-sm">Share the room ID <span className="text-indigo-400 font-mono bg-indigo-500/10 px-1.5 py-0.5 rounded">{roomId}</span> to invite.</p>
-                {statusMessage && (
-                  <div className="mt-4 flex flex-col items-center">
-                    <p className="text-yellow-500 text-xs animate-pulse mb-2">{statusMessage}</p>
-                     {/* Show manual retry if taking too long */}
-                    {(statusMessage.includes('failed') || statusMessage.includes('Searching')) && (
-                        <button 
-                            onClick={manualReconnect}
-                            className="flex items-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-white/10 text-white px-3 py-1.5 rounded-lg text-xs transition-colors"
-                        >
-                            <RefreshCw size={12} /> Retry
-                        </button>
-                    )}
-                  </div>
-                )}
+                <h3 className="text-black text-xl md:text-3xl font-black uppercase italic -skew-x-3 mb-2 leading-tight">SYSTEM_IDLE: AWAITING_PEER</h3>
+                <p className="text-black font-bold uppercase text-xs md:text-sm border-2 border-black px-3 py-1 bg-[#ffdf00] mt-2">LINK: {roomId}</p>
               </div>
             )}
           </div>
@@ -267,8 +267,8 @@ const App: React.FC = () => {
         {/* Sidebar Panel (Chat) */}
         <div 
           className={`
-            absolute top-0 right-0 h-full bg-[#0b101b]/95 backdrop-blur-xl border-l border-white/5 shadow-2xl z-40 transition-transform duration-500 ease-in-out transform
-            w-full md:w-[360px]
+            fixed md:absolute inset-0 md:inset-auto md:top-0 md:right-0 md:h-full bg-white border-l-[6px] border-black shadow-[-8px_0px_0px_0px_rgba(0,0,0,1)] z-[100] transition-transform duration-300 ease-[cubic-bezier(0.87,0,0.13,1)]
+            w-full md:w-[400px]
             ${activeTool === 'chat' ? 'translate-x-0' : 'translate-x-full'}
           `}
         >
@@ -285,8 +285,8 @@ const App: React.FC = () => {
       </div>
 
       {/* Floating Controls Dock */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-fit px-4 pointer-events-none">
-        <div className="pointer-events-auto shadow-2xl shadow-black/50 rounded-full">
+      <div className="fixed bottom-6 md:bottom-10 left-1/2 transform -translate-x-1/2 z-[80] w-full max-w-fit px-4 md:px-6 pointer-events-none">
+        <div className="pointer-events-auto brut-border bg-white p-2">
           <Controls 
             isMicOn={isMicOn}
             isCameraOn={isCameraOn}

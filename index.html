@@ -5,62 +5,104 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>SyncMeet</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
+      :root {
+        --neo-bg: #ffffff;
+        --neo-accent: #ffdf00; /* Vibrant Yellow */
+        --neo-border: #000000;
+        --neo-shadow: #000000;
+      }
+
       body {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        background-color: #030712; /* gray-950 */
-        color: white;
-        overflow: hidden; /* Prevent body scroll, handle in app */
-        overscroll-behavior: none; /* Prevent pull-to-refresh on mobile */
+        font-family: 'Space Grotesk', sans-serif;
+        background-color: var(--neo-bg);
+        color: #000;
+        overflow: hidden;
+        overscroll-behavior: none;
       }
       
-      /* Smooth Gradient Background Animation */
-      .animate-gradient {
-        background-size: 300%;
-        -webkit-animation: gradient 15s ease infinite;
-        animation: gradient 15s ease infinite;
+      .brut-border {
+        border: 4px solid var(--neo-border);
+        box-shadow: 4px 4px 0px 0px var(--neo-shadow);
       }
 
-      @keyframes gradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+      .brut-border-lg {
+        border: 6px solid var(--neo-border);
+        box-shadow: 8px 8px 0px 0px var(--neo-shadow);
       }
 
-      /* Floating Emoji Animation */
+      .brut-btn {
+        background-color: var(--neo-accent);
+        border: 4px solid var(--neo-border);
+        box-shadow: 4px 4px 0px 0px var(--neo-shadow);
+        transition: all 0.1s;
+        font-weight: 700;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .brut-btn:active {
+        box-shadow: 0px 0px 0px 0px var(--neo-shadow);
+        transform: translate(4px, 4px);
+      }
+
+      .brut-input {
+        background-color: #fff;
+        border: 4px solid var(--neo-border);
+        padding: 1rem;
+        font-family: 'JetBrains Mono', monospace;
+        outline: none;
+      }
+
+      .brut-tile {
+        background-color: #fff;
+        border: 4px solid var(--neo-border);
+        box-shadow: 8px 8px 0px 0px var(--neo-shadow);
+      }
+
+      /* Floating Emoji Animation for Brutalism */
       @keyframes float-up {
-        0% { transform: translateY(0) scale(0.5); opacity: 0; }
+        0% { transform: translateY(0) scale(0.5) rotate(0deg); opacity: 0; }
         10% { opacity: 1; }
-        100% { transform: translateY(-200px) scale(1.5); opacity: 0; }
+        100% { transform: translateY(-200px) scale(2) rotate(20deg); opacity: 0; }
       }
       .animate-float-up {
-        animation: float-up 2s ease-out forwards;
+        animation: float-up 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+
+      @keyframes infinite-scroll {
+        from { transform: translateX(0); }
+        to { transform: translateX(-50%); }
+      }
+      .animate-infinite-scroll {
+        display: inline-flex;
+        animation: infinite-scroll 10s linear infinite;
       }
 
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
+        width: 12px;
+        height: 12px;
       }
       ::-webkit-scrollbar-track {
-        background: transparent; 
+        background: #fff;
+        border-left: 4px solid #000;
       }
       ::-webkit-scrollbar-thumb {
-        background: #374151; 
-        border-radius: 10px;
+        background: var(--neo-accent);
+        border: 4px solid #000;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #4b5563; 
+        background: #fff;
       }
 
-      /* Hide Scrollbar for Controls */
       .no-scrollbar::-webkit-scrollbar {
         display: none;
       }
       .no-scrollbar {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
     </style>
   <script type="importmap">

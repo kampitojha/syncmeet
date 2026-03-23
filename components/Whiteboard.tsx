@@ -10,8 +10,8 @@ interface WhiteboardProps {
 const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [color, setColor] = useState('#ffffff');
-  const [lineWidth, setLineWidth] = useState(3);
+  const [color, setColor] = useState('#000000');
+  const [lineWidth, setLineWidth] = useState(4);
   const [prevPos, setPrevPos] = useState<{ x: number, y: number } | null>(null);
 
   // Resize handling
@@ -22,7 +22,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
     const resize = () => {
       const parent = canvas.parentElement;
       if (parent) {
-        // Create temp canvas to save content during resize
         const tempCanvas = document.createElement('canvas');
         const tempCtx = tempCanvas.getContext('2d');
         tempCanvas.width = canvas.width;
@@ -32,9 +31,12 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
         canvas.width = parent.clientWidth;
         canvas.height = parent.clientHeight;
         
-        // Restore
         const ctx = canvas.getContext('2d');
-        ctx?.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+        if (ctx) {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0,0, canvas.width, canvas.height);
+            ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+        }
       }
     };
 
@@ -57,11 +59,10 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
     ctx.lineTo(currPos.x, currPos.y);
     ctx.strokeStyle = style.color;
     ctx.lineWidth = style.width;
-    ctx.lineCap = 'round';
+    ctx.lineCap = 'square';
     ctx.stroke();
 
     if (emit) {
-        // Normalize coordinates to 0-1 range for resolution independence
         const normalizedPrev = { x: prevPos.x / canvas.width, y: prevPos.y / canvas.height };
         const normalizedCurr = { x: currPos.x / canvas.width, y: currPos.y / canvas.height };
         
@@ -123,7 +124,10 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    ctx?.clearRect(0, 0, canvas.width, canvas.height);
+    if (ctx) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
     if (emit) signaling.sendClearBoard(roomId);
   };
 
@@ -138,7 +142,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // Denormalize
         const x1 = prev.x * canvas.width;
         const y1 = prev.y * canvas.height;
         const x2 = curr.x * canvas.width;
@@ -149,7 +152,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
         ctx.lineTo(x2, y2);
         ctx.strokeStyle = remoteColor;
         ctx.lineWidth = width;
-        ctx.lineCap = 'round';
+        ctx.lineCap = 'square';
         ctx.stroke();
     };
 
@@ -167,46 +170,46 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
   }, [roomId]);
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 rounded-3xl overflow-hidden border border-white/10 shadow-2xl relative group">
+    <div className="flex flex-col h-full bg-white overflow-hidden relative group font-bold">
         
         {/* Toolbar */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-gray-800/90 backdrop-blur p-2 rounded-xl border border-white/10 shadow-xl z-10 transition-opacity opacity-0 group-hover:opacity-100">
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-[#ffdf00] p-4 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] z-10 transition-transform hover:scale-105">
             <input 
                 type="color" 
                 value={color} 
                 onChange={(e) => setColor(e.target.value)}
-                className="w-8 h-8 rounded cursor-pointer bg-transparent border-none"
+                className="w-10 h-10 cursor-pointer bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
             />
-            <div className="w-px h-6 bg-gray-600 mx-1" />
+            <div className="w-1.5 h-10 bg-black mx-1" />
             
-            {[2, 5, 10].map(w => (
+            {[2, 6, 12, 24].map(w => (
                 <button 
                     key={w}
-                    onClick={() => { setLineWidth(w); setColor(color === '#030712' ? '#ffffff' : color); }}
-                    className={`w-8 h-8 flex items-center justify-center rounded-lg ${lineWidth === w && color !== '#030712' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-white/10'}`}
+                    onClick={() => { setLineWidth(w); if (color === '#ffffff') setColor('#000000'); }}
+                    className={`w-10 h-10 flex items-center justify-center border-4 border-black transition-all active:translate-x-0.5 active:translate-y-0.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none ${lineWidth === w && color !== '#ffffff' ? 'bg-black text-[#ffdf00]' : 'bg-white text-black hover:bg-black hover:text-white'}`}
                 >
-                    <div className="bg-current rounded-full" style={{ width: w, height: w }} />
+                    <div className="bg-current" style={{ width: Math.min(w, 16), height: Math.min(w, 16) }} />
                 </button>
             ))}
             
             <button 
-                onClick={() => { setColor('#030712'); setLineWidth(20); }} // Eraser mode (paint bg color)
-                className={`p-2 rounded-lg ${color === '#030712' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:bg-white/10'}`}
+                onClick={() => { setColor('#ffffff'); setLineWidth(40); }} 
+                className={`p-2 border-4 border-black transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none ${color === '#ffffff' ? 'bg-black text-[#ffdf00]' : 'bg-white text-black hover:bg-black hover:text-white'}`}
                 title="Eraser"
             >
-                <Eraser size={18} />
+                <Eraser size={24} strokeWidth={3} />
             </button>
             
              <button 
                 onClick={() => clearBoard(true)}
-                className="p-2 rounded-lg text-red-400 hover:bg-red-500/10"
+                className="p-2 border-4 border-black bg-red-400 text-black hover:bg-black hover:text-red-400 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
                 title="Clear All"
             >
-                <Trash2 size={18} />
+                <Trash2 size={24} strokeWidth={3} />
             </button>
         </div>
 
-        <div className="flex-1 relative cursor-crosshair bg-[#030712]">
+        <div className="flex-1 relative cursor-crosshair bg-white">
             <canvas
                 ref={canvasRef}
                 onMouseDown={startDrawing}
@@ -219,8 +222,8 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ roomId }) => {
                 className="w-full h-full block touch-none"
             />
              {/* Hint when empty */}
-             <div className="absolute bottom-4 right-4 text-xs text-gray-600 pointer-events-none select-none">
-                Collaborative Whiteboard
+             <div className="absolute bottom-6 right-6 text-xs text-black font-black uppercase italic border-2 border-black bg-[#ffdf00] px-3 py-1 pointer-events-none select-none">
+                PROTOCOL_WHITEBOARD_v3
             </div>
         </div>
     </div>

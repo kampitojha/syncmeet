@@ -37,32 +37,32 @@ const Controls: React.FC<ControlsProps> = ({
   const [showEmojis, setShowEmojis] = useState(false);
   const emojis = ['👍', '❤️', '😂', '🎉', '👋', '🔥'];
 
-  const baseBtnClass = "flex-shrink-0 p-3.5 md:p-4 rounded-full transition-all duration-300 flex items-center justify-center transform hover:scale-105 active:scale-95 relative";
+  const baseBtnClass = "group p-4 flex items-center justify-center transition-all duration-75 relative active:translate-x-1 active:translate-y-1 active:shadow-none";
   
   const getBtnStyle = (isActive: boolean, type: 'normal' | 'danger' | 'toggle' = 'normal') => {
+    let classes = `${baseBtnClass} border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] `;
+    
     if (type === 'danger') {
-      return `${baseBtnClass} bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/30 px-6 md:px-8 rounded-2xl`;
+      return `${classes} bg-[#ff4444] text-white hover:bg-red-600 px-8`;
     }
-    if (type === 'toggle') {
-        return `${baseBtnClass} ${isActive 
-            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-400/50' 
-            : 'bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700'}`;
+    
+    if (isActive) {
+        return `${classes} bg-black text-[#ffdf00]`;
     }
-    return `${baseBtnClass} ${isActive 
-        ? 'bg-gray-800 hover:bg-gray-700 text-white border border-gray-700' 
-        : 'bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20'}`;
+    
+    return `${classes} bg-white text-black hover:bg-[#ffdf00]`;
   };
 
   return (
-    <div className="relative max-w-[90vw] md:max-w-none mx-auto">
+    <div className="relative max-w-[95vw] md:max-w-none mx-auto">
         {/* Emoji Popover */}
         {showEmojis && (
-            <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 bg-gray-800 border border-white/10 p-2 rounded-2xl flex gap-2 shadow-xl animate-fade-in-up overflow-x-auto max-w-full">
+            <div className="absolute bottom-[calc(100%+20px)] left-1/2 -translate-x-1/2 bg-white border-[4px] border-black p-3 flex gap-3 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] animate-fade-in-up z-50 overflow-x-auto max-w-full no-scrollbar">
                 {emojis.map(e => (
                     <button 
                         key={e} 
                         onClick={() => { onReaction(e); setShowEmojis(false); }}
-                        className="text-2xl hover:bg-white/10 p-2 rounded-xl transition-colors hover:scale-125 transform flex-shrink-0"
+                        className="text-3xl hover:bg-[#ffdf00] p-2 transition-transform hover:scale-110 active:scale-95 flex-shrink-0"
                     >
                         {e}
                     </button>
@@ -70,13 +70,13 @@ const Controls: React.FC<ControlsProps> = ({
             </div>
         )}
 
-        <div className="bg-gray-900/90 backdrop-blur-xl border border-white/10 rounded-2xl md:rounded-full px-2 py-2 md:px-6 md:py-4 flex items-center gap-2 md:gap-3 shadow-2xl overflow-x-auto no-scrollbar max-w-full">
+        <div className="flex items-center gap-4 bg-[#f0f0f0] p-4 border-[6px] border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-x-auto no-scrollbar max-w-full">
         <button 
             onClick={onToggleMic} 
             className={getBtnStyle(isMicOn)}
             title={isMicOn ? "Mute" : "Unmute"}
         >
-            {isMicOn ? <Mic size={20} className="md:w-5 md:h-5" /> : <MicOff size={20} className="md:w-5 md:h-5" />}
+            {isMicOn ? <Mic size={24} strokeWidth={3} /> : <MicOff size={24} strokeWidth={3} />}
         </button>
 
         <button 
@@ -84,51 +84,51 @@ const Controls: React.FC<ControlsProps> = ({
             className={getBtnStyle(isCameraOn)}
             title={isCameraOn ? "Turn off camera" : "Turn on camera"}
         >
-            {isCameraOn ? <Video size={20} className="md:w-5 md:h-5" /> : <VideoOff size={20} className="md:w-5 md:h-5" />}
+            {isCameraOn ? <Video size={24} strokeWidth={3} /> : <VideoOff size={24} strokeWidth={3} />}
         </button>
 
-        <div className="w-px h-8 bg-gray-700 mx-1 flex-shrink-0" />
+        <div className="w-1.5 h-12 bg-black mx-1 flex-shrink-0" />
 
         <button 
             onClick={onToggleScreenShare} 
-            className={getBtnStyle(isScreenSharing, 'toggle')}
+            className={getBtnStyle(isScreenSharing)}
             title="Share Screen"
         >
-            {isScreenSharing ? <MonitorOff size={20} className="md:w-5 md:h-5" /> : <Monitor size={20} className="md:w-5 md:h-5" />}
+            {isScreenSharing ? <MonitorOff size={24} strokeWidth={3} /> : <Monitor size={24} strokeWidth={3} />}
         </button>
         
         <button 
             onClick={onToggleWhiteboard} 
-            className={getBtnStyle(isWhiteboardOpen, 'toggle')}
+            className={getBtnStyle(isWhiteboardOpen)}
             title="Whiteboard"
         >
-            <PenTool size={20} className="md:w-5 md:h-5" />
+            <PenTool size={24} strokeWidth={3} />
         </button>
 
         <button 
             onClick={onToggleNotes} 
-            className={getBtnStyle(isNotesOpen, 'toggle')}
+            className={getBtnStyle(isNotesOpen)}
             title="Shared Notes"
         >
-            <FileText size={20} className="md:w-5 md:h-5" />
+            <FileText size={24} strokeWidth={3} />
         </button>
 
-        <div className="w-px h-8 bg-gray-700 mx-1 flex-shrink-0" />
+        <div className="w-1.5 h-12 bg-black mx-1 flex-shrink-0" />
 
         <button 
             onClick={() => setShowEmojis(!showEmojis)} 
-            className={getBtnStyle(showEmojis, 'toggle')}
+            className={getBtnStyle(showEmojis)}
             title="Reactions"
         >
-            <Smile size={20} className="md:w-5 md:h-5" />
+            <Smile size={24} strokeWidth={3} />
         </button>
 
         <button 
             onClick={onToggleChat} 
-            className={getBtnStyle(isChatOpen, 'toggle')}
+            className={getBtnStyle(isChatOpen)}
             title="Chat"
         >
-            <MessageSquare size={20} className="md:w-5 md:h-5" />
+            <MessageSquare size={24} strokeWidth={3} />
         </button>
 
         <button 
@@ -136,7 +136,7 @@ const Controls: React.FC<ControlsProps> = ({
             className={getBtnStyle(false, 'danger')}
             title="Leave Call"
         >
-            <PhoneOff size={22} className="md:w-5 md:h-5" />
+            <PhoneOff size={24} strokeWidth={3} />
         </button>
         </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { MicOff, VideoOff, MessageSquare, AudioLines, User, Signal, WifiOff, Loader2, RefreshCw } from 'lucide-react';
+import { MicOff, VideoOff, MessageSquare, AudioLines, RefreshCw, Signal, WifiOff } from 'lucide-react';
 import { useAudioLevel } from '../hooks/useAudioLevel';
 
 interface VideoTileProps {
@@ -15,7 +15,7 @@ interface VideoTileProps {
   connectionState?: RTCIceConnectionState;
   reactions?: string[];
   statusMessage?: string; 
-  onRetry?: () => void; // New prop
+  onRetry?: () => void;
 }
 
 const VideoTile: React.FC<VideoTileProps> = ({ 
@@ -59,14 +59,13 @@ const VideoTile: React.FC<VideoTileProps> = ({
   return (
     <div 
       className={`
-        relative w-full h-full bg-gray-900 rounded-3xl overflow-hidden shadow-2xl transition-all duration-300
+        relative w-full h-full bg-white overflow-hidden transition-all duration-100
         ${isSpeaking 
-          ? 'ring-2 ring-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.3)]' 
-          : 'ring-1 ring-white/10 hover:ring-white/20'
+          ? 'border-[8px] md:border-[12px] border-[#ffdf00] z-10' 
+          : 'border-[4px] md:border-[6px] border-black'
         }
       `}
     >
-      
       {/* Video Content or Placeholder */}
       {stream && isVideoEnabled ? (
         <div className={`w-full h-full flex items-center justify-center ${isScreenShare ? 'bg-black' : ''}`}>
@@ -79,25 +78,21 @@ const VideoTile: React.FC<VideoTileProps> = ({
           />
         </div>
       ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900 relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-950" />
-          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900 via-gray-900 to-gray-900 animate-pulse" />
+        <div className="w-full h-full flex flex-col items-center justify-center bg-[#f0f0f0] relative overflow-hidden group">
+          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 0)', backgroundSize: '10px 10px' }} />
           
-          <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="relative z-10 flex flex-col items-center gap-4 md:gap-6">
             <div className={`
-              relative h-28 w-28 rounded-full flex items-center justify-center shadow-2xl border-4 border-gray-800
-              ${isSpeaking ? 'bg-gradient-to-tr from-indigo-500 to-purple-600 scale-105 transition-transform' : 'bg-gray-700'}
+              relative h-20 w-20 md:h-32 md:w-32 flex items-center justify-center border-[4px] md:border-[6px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]
+              ${isSpeaking ? 'bg-[#ffdf00]' : 'bg-white'}
             `}>
-              <span className="text-4xl font-bold text-white/90">
+              <span className="text-4xl md:text-6xl font-black text-black italic -skew-x-6">
                 {username.charAt(0).toUpperCase()}
               </span>
-              {!isVideoEnabled && (
-                  <div className="absolute bottom-0 right-0 bg-gray-800 p-2 rounded-full border border-gray-700 shadow-lg">
-                      <VideoOff size={16} className="text-red-400" />
-                  </div>
-              )}
             </div>
-            <span className="text-gray-400 text-sm font-medium tracking-wide">Camera Off</span>
+            <div className="bg-black text-[#ffdf00] px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-black uppercase tracking-widest italic -skew-x-2">
+                SIGNAL_LOSS: CAM_DISABLED
+            </div>
           </div>
         </div>
       )}
@@ -105,7 +100,7 @@ const VideoTile: React.FC<VideoTileProps> = ({
       {/* Floating Reactions */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
          {reactions.map((emoji, i) => (
-             <div key={i} className="absolute bottom-20 left-1/2 text-4xl animate-float-up" style={{ animationDelay: `${i * 100}ms` }}>
+             <div key={i} className="absolute bottom-16 md:bottom-20 left-1/2 text-4xl md:text-6xl animate-float-up drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]" style={{ animationDelay: `${i * 100}ms` }}>
                  {emoji}
              </div>
          ))}
@@ -113,24 +108,27 @@ const VideoTile: React.FC<VideoTileProps> = ({
 
       {/* Typing Indicator */}
       {isTyping && !isLocal && (
-        <div className="absolute bottom-20 left-6 bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-2xl rounded-bl-none text-xs font-semibold flex items-center gap-2 animate-bounce z-20 shadow-lg">
-            <MessageSquare size={14} className="text-indigo-300 fill-current" />
-            <span className="text-indigo-100">Typing...</span>
+        <div className="absolute bottom-16 md:bottom-24 left-4 md:left-8 bg-[#ffdf00] border-2 md:border-4 border-black text-black px-2 md:px-4 py-1 md:py-2 text-[10px] md:text-sm font-black uppercase italic -skew-x-12 z-20 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] animate-bounce">
+            <span className="flex items-center gap-1 md:gap-2">
+                <MessageSquare size={12} strokeWidth={3} className="md:w-4 md:h-4 w-3 h-3" /> {username}_ISO_TYPING
+            </span>
         </div>
       )}
 
       {/* Connection Status Overlay */}
       {statusMessage && !isLocal && (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center animate-fade-in">
-             <div className="bg-gray-800/80 p-6 rounded-xl border border-white/10 flex flex-col items-center max-w-xs text-center">
-                <Loader2 size={32} className="text-indigo-500 animate-spin mb-3" />
-                <span className="text-white font-medium text-sm mb-4">{statusMessage}</span>
+        <div className="absolute inset-0 bg-[#ffdf00]/90 z-30 flex flex-col items-center justify-center p-4">
+             <div className="bg-white p-6 md:p-8 border-[4px] md:border-[6px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center max-w-sm text-center">
+                <div className="bg-black p-3 md:p-4 mb-4 md:mb-6 leading-none">
+                    <RefreshCw size={32} strokeWidth={3} className="text-[#ffdf00] animate-spin md:w-10 md:h-10 w-8 h-8" />
+                </div>
+                <span className="text-black font-black text-lg md:text-xl uppercase italic mb-4 md:mb-6 leading-tight">{statusMessage}</span>
                 {showRetry && onRetry && (
                     <button 
                         onClick={onRetry}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors pointer-events-auto"
+                        className="brut-btn px-6 md:px-8 py-2 md:py-3 text-sm md:text-lg flex items-center justify-center gap-2 md:gap-3 w-full"
                     >
-                        <RefreshCw size={14} /> Retry Connection
+                        RE_SYNC_PROTOCOL
                     </button>
                 )}
              </div>
@@ -139,36 +137,46 @@ const VideoTile: React.FC<VideoTileProps> = ({
       
       {/* Reconnecting Overlay (Native WebRTC State) */}
       {!statusMessage && isReconnecting && !isLocal && (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center">
-            <WifiOff size={32} className="text-red-500 mb-2 animate-pulse" />
-            <span className="text-white font-semibold">Connection Unstable</span>
+        <div className="absolute inset-x-0 top-0 bg-red-500 border-b-4 border-black py-2 px-4 flex items-center justify-center gap-4 z-40 overflow-hidden">
+            <div className="whitespace-nowrap flex animate-infinite-scroll">
+                 <span className="mx-4 font-black text-sm uppercase italic text-white flex items-center gap-2">
+                    <WifiOff size={14} strokeWidth={3} /> NETWORK_UNSTABLE_RECONNECTING_
+                 </span>
+                 <span className="mx-4 font-black text-sm uppercase italic text-white flex items-center gap-2">
+                    <WifiOff size={14} strokeWidth={3} /> NETWORK_UNSTABLE_RECONNECTING_
+                 </span>
+            </div>
         </div>
       )}
 
-      {/* Bottom Overlay Gradient */}
-      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
-
       {/* Info Bar */}
-      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-10">
-        <div className="flex items-center gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
-          {isSpeaking && !isLocal && (
-               <AudioLines size={16} className="text-green-400 animate-pulse" />
-          )}
-          
-          <span className={`text-sm font-semibold tracking-tight ${isSpeaking ? 'text-white' : 'text-gray-200'}`}>
-            {username} {isLocal && <span className="text-gray-400 font-normal ml-1">(You)</span>}
-          </span>
+      <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4 md:right-6 flex items-end justify-between z-10 pointer-events-none">
+        <div className="flex flex-col gap-1 md:gap-2">
+            <div className={`p-2 md:p-3 border-[3px] md:border-4 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2 md:gap-3 ${isSpeaking ? 'bg-[#ffdf00]' : 'bg-white'}`}>
+                {isSpeaking && !isLocal && (
+                    <AudioLines size={16} strokeWidth={3} className="text-black animate-pulse md:w-5 md:h-5 w-4 h-4" />
+                )}
+                <span className="text-sm md:text-lg font-black text-black uppercase italic tracking-tighter">
+                    {username} {isLocal && <span className="opacity-50 NOT_ITALIC font-bold ml-1 text-[10px] md:text-sm">(LOCAL)</span>}
+                </span>
+            </div>
+            
+            {isScreenShare && (
+                <div className="bg-black text-[#ffdf00] px-1.5 md:px-2 py-0.5 text-[8px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] w-fit">
+                    BROADCASTING_SCREEN_MODE
+                </div>
+            )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-1.5 md:gap-2 pointer-events-auto">
             {!isLocal && (
-                <div className="bg-black/40 backdrop-blur-md p-2 rounded-full border border-white/10" title="Network Quality">
-                    <Signal size={16} className={getSignalColor()} />
+                <div className="bg-white border-[3px] md:border-4 border-black p-1.5 md:p-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" title="SIGNAL QUALITY">
+                    <Signal size={16} strokeWidth={3} className={`${getSignalColor().replace('text-', 'stroke-')} md:w-5 md:h-5 w-4 h-4`} />
                 </div>
             )}
             {!isAudioEnabled && (
-                <div className="bg-red-500/20 backdrop-blur-md p-2 rounded-full border border-red-500/30" title="Microphone Muted">
-                    <MicOff size={16} className="text-red-400" />
+                <div className="bg-red-500 border-[3px] md:border-4 border-black p-1.5 md:p-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" title="MUTE_ACTIVE">
+                    <MicOff size={16} strokeWidth={3} className="text-white md:w-5 md:h-5 w-4 h-4" />
                 </div>
             )}
         </div>
