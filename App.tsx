@@ -273,7 +273,7 @@ const App: React.FC = () => {
                 <div className="absolute inset-0 z-[120] lg:z-[60] animate-fade-in glass-card-bright md:rounded-[40px] rounded-2xl overflow-hidden shadow-2xl border border-white/20">
                     {activeTool === 'whiteboard' && <Whiteboard roomId={roomId} />}
                     {activeTool === 'notes' && <CollaborativeNotes roomId={roomId} />}
-                    {activeTool === 'media' && <MediaPlayer syncData={syncData} onSync={(t, s) => signaling.sendMediaSync(roomId, { time: t, state: s })} onClose={() => setActiveTool('none')} />}
+                    {activeTool === 'media' && <MediaPlayer syncData={syncData} onSync={(t, s) => signaling.sendMediaSync(roomId, { time: t, state: s })} onClose={() => setActiveTool('none')} /> as any}
                 </div>
             )}
 
