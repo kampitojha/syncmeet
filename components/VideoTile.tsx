@@ -40,10 +40,13 @@ const VideoTile: React.FC<VideoTileProps> = ({
   useEffect(() => {
     const videoEl = videoRef.current;
     if (videoEl && stream) {
-      videoEl.srcObject = stream;
-      videoEl.play().catch(e => console.error("Auto-play failed:", e));
+      // Re-assign srcObject if it's different or if tracks have changed
+      if (videoEl.srcObject !== stream) {
+          videoEl.srcObject = stream;
+      }
+      videoEl.play().catch(e => {});
     }
-  }, [stream, isVideoEnabled]); 
+  }, [stream, isVideoEnabled, stream?.getTracks().length, connectionState]); 
 
   const shouldMirror = isScreenShare ? false : (isMirrored !== undefined ? isMirrored : isLocal);
 
