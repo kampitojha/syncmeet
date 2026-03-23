@@ -36,7 +36,6 @@ const VideoTile: React.FC<VideoTileProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioLevel = useAudioLevel(stream, isAudioEnabled ?? true);
   const isSpeaking = audioLevel > 5;
-  const isReconnecting = connectionState === 'disconnected' || connectionState === 'failed' || connectionState === 'checking';
 
   useEffect(() => {
     const videoEl = videoRef.current;
@@ -67,10 +66,8 @@ const VideoTile: React.FC<VideoTileProps> = ({
         ${isGlitching ? 'animate-glitch' : ''}
       `}
     >
-      {/* Background Grid Pattern */}
       <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
       
-      {/* Hand Raise Overlay */}
       {isHandRaised && (
           <div className="absolute top-4 right-4 z-[40] animate-bounce">
               <div className="bg-[#ffdf00] p-3 md:p-4 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2">
@@ -80,7 +77,6 @@ const VideoTile: React.FC<VideoTileProps> = ({
           </div>
       )}
 
-      {/* Video Content */}
       <div className={`w-full h-full flex items-center justify-center ${isScreenShare ? 'bg-black' : ''}`}>
         <video
             ref={videoRef}
@@ -97,12 +93,11 @@ const VideoTile: React.FC<VideoTileProps> = ({
         />
       </div>
 
-      {/* Placeholder for Cam Off */}
       {!isVideoEnabled && (
         <div className="absolute inset-0 flex flex-col items-center justify-center animate-fade-in bg-[#f0f0f0]">
           <div className="relative">
             <div className={`h-24 w-24 md:h-40 md:w-40 bg-[#ffdf00] border-[6px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center -rotate-3`}>
-              <User size={64} md:size={96} strokeWidth={3} className="text-black" />
+              <User className="w-16 h-16 md:w-24 md:h-24" strokeWidth={3} />
             </div>
             {isSpeaking && !isLocal && (
                <div className="absolute -inset-4 border-4 border-black animate-ping opacity-20" />
@@ -111,22 +106,17 @@ const VideoTile: React.FC<VideoTileProps> = ({
           <div className="mt-8 bg-black text-[#ffdf00] px-4 py-2 flex items-center gap-3 italic font-black uppercase text-xs md:text-sm">
              <VideoOff size={20} className="text-[#ffdf00]" /> SIGNAL_LOSS: CAM_DISABLED
           </div>
-          {isHandRaised && (
-              <div className="mt-4 bg-[#ffdf00] text-black px-4 py-1 border-2 border-black font-black uppercase text-xs">AWAITING_PROTO_ACK</div>
-          )}
         </div>
       )}
 
-      {/* Typing Indicator */}
       {isTyping && !isLocal && (
         <div className="absolute bottom-24 md:bottom-32 left-4 md:left-8 bg-[#ffdf00] border-4 border-black text-black px-4 py-2 text-sm font-black uppercase italic -skew-x-12 z-20 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] animate-bounce">
             <span className="flex items-center gap-2">
-                <Terminal size={14} strokeWidth={3} /> {username}_TRANSMITTING_SYSTEM_INFO
+                <Terminal size={14} strokeWidth={3} /> {username}_TRANS_SYSTEM_INFO
             </span>
         </div>
       )}
 
-      {/* Floating Reactions */}
       <div className="absolute inset-0 pointer-events-none z-[45] overflow-hidden">
         {reactions.map((emoji, i) => (
            <div 
@@ -139,12 +129,11 @@ const VideoTile: React.FC<VideoTileProps> = ({
         ))}
       </div>
 
-      {/* Info Overlay (Negotiating/Lost) */}
       {statusMessage && !isLocal && (
         <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px] z-50 flex items-center justify-center p-6 text-center">
             <div className="bg-white border-[6px] border-black p-8 shadow-[12px_12px_0px_0px_rgba(255,223,0,1)] max-w-sm w-full">
               <div className="flex items-center gap-4 mb-6 border-b-4 border-black pb-4">
-                 <RefreshCw size={32} className="text-black animate-spin" strokeWidth={3} />
+                 <RefreshCw className="w-8 h-8 md:w-10 md:h-10 text-black animate-spin" strokeWidth={3} />
                  <span className="font-black text-lg md:text-xl uppercase italic -skew-x-6">RECONNECTING_PROTOCOL</span>
               </div>
               <p className="font-bold text-xs text-black uppercase mb-6 leading-tight">{statusMessage}</p>
@@ -160,17 +149,15 @@ const VideoTile: React.FC<VideoTileProps> = ({
         </div>
       )}
 
-      {/* Info Indicators */}
       <div className="absolute top-4 left-4 z-40 flex flex-col gap-2">
         <div className="bg-white border-4 border-black px-3 py-1.5 flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
            <span className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2">
              <span className={`w-2 h-2 rounded-none bg-black ${isSpeaking ? 'animate-pulse' : ''}`} />
-             {username} {isLocal ? '(LOCAL_HOST)' : '(REMOTE_ID)'}
+             {username} {isLocal ? '(LOCAL)' : '(REMOTE)'}
            </span>
         </div>
       </div>
 
-      {/* Bottom Control Bar */}
       <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end z-40 pointer-events-none">
         <div className={`p-2 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-3 ${isAudioEnabled ? (isSpeaking ? 'bg-[#ffdf00]' : 'bg-white') : 'bg-red-500'}`}>
           {isAudioEnabled ? (
@@ -179,7 +166,7 @@ const VideoTile: React.FC<VideoTileProps> = ({
             <MicOff size={16} strokeWidth={3} className="text-white" />
           )}
           <span className={`text-[10px] font-black uppercase ${!isAudioEnabled ? 'text-white' : 'text-black'}`}>
-             {isAudioEnabled ? (isSpeaking ? 'IS_SPEAKING' : 'AUDIO_LIVE') : 'AUDIO_MUTED'}
+             {isAudioEnabled ? (isSpeaking ? 'SPEAKING' : 'AUDIO_LIVE') : 'MUTED'}
           </span>
         </div>
 
@@ -191,7 +178,7 @@ const VideoTile: React.FC<VideoTileProps> = ({
                 </div>
             )}
             <div className={`p-2 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-colors ${getSignalColor().replace('text-', 'bg-')}`}>
-                <Wifi size={16} strokeWidth={3} className="text-black" />
+                <Signal size={16} strokeWidth={3} className="text-black" />
             </div>
         </div>
       </div>

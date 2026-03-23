@@ -96,7 +96,7 @@ const Chat: React.FC<ChatProps> = ({
         <form onSubmit={handleSubmit} className="flex gap-2 md:gap-3">
           <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
           <button type="button" onClick={() => fileInputRef.current?.click()} className="bg-black text-[#ffdf00] p-3 md:p-4 border-2 md:border-4 border-black hover:bg-white hover:text-black">
-            <Paperclip size={20} md:size={24} strokeWidth={3} />
+            <Paperclip className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
           </button>
           
           <div className="flex-1 relative">
@@ -109,7 +109,7 @@ const Chat: React.FC<ChatProps> = ({
             />
           </div>
           <button type="submit" className="bg-black text-[#ffdf00] p-3 md:p-4 border-2 md:border-4 border-black">
-            <Send size={20} md:size={24} strokeWidth={3} />
+            <Send className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
           </button>
         </form>
       </div>

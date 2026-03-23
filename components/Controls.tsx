@@ -45,6 +45,8 @@ const Controls: React.FC<ControlsProps> = ({
   onLeave,
   onSendReaction
 }) => {
+  const iconClass = "w-5 h-5 md:w-6 md:h-6";
+
   return (
     <div className="flex items-center gap-2 md:gap-4">
       <div className="flex items-center gap-1.5 md:gap-2">
@@ -52,25 +54,25 @@ const Controls: React.FC<ControlsProps> = ({
           onClick={onToggleMic}
           className={`brut-btn p-2 md:p-4 ${!isMicOn ? 'bg-red-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
         >
-          {isMicOn ? <Mic size={20} md:size={24} strokeWidth={3} /> : <MicOff size={20} md:size={24} strokeWidth={3} />}
+          {isMicOn ? <Mic className={iconClass} strokeWidth={3} /> : <MicOff className={iconClass} strokeWidth={3} />}
         </button>
         <button 
           onClick={onToggleCamera}
           className={`brut-btn p-2 md:p-4 ${!isCameraOn ? 'bg-red-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
         >
-          {isCameraOn ? <VideoIcon size={20} md:size={24} strokeWidth={3} /> : <VideoOff size={20} md:size={24} strokeWidth={3} />}
+          {isCameraOn ? <VideoIcon className={iconClass} strokeWidth={3} /> : <VideoOff className={iconClass} strokeWidth={3} />}
         </button>
         <button 
           onClick={onToggleScreenShare}
           className={`brut-btn p-2 md:p-4 ${isScreenSharing ? 'bg-[#ffdf00] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
         >
-          <MonitorUp size={20} md:size={24} strokeWidth={3} />
+          <MonitorUp className={iconClass} strokeWidth={3} />
         </button>
         <button 
           onClick={onToggleHandRaise}
           className={`brut-btn p-2 md:p-4 ${isHandRaised ? 'bg-[#ffdf00] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
         >
-          <Hand size={20} md:size={24} strokeWidth={3} fill={isHandRaised ? 'currentColor' : 'none'} />
+          <Hand className={iconClass} strokeWidth={3} fill={isHandRaised ? 'currentColor' : 'none'} />
         </button>
       </div>
 
@@ -81,25 +83,25 @@ const Controls: React.FC<ControlsProps> = ({
           onClick={() => onToggleTool('chat')}
           className={`brut-btn p-2 md:p-4 ${activeTool === 'chat' ? 'bg-[#ffdf00] text-black' : 'bg-white text-black'}`}
         >
-          <MessageSquare size={20} md:size={24} strokeWidth={3} />
+          <MessageSquare className={iconClass} strokeWidth={3} />
         </button>
         <button 
           onClick={() => onToggleTool('whiteboard')}
           className={`brut-btn p-2 md:p-4 ${activeTool === 'whiteboard' ? 'bg-[#ffdf00] text-black' : 'bg-white text-black'}`}
         >
-          <PenTool size={20} md:size={24} strokeWidth={3} />
+          <PenTool className={iconClass} strokeWidth={3} />
         </button>
         <button 
           onClick={() => onToggleTool('notes')}
           className={`brut-btn p-2 md:p-4 ${activeTool === 'notes' ? 'bg-[#ffdf00] text-black' : 'bg-white text-black'}`}
         >
-          <FileText size={20} md:size={24} strokeWidth={3} />
+          <FileText className={iconClass} strokeWidth={3} />
         </button>
         <button 
           onClick={() => onToggleTool('logs')}
-          className={`brut-btn p-2 md:p-4 ${activeTool === 'logs' ? 'bg-[#ffdf00] text-black-active' : 'bg-white text-black'}`}
+          className={`brut-btn p-2 md:p-4 ${activeTool === 'logs' ? 'bg-[#ffdf00] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black'}`}
         >
-          <Terminal size={20} md:size={24} strokeWidth={3} />
+          <Terminal className={iconClass} strokeWidth={3} />
         </button>
       </div>
 
@@ -124,7 +126,7 @@ const Controls: React.FC<ControlsProps> = ({
         onClick={onLeave}
         className="brut-btn p-2 md:p-4 bg-red-500 text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-[#ffdf00] transition-all ml-2 md:ml-4"
       >
-        <PhoneOff size={20} md:size={24} strokeWidth={3} />
+        <PhoneOff className={iconClass} strokeWidth={3} />
       </button>
     </div>
   );

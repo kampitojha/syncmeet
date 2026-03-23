@@ -236,8 +236,8 @@ const App: React.FC = () => {
         )}
         <div className="pointer-events-auto flex items-center gap-2 md:gap-4 bg-white p-2 md:p-4 brut-border-lg shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:shadow-[14px_14px_0px_0px_rgba(0,0,0,1)] overflow-x-auto no-scrollbar max-w-full">
             <Controls onToggleMic={toggleMic} isMicOn={isMicOn} onToggleCamera={toggleCamera} isCameraOn={isCameraOn} onToggleScreenShare={toggleScreenShare} isScreenSharing={isScreenSharing} onToggleHandRaise={toggleHandRaise} isHandRaised={isHandRaised} onToggleTool={toggleTool} activeTool={activeTool} onLeave={handleLeave} onSendReaction={(emoji) => signaling.sendReaction(roomId, emoji)} />
-            <button onClick={() => toggleTool('media')} className={`ml-2 md:ml-4 p-2 md:p-3 border-4 border-black transition-colors ${activeTool === 'media' ? 'bg-black text-[#ffdf00]' : 'bg-[#ffdf00] text-black'}`} title="MEDIA_SYNC_MODULE"><Tv size={18} md:size={24} strokeWidth={3} /></button>
-            <button onClick={() => setShowPalette(true)} className="ml-2 bg-black text-[#ffdf00] p-2 md:p-3 border-4 border-black hover:bg-[#ffdf00] hover:text-black transition-colors" title="COMMAND_PALETTE"><Terminal size={18} md:size={24} strokeWidth={3} /></button>
+            <button onClick={() => toggleTool('media')} className={`ml-2 md:ml-4 p-2 md:p-3 border-4 border-black transition-colors ${activeTool === 'media' ? 'bg-black text-[#ffdf00]' : 'bg-[#ffdf00] text-black'}`} title="MEDIA_SYNC_MODULE"><Tv className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} /></button>
+            <button onClick={() => setShowPalette(true)} className="ml-2 bg-black text-[#ffdf00] p-2 md:p-3 border-4 border-black hover:bg-[#ffdf00] hover:text-black transition-colors" title="COMMAND_PALETTE"><Terminal className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} /></button>
         </div>
       </div>
     </div>
