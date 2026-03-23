@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Video, 
   Users, 
@@ -57,10 +57,14 @@ const App: React.FC = () => {
 
   const { isRecording, startRecording, stopRecording } = useRecorder(localStream);
 
+  const captionTimeoutRef = useRef<any>(null);
+
   useCaptions(isCaptionsOn && isMicOn, (text) => {
       setCurrentCaption(text);
       signaling.sendCaption(roomId, text);
-      setTimeout(() => setCurrentCaption(''), 4000);
+      
+      if (captionTimeoutRef.current) clearTimeout(captionTimeoutRef.current);
+      captionTimeoutRef.current = setTimeout(() => setCurrentCaption(''), 6000);
   });
 
   const addLog = (message: string, type: LogEntry['type'] = 'info') => {

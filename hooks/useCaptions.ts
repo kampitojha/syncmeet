@@ -1,48 +1,84 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 export const useCaptions = (isEnabled: boolean, onCaption: (text: string) => void) => {
-  const recognition = useRef<any>(null);
+  const recognitionRef = useRef<any>(null);
+  const isEnabledRef = useRef(isEnabled);
 
   useEffect(() => {
+    isEnabledRef.current = isEnabled;
+  }, [isEnabled]);
+
+  const initRecognition = useCallback(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       console.warn("Speech Recognition not supported in this browser.");
       return;
     }
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    recognition.current = new SpeechRecognition();
-    recognition.current.continuous = true;
-    recognition.current.interimResults = true;
-    recognition.current.lang = 'en-US';
+    const recognition = new SpeechRecognition();
+    
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US'; // Default, but robust
 
-    recognition.current.onresult = (event: any) => {
+    recognition.onresult = (event: any) => {
+      let interimTranscript = '';
       let finalTranscript = '';
+
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
           finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
         }
       }
-      if (finalTranscript) {
-        onCaption(finalTranscript);
+
+      const fullText = (finalTranscript || interimTranscript).trim();
+      if (fullText) {
+        onCaption(fullText);
       }
     };
 
-    recognition.current.onerror = (event: any) => {
-        if (event.error !== 'no-speech') console.error("Speech Recognition Error:", event.error);
+    recognition.onerror = (event: any) => {
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
+            console.error("Speech Recognition Error:", event.error);
+        }
     };
 
-    return () => {
-      if (recognition.current) recognition.current.stop();
+    recognition.onend = () => {
+        if (isEnabledRef.current) {
+            try { 
+                recognition.start(); 
+            } catch (e) {
+                // Ignore concurrent start errors
+            }
+        }
     };
-  }, []);
+
+    recognitionRef.current = recognition;
+  }, [onCaption]);
 
   useEffect(() => {
-    if (isEnabled && recognition.current) {
-        try { recognition.current.start(); } catch (e) {}
-    } else if (recognition.current) {
-        recognition.current.stop();
+    if (!recognitionRef.current) initRecognition();
+
+    if (isEnabled && recognitionRef.current) {
+        try { 
+            recognitionRef.current.start(); 
+        } catch (e) {
+            // Already started?
+        }
+    } else if (recognitionRef.current) {
+        try { 
+            recognitionRef.current.stop(); 
+        } catch (e) {}
     }
-  }, [isEnabled]);
+
+    return () => {
+        if (recognitionRef.current) {
+            try { recognitionRef.current.stop(); } catch (e) {}
+        }
+    };
+  }, [isEnabled, initRecognition]);
 
   return {};
 };
