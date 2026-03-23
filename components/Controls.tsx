@@ -1,22 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
-  Mic, 
-  MicOff, 
-  Video as VideoIcon, 
-  VideoOff, 
-  PhoneOff, 
-  MessageSquare, 
-  PenTool, 
-  FileText,
-  MonitorUp,
-  Smile,
-  Hand,
-  Terminal,
-  Zap,
-  BarChart3,
-  Activity,
-  Captions,
-  Circle
+  Mic, MicOff, Video, VideoOff, ScreenShare, Hand, 
+  MessageSquare, PenTool, FileText, Tv, Captions, Radio, 
+  Smile, PhoneOff 
 } from 'lucide-react';
 
 interface ControlsProps {
@@ -28,150 +14,164 @@ interface ControlsProps {
   isScreenSharing: boolean;
   onToggleHandRaise: () => void;
   isHandRaised: boolean;
-  onToggleTool: (tool: any) => void;
+  onToggleTool: (tool: 'chat' | 'whiteboard' | 'notes' | 'media' | 'logs' | 'polls' | 'dashboard' | 'none') => void;
   activeTool: string;
   onLeave: () => void;
   onSendReaction: (emoji: string) => void;
-  isRecording?: boolean;
+  isRecording: boolean;
   onToggleRecording: () => void;
-  isCaptionsOn?: boolean;
+  isCaptionsOn: boolean;
   onToggleCaptions: () => void;
 }
 
-const REACTIONS = ['🔥', '👍', '❤️', '👏', '😂', '😮', '❓'];
-
 const Controls: React.FC<ControlsProps> = ({
-  onToggleMic,
-  isMicOn,
-  onToggleCamera,
-  isCameraOn,
-  onToggleScreenShare,
-  isScreenSharing,
-  onToggleHandRaise,
-  isHandRaised,
-  onToggleTool,
-  activeTool,
-  onLeave,
-  onSendReaction,
-  isRecording,
-  onToggleRecording,
-  isCaptionsOn,
-  onToggleCaptions
+  onToggleMic, isMicOn,
+  onToggleCamera, isCameraOn,
+  onToggleScreenShare, isScreenSharing,
+  onToggleHandRaise, isHandRaised,
+  onToggleTool, activeTool,
+  onLeave, onSendReaction,
+  isRecording, onToggleRecording,
+  isCaptionsOn, onToggleCaptions
 }) => {
-  const iconClass = "w-5 h-5 md:w-6 md:h-6 transition-all duration-300";
+  const [showReactions, setShowReactions] = useState(false);
 
   return (
-    <div className="flex flex-col md:flex-row items-center gap-4 pointer-events-auto">
-      <div className="flex items-center gap-1.5 md:gap-3 glass-card p-2 rounded-[24px]">
+    <div className="flex items-center gap-2 md:gap-4 glass-card-bright p-2 md:p-4 rounded-3xl md:rounded-[36px] border border-white/20 select-none no-scrollbar flex-nowrap overflow-x-auto max-w-[90vw] md:max-w-none shadow-2xl">
+      {/* Primary Communication Protocols */}
+      <div className="flex items-center gap-1 md:gap-2 px-1 border-r border-white/10 flex-shrink-0">
         <button 
           onClick={onToggleMic}
-          className={`p-4 rounded-xl transition-all duration-500 shadow-xl border border-white/10 ${!isMicOn ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
-          title="Microphone"
+          className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1 group
+            ${isMicOn ? 'bg-white/5 text-cyan-400 hover:bg-white/10' : 'bg-red-500 text-white shadow-lg shadow-red-500/20'}`}
         >
-          {isMicOn ? <Mic className={iconClass} strokeWidth={2} /> : <MicOff className={iconClass} strokeWidth={2} />}
+          {isMicOn ? <Mic size={20} strokeWidth={2.5} /> : <MicOff size={20} strokeWidth={2.5} />}
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">MIC_L1</span>
         </button>
+
         <button 
           onClick={onToggleCamera}
-          className={`p-4 rounded-xl transition-all duration-500 shadow-xl border border-white/10 ${!isCameraOn ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
-          title="Camera"
+          className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1 group
+            ${isCameraOn ? 'bg-white/5 text-cyan-400 hover:bg-white/10' : 'bg-red-500 text-white shadow-lg shadow-red-500/20'}`}
         >
-          {isCameraOn ? <VideoIcon className={iconClass} strokeWidth={2} /> : <VideoOff className={iconClass} strokeWidth={2} />}
+          {isCameraOn ? <Video size={20} strokeWidth={2.5} /> : <VideoOff size={20} strokeWidth={2.5} />}
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">CAM_L2</span>
         </button>
+      </div>
+
+      {/* Collaboration Suite */}
+      <div className="flex items-center gap-1 md:gap-2 px-1 border-r border-white/10 flex-shrink-0">
         <button 
           onClick={onToggleScreenShare}
-          className={`p-4 rounded-xl transition-all duration-500 shadow-xl border border-white/10 ${isScreenSharing ? 'bg-cyan-400 text-black shadow-cyan-400/20' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
-          title="Share Screen"
+          className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
+            ${isScreenSharing ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
         >
-          <MonitorUp className={iconClass} strokeWidth={2} />
+          <ScreenShare size={20} strokeWidth={2.5} />
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">SHARE_L3</span>
         </button>
+
         <button 
           onClick={onToggleHandRaise}
-          className={`p-4 rounded-xl transition-all duration-500 shadow-xl border border-white/10 ${isHandRaised ? 'bg-cyan-400 text-black shadow-cyan-400/20' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
-          title="Raise Hand"
+          className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
+            ${isHandRaised ? 'bg-yellow-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
         >
-          <Hand className={iconClass} strokeWidth={2} fill={isHandRaised ? 'currentColor' : 'none'} />
+          <Hand size={20} strokeWidth={2.5} className={isHandRaised ? 'animate-bounce' : ''} />
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">RAISE_L4</span>
         </button>
       </div>
 
-      <div className="flex items-center gap-1.5 md:gap-3 glass-card p-2 rounded-[24px]">
-        <button 
-          onClick={onToggleCaptions}
-          className={`p-4 rounded-xl transition-all duration-500 shadow-xl border border-white/10 ${isCaptionsOn ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
-          title="Live Captions"
-        >
-          <Captions className={iconClass} strokeWidth={2} />
-        </button>
-        <button 
-          onClick={onToggleRecording}
-          className={`p-4 rounded-xl transition-all duration-500 shadow-xl border border-white/10 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
-          title="Record Session"
-        >
-          <Circle className={iconClass} strokeWidth={3} fill={isRecording ? 'currentColor' : 'none'} />
-        </button>
-      </div>
-
-      <div className="flex items-center gap-1.5 md:gap-3 glass-card p-2 rounded-[24px]">
+      {/* Advanced Logic Modules */}
+      <div className="flex items-center gap-1 md:gap-2 px-1 flex-shrink-0">
         <button 
           onClick={() => onToggleTool('chat')}
-          className={`p-4 rounded-xl transition-all duration-500 shadow-xl border border-white/10 ${activeTool === 'chat' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
-          title="Chat"
+          className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1 relative
+            ${activeTool === 'chat' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
         >
-          <MessageSquare className={iconClass} strokeWidth={2} />
+          <MessageSquare size={20} strokeWidth={2.5} />
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">HUB_L5</span>
         </button>
+
         <button 
-          onClick={() => onToggleTool('polls')}
-          className={`p-4 rounded-xl transition-all duration-500 shadow-xl border border-white/10 ${activeTool === 'polls' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
-          title="Polls"
+          onClick={() => onToggleTool('whiteboard')}
+          className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
+            ${activeTool === 'whiteboard' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
         >
-          <BarChart3 className={iconClass} strokeWidth={2} />
+          <PenTool size={20} strokeWidth={2.5} />
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">DRAW_L6</span>
         </button>
+
         <button 
-          onClick={() => onToggleTool('dashboard')}
-          className={`p-4 rounded-xl transition-all duration-500 shadow-xl border border-white/10 ${activeTool === 'dashboard' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
-          title="Network Telemetry"
+          onClick={() => onToggleTool('notes')}
+          className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
+            ${activeTool === 'notes' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
         >
-          <Activity className={iconClass} strokeWidth={2} />
+          <FileText size={20} strokeWidth={2.5} />
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">NOTE_L7</span>
         </button>
+
         <button 
-           onClick={() => onToggleTool('logs')}
-           className={`p-4 rounded-xl transition-all duration-500 shadow-xl border border-white/10 ${activeTool === 'logs' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
-           title="System Console"
-         >
-           <Terminal className={iconClass} strokeWidth={2} />
-         </button>
+          onClick={() => onToggleTool('media')}
+          className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
+            ${activeTool === 'media' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+        >
+          <Tv size={20} strokeWidth={2.5} />
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">CAST_L8</span>
+        </button>
+
+        <button 
+          onClick={onToggleCaptions}
+          className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
+            ${isCaptionsOn ? 'bg-purple-500 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+        >
+          <Captions size={20} strokeWidth={2.5} />
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">TX_L9</span>
+        </button>
+
+        <button 
+          onClick={onToggleRecording}
+          className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
+            ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+        >
+          <Radio size={20} strokeWidth={2.5} />
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">REC_X0</span>
+        </button>
+
+        <div className="relative flex-shrink-0">
+          <button 
+            onClick={() => setShowReactions(!showReactions)}
+            className={`p-3 md:p-5 rounded-2xl md:rounded-3xl transition-all active:scale-90 flex flex-col items-center gap-1
+              ${showReactions ? 'bg-white/20 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+          >
+            <Smile size={20} strokeWidth={2.5} />
+            <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">REACT_X1</span>
+          </button>
+          
+          {showReactions && (
+            <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 glass-card-bright p-3 rounded-2xl flex gap-3 shadow-2xl animate-slide-up border border-white/20 z-[200]">
+               {['⚡', '🔥', '👏', '❤️', '🎉', '😂', '💯'].map(emoji => (
+                 <button 
+                   key={emoji} 
+                   onClick={() => { onSendReaction(emoji); setShowReactions(false); }}
+                   className="p-3 text-xl hover:scale-150 active:scale-90 transition-all hover:bg-white/10 rounded-xl"
+                 >
+                   {emoji}
+                 </button>
+               ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="relative ml-4 px-2">
-         <button 
-            onClick={() => onToggleTool('reactions')}
-            className={`p-4 rounded-xl transition-all shadow-xl border border-white/10 ${activeTool === 'reactions' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'}`}
-            title="Send Reaction"
-         >
-            <Smile className={iconClass} strokeWidth={2} />
-         </button>
-         
-         {activeTool === 'reactions' && (
-           <div className="absolute bottom-[calc(100%+24px)] left-1/2 -translate-x-1/2 glass-card-bright p-4 rounded-[32px] flex gap-3 transform transition-all shadow-2xl border border-white/10 animate-slide-up z-[120]">
-              {REACTIONS.map(emoji => (
-                  <button 
-                    key={emoji}
-                    onClick={() => { onSendReaction(emoji); onToggleTool('none'); }}
-                    className="text-3xl hover:scale-150 transition-transform p-2 active:scale-90"
-                  >
-                    {emoji}
-                  </button>
-              ))}
-           </div>
-         )}
+      {/* Termination Protocol */}
+      <div className="flex-shrink-0 pl-1">
+        <button 
+          onClick={onLeave}
+          className="p-3 md:p-5 rounded-2xl md:rounded-3xl bg-red-500 text-white hover:bg-red-600 transition-all active:scale-90 flex flex-col items-center gap-1 shadow-lg shadow-red-500/20 group"
+        >
+          <PhoneOff size={20} strokeWidth={2.5} className="group-hover:rotate-12 transition-transform" />
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">LEAVE_OFF</span>
+        </button>
       </div>
-
-      <button 
-        onClick={onLeave}
-        className="p-4 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-500 shadow-xl border border-red-500/20"
-        title="Disconnect Session"
-      >
-        <PhoneOff className={iconClass} strokeWidth={2} />
-      </button>
     </div>
   );
 };
