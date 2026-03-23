@@ -162,7 +162,19 @@ const App: React.FC = () => {
       setTimeout(() => setReactions(prev => prev.slice(1)), 2000);
   };
 
-  const handleJoin = (e: React.FormEvent) => { e.preventDefault(); joinRoom(); addLog(`INIT: BOOTSTRAPPING_SESSION_LINK...`, 'info'); };
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const handleJoin = (e: React.FormEvent) => { 
+    e.preventDefault(); 
+    if (!userName.trim() || !roomId.trim()) {
+        setFormError('MISSING_IDENTIFIERS_');
+        return;
+    }
+    setFormError(null);
+    joinRoom(); 
+    addLog(`INIT: BOOTSTRAPPING_SESSION_LINK...`, 'info'); 
+  };
+
   const handleLeave = () => { leaveRoom(); clearMessages(); setActiveTool('none'); };
   const toggleTool = (tool: typeof activeTool) => setActiveTool(prev => prev === tool ? 'none' : tool);
 
@@ -196,8 +208,28 @@ const App: React.FC = () => {
             <p className="text-white/40 text-sm md:text-base font-medium tracking-widest uppercase flex items-center gap-3"><ShieldCheck size={16} className="text-cyan-400/50" /> Secure P2P Mesh Protocol</p>
           </div>
           <form onSubmit={handleJoin} className="space-y-6">
-            <div className="relative group/field"><input type="text" value={userName} onChange={(e) => setUserName(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white/90 font-semibold placeholder:text-white/20 outline-none focus:bg-white/10 focus:border-cyan-400/50 shadow-inner transition-all" placeholder="Display Name" required /></div>
-            <div className="relative group/field"><input type="text" value={roomId} onChange={(e) => setRoomId(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white/90 font-semibold placeholder:text-white/20 outline-none focus:bg-white/10 focus:border-cyan-400/50 shadow-inner transition-all" placeholder="Meeting UUID" required /></div>
+            <div className="relative group/field">
+               <input 
+                 type="text" 
+                 value={userName} 
+                 onChange={(e) => {setUserName(e.target.value); if(formError) setFormError(null);}} 
+                 className={`w-full bg-white/5 border rounded-2xl p-5 text-white/90 font-semibold placeholder:text-white/20 outline-none transition-all shadow-inner
+                    ${formError && !userName.trim() ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)] bg-red-500/5' : 'border-white/10 focus:bg-white/10 focus:border-cyan-400/50'}`} 
+                 placeholder="Display Name" 
+               />
+               {formError && !userName.trim() && <span className="absolute -top-6 right-0 text-[8px] font-black text-red-500 tracking-widest uppercase animate-slide-up">MANDATORY_FIELD</span>}
+            </div>
+            <div className="relative group/field">
+               <input 
+                 type="text" 
+                 value={roomId} 
+                 onChange={(e) => {setRoomId(e.target.value); if(formError) setFormError(null);}} 
+                 className={`w-full bg-white/5 border rounded-2xl p-5 text-white/90 font-semibold placeholder:text-white/20 outline-none transition-all shadow-inner
+                    ${formError && !roomId.trim() ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)] bg-red-500/5' : 'border-white/10 focus:bg-white/10 focus:border-cyan-400/50'}`} 
+                 placeholder="Meeting UUID" 
+               />
+               {formError && !roomId.trim() && <span className="absolute -top-6 right-0 text-[8px] font-black text-red-500 tracking-widest uppercase animate-slide-up">MANDATORY_FIELD</span>}
+            </div>
             <button type="submit" className="w-full py-5 rounded-2xl bg-cyan-400 text-black text-xl font-black flex items-center justify-center gap-4 hover:bg-white hover:scale-[1.02] transform transition-all active:scale-95 shadow-xl shadow-cyan-400/20 group/btn">START_SESSION <ArrowRight size={24} className="group-hover/btn:translate-x-2 transition-transform" /></button>
           </form>
           <div className="mt-10 flex justify-center gap-6 opacity-40"><div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-white"> <Zap size={14} className="text-cyan-400" /> Ultra-Low Latency </div><div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-white"> <LayoutDashboard size={14} className="text-cyan-400" /> Advanced Toolkit </div></div>
