@@ -50,7 +50,7 @@ class PeerSignalingService {
     this.peer = new Peer(this.userId, { host: '0.peerjs.com', port: 443, secure: true, debug: 1 });
 
     this.peer.on('open', (id) => {
-        this.emit('system-log', { message: `MESH_V6: Node Active. Protocol LOBBY_GRID.`, type: 'success' });
+        this.emit('system-log', { message: `MESH_V6: Node Active (${id}). Protocol MESH_GRID.`, type: 'success' });
         this.tryJoinLobby(roomId, localStream);
     });
 
@@ -75,8 +75,11 @@ class PeerSignalingService {
       const lobbyConn = this.peer!.connect(lobbyId, { reliable: true });
       
       const timeout = setTimeout(() => {
-          if (!this.connections[lobbyId]) this.becomeLobbyMaster(roomId, localStream);
-      }, 3000);
+          if (!this.connections[lobbyId]) {
+              this.emit('system-log', { message: `MESH_V6: Lobby Timeout. Gaining Authority...`, type: 'info' });
+              this.becomeLobbyMaster(roomId, localStream);
+          }
+      }, 5000);
 
       lobbyConn.on('open', () => {
           clearTimeout(timeout);
@@ -90,23 +93,41 @@ class PeerSignalingService {
 
       this.lobbyPeer.on('open', (id) => {
           this.isLobbyMaster = true;
-          this.emit('system-log', { message: `MESH_V6: Established Room Hub. Waiting for participants...`, type: 'success' });
+          this.knownPeerIds.add(this.userId);
+          this.emit('system-log', { message: `MESH_V6: Established Room Hub. Master ID: ${this.userId}`, type: 'success' });
           
           this.lobbyPeer!.on('connection', (conn) => {
+              let announcerId: string | null = null;
               conn.on('open', () => {
                   conn.on('data', (data: any) => {
                       if (data.type === 'announce') {
-                          this.knownPeerIds.add(data.peerId);
-                          this.broadcastToAll({ type: 'new_peer', peerId: data.peerId });
+                          announcerId = data.peerId;
+                          this.knownPeerIds.add(announcerId);
+                          this.emit('system-log', { message: `MESH_V6: Peer ${announcerId} detected. Broadcasting...`, type: 'info' });
+                          
+                          this.connectToPeer(announcerId, localStream);
+                          this.broadcastToAll({ type: 'new_peer', peerId: announcerId });
                           conn.send({ type: 'peer_list', peers: Array.from(this.knownPeerIds) });
                       }
                   });
               });
+
+              conn.on('close', () => {
+                  if (announcerId) {
+                      this.knownPeerIds.delete(announcerId);
+                      this.emit('leave', { senderId: announcerId });
+                      this.broadcastToAll({ type: 'peer_leave', peerId: announcerId });
+                  }
+              });
           });
+
       });
 
       this.lobbyPeer.on('error', (err: any) => {
-          if (err.type === 'id-taken') this.tryJoinLobby(roomId, localStream);
+          if (err.type === 'id-taken') {
+              this.emit('system-log', { message: `MESH_V6: Lobby Collision (ID_TAKEN). Syncing...`, type: 'warn' });
+              this.tryJoinLobby(roomId, localStream);
+          }
       });
   }
 
@@ -135,7 +156,10 @@ class PeerSignalingService {
                       break;
                   case 'peer_list':
                       data.peers.forEach((pid: string) => {
-                          if (pid !== this.userId) this.connectToPeer(pid, localStream);
+                          if (pid !== this.userId) {
+                              this.knownPeerIds.add(pid);
+                              this.connectToPeer(pid, localStream);
+                          }
                       });
                       break;
                   default:
@@ -147,11 +171,17 @@ class PeerSignalingService {
       conn.on('close', () => {
           this.emit('leave', { senderId: conn.peer });
           delete this.connections[conn.peer];
+          this.knownPeerIds.delete(conn.peer);
       });
   }
 
   private connectToPeer(targetId: string, localStream: MediaStream | null) {
       if (!this.peer || targetId === this.userId || this.connections[targetId]) return;
+      
+      // Strict rule: Only initiate connection if our ID is "smaller" lexicographically
+      // This prevents double connection attempts in most cases.
+      if (this.userId > targetId) return;
+
       const conn = this.peer.connect(targetId, { reliable: true });
       this.handleIncomingConnection(conn, localStream);
   }
