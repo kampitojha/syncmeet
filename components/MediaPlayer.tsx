@@ -35,6 +35,15 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ onSync, syncData, onClose }) 
       setActiveUrl(url);
   };
 
+  const getYoutubeId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  const isYoutube = url.includes('youtube.com') || url.includes('youtu.be');
+  const youtubeId = activeUrl ? getYoutubeId(activeUrl) : null;
+
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a] font-sans overflow-hidden">
       <div className="glass-card-bright p-5 flex items-center justify-between border-b border-white/10 z-[70]">
@@ -58,7 +67,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ onSync, syncData, onClose }) 
                         type="text" 
                         value={url} 
                         onChange={e => setUrl(e.target.value)}
-                        placeholder="ENTER_SOURCE_URL_"
+                        placeholder="ENTER_RAW_OR_YT_URL_"
                         className="w-full bg-white/5 border border-white/10 p-6 pl-14 text-white font-bold uppercase text-[10px] outline-none rounded-3xl focus:border-cyan-500/30 focus:bg-white/10 transition-all shadow-inner"
                       />
                   </div>
@@ -69,14 +78,23 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ onSync, syncData, onClose }) 
           </div>
       ) : (
           <div className="flex-1 flex flex-col relative group overflow-hidden">
-              <video 
-                ref={videoRef}
-                src={activeUrl}
-                className="w-full h-full object-contain bg-black"
-                onPlay={() => handleAction('play')}
-                onPause={() => handleAction('pause')}
-                controls
-              />
+              {youtubeId ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+                  className="w-full h-full border-none"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <video 
+                  ref={videoRef}
+                  src={activeUrl}
+                  className="w-full h-full object-contain bg-black"
+                  onPlay={() => handleAction('play')}
+                  onPause={() => handleAction('pause')}
+                  controls
+                />
+              )}
               <div className="absolute top-6 left-6 glass-card p-3 px-5 rounded-2xl border border-white/10 opacity-0 group-hover:opacity-100 transition-all transform translate-y-4 group-hover:translate-y-0">
                   <span className="text-cyan-400 text-[9px] font-black uppercase flex items-center gap-3 tracking-widest italic">
                      <Globe size={12} /> STREAM_SOURCE: {activeUrl.slice(0, 40)}...
