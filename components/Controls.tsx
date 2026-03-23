@@ -46,7 +46,7 @@ const Controls: React.FC<ControlsProps> = ({
             ${isMicOn ? 'bg-white/5 text-cyan-400 hover:bg-white/10' : 'bg-red-500 text-white shadow-lg shadow-red-500/20'}`}
         >
           {isMicOn ? <Mic size={20} strokeWidth={2.5} /> : <MicOff size={20} strokeWidth={2.5} />}
-          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">MIC_L1</span>
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">{isMicOn ? 'MUTE' : 'UNMUTE'}</span>
         </button>
 
         <button 
@@ -55,7 +55,7 @@ const Controls: React.FC<ControlsProps> = ({
             ${isCameraOn ? 'bg-white/5 text-cyan-400 hover:bg-white/10' : 'bg-red-500 text-white shadow-lg shadow-red-500/20'}`}
         >
           {isCameraOn ? <Video size={20} strokeWidth={2.5} /> : <VideoOff size={20} strokeWidth={2.5} />}
-          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">CAM_L2</span>
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">{isCameraOn ? 'VIDEO_OFF' : 'VIDEO_ON'}</span>
         </button>
       </div>
 
@@ -67,7 +67,7 @@ const Controls: React.FC<ControlsProps> = ({
             ${isScreenSharing ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
         >
           <ScreenShare size={20} strokeWidth={2.5} />
-          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">SHARE_L3</span>
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">SHARE</span>
         </button>
 
         <button 
@@ -76,7 +76,7 @@ const Controls: React.FC<ControlsProps> = ({
             ${isHandRaised ? 'bg-yellow-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
         >
           <Hand size={20} strokeWidth={2.5} className={isHandRaised ? 'animate-bounce' : ''} />
-          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">RAISE_L4</span>
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">HAND</span>
         </button>
       </div>
 
@@ -88,7 +88,7 @@ const Controls: React.FC<ControlsProps> = ({
             ${activeTool === 'chat' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
         >
           <MessageSquare size={20} strokeWidth={2.5} />
-          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">HUB_L5</span>
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">CHAT</span>
         </button>
 
         <button 
@@ -97,7 +97,7 @@ const Controls: React.FC<ControlsProps> = ({
             ${activeTool === 'whiteboard' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
         >
           <PenTool size={20} strokeWidth={2.5} />
-          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">DRAW_L6</span>
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">DRAW</span>
         </button>
 
         <button 
@@ -106,7 +106,7 @@ const Controls: React.FC<ControlsProps> = ({
             ${activeTool === 'notes' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
         >
           <FileText size={20} strokeWidth={2.5} />
-          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">NOTE_L7</span>
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">NOTES</span>
         </button>
 
         <button 
@@ -115,7 +115,7 @@ const Controls: React.FC<ControlsProps> = ({
             ${activeTool === 'media' ? 'bg-cyan-400 text-black' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
         >
           <Tv size={20} strokeWidth={2.5} />
-          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">CAST_L8</span>
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">CAST</span>
         </button>
 
         <button 
@@ -124,7 +124,7 @@ const Controls: React.FC<ControlsProps> = ({
             ${isCaptionsOn ? 'bg-purple-500 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
         >
           <Captions size={20} strokeWidth={2.5} />
-          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">TX_L9</span>
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">CAPTIONS</span>
         </button>
 
         <button 
@@ -133,7 +133,7 @@ const Controls: React.FC<ControlsProps> = ({
             ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
         >
           <Radio size={20} strokeWidth={2.5} />
-          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">REC_X0</span>
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">RECORD</span>
         </button>
 
         <div className="relative flex-shrink-0">
@@ -143,7 +143,7 @@ const Controls: React.FC<ControlsProps> = ({
               ${showReactions ? 'bg-white/20 text-white' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
           >
             <Smile size={20} strokeWidth={2.5} />
-            <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">REACT_X1</span>
+            <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">REACT</span>
           </button>
           
           {showReactions && (
@@ -169,7 +169,7 @@ const Controls: React.FC<ControlsProps> = ({
           className="p-3 md:p-5 rounded-2xl md:rounded-3xl bg-red-500 text-white hover:bg-red-600 transition-all active:scale-90 flex flex-col items-center gap-1 shadow-lg shadow-red-500/20 group"
         >
           <PhoneOff size={20} strokeWidth={2.5} className="group-hover:rotate-12 transition-transform" />
-          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">LEAVE_OFF</span>
+          <span className="text-[7px] font-black uppercase tracking-tighter hidden md:block">LEAVE</span>
         </button>
       </div>
     </div>
