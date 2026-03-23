@@ -1,5 +1,5 @@
 {
-  "name": "syncmeet-1-1",
+  "name": "syncmeet",
   "version": "1.0.0",
   "type": "module",
   "description": "A minimal, low-latency 1:1 video calling platform with screen sharing and chat.",
