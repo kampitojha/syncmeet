@@ -46,11 +46,16 @@ class PeerSignalingService {
     this.initPeer(normalizedRoomId, localStream);
   }
 
+  private isSearchingLobby: boolean = false;
+
   private initPeer(roomId: string, localStream: MediaStream | null) {
+    if (this.peer) {
+        this.peer.destroy();
+    }
     this.peer = new Peer(this.userId, { host: '0.peerjs.com', port: 443, secure: true, debug: 1 });
 
     this.peer.on('open', (id) => {
-        this.emit('system-log', { message: `MESH_V6: Node Active (${id}). Protocol MESH_GRID.`, type: 'success' });
+        this.emit('system-log', { message: `NODE_READY: Protocol established at ${id}.`, type: 'success' });
         this.tryJoinLobby(roomId, localStream);
     });
 
@@ -63,38 +68,65 @@ class PeerSignalingService {
     });
 
     this.peer.on('error', (err: any) => {
+        this.emit('system-log', { message: `PEER_ERR: ${err.type || 'unknown'}. Restarting...`, type: 'error' });
         if (err.type === 'id-taken') {
             this.userId = `sm-${roomId}-p-${Math.random().toString(36).substring(2, 6)}`;
-            this.initPeer(roomId, localStream);
+            setTimeout(() => this.initPeer(roomId, localStream), 1000);
         }
+    });
+
+    this.peer.on('disconnected', () => {
+        this.peer?.reconnect();
     });
   }
 
   private tryJoinLobby(roomId: string, localStream: MediaStream | null) {
+      if (this.isSearchingLobby) return;
+      this.isSearchingLobby = true;
+
       const lobbyId = `sm-${roomId}-lobby-master`;
-      const lobbyConn = this.peer!.connect(lobbyId, { reliable: true });
+      this.emit('system-log', { message: `SEARCH_LOBBY: Looking for room hub...`, type: 'info' });
+
+      let lobbyConn: DataConnection | null = this.peer!.connect(lobbyId, { reliable: true });
       
       const timeout = setTimeout(() => {
-          if (!this.connections[lobbyId]) {
-              this.emit('system-log', { message: `MESH_V6: Lobby Timeout. Gaining Authority...`, type: 'info' });
-              this.becomeLobbyMaster(roomId, localStream);
+          if (this.isSearchingLobby && !this.connections[lobbyId]) {
+              this.isSearchingLobby = false;
+              if (lobbyConn) {
+                  lobbyConn.close();
+                  lobbyConn = null;
+              }
+              this.emit('system-log', { message: `LOBBY_EMPTY: No hub found. Self-promotional backoff...`, type: 'info' });
+              // Random delay to prevent simultaneous promotion
+              setTimeout(() => this.becomeLobbyMaster(roomId, localStream), Math.random() * 2000 + 500);
           }
-      }, 5000);
+      }, 6000);
 
       lobbyConn.on('open', () => {
           clearTimeout(timeout);
-          this.handleIncomingConnection(lobbyConn, localStream);
+          this.isSearchingLobby = false;
+          this.emit('system-log', { message: `LOBBY_FOUND: Hub connected. Syncing mesh...`, type: 'success' });
+          this.handleIncomingConnection(lobbyConn!, localStream);
+      });
+
+      lobbyConn.on('error', () => {
+          this.isSearchingLobby = false;
+          clearTimeout(timeout);
       });
   }
 
   private becomeLobbyMaster(roomId: string, localStream: MediaStream | null) {
+      if (this.isLobbyMaster || this.lobbyPeer) return;
+
       const lobbyId = `sm-${roomId}-lobby-master`;
+      this.emit('system-log', { message: `PROMOTING: Establishing room hub authority...`, type: 'warn' });
+      
       this.lobbyPeer = new Peer(lobbyId, { host: '0.peerjs.com', port: 443, secure: true, debug: 1 });
 
       this.lobbyPeer.on('open', (id) => {
           this.isLobbyMaster = true;
           this.knownPeerIds.add(this.userId);
-          this.emit('system-log', { message: `MESH_V6: Established Room Hub. Master ID: ${this.userId}`, type: 'success' });
+          this.emit('system-log', { message: `HUB_ACTIVE: Authority established. Listening for nodes.`, type: 'success' });
           
           this.lobbyPeer!.on('connection', (conn) => {
               let announcerId: string | null = null;
@@ -103,7 +135,7 @@ class PeerSignalingService {
                       if (data.type === 'announce') {
                           announcerId = data.peerId;
                           this.knownPeerIds.add(announcerId);
-                          this.emit('system-log', { message: `MESH_V6: Peer ${announcerId} detected. Broadcasting...`, type: 'info' });
+                          this.emit('system-log', { message: `AUTH: Peer ${announcerId} verified. Updating mesh.`, type: 'info' });
                           
                           this.connectToPeer(announcerId, localStream);
                           this.broadcastToAll({ type: 'new_peer', peerId: announcerId });
@@ -120,13 +152,19 @@ class PeerSignalingService {
                   }
               });
           });
-
       });
 
       this.lobbyPeer.on('error', (err: any) => {
+          this.isLobbyMaster = false;
+          if (this.lobbyPeer) {
+              this.lobbyPeer.destroy();
+              this.lobbyPeer = null;
+          }
           if (err.type === 'id-taken') {
-              this.emit('system-log', { message: `MESH_V6: Lobby Collision (ID_TAKEN). Syncing...`, type: 'warn' });
+              this.emit('system-log', { message: `HUB_COLLISION: ID Taken. Hub already exists. Re-syncing...`, type: 'warn' });
               this.tryJoinLobby(roomId, localStream);
+          } else {
+              this.emit('system-log', { message: `HUB_ERR: ${err.type}. Protocol failed.`, type: 'error' });
           }
       });
   }

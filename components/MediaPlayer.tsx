@@ -44,7 +44,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ onSync, syncData, onClose }) 
   const youtubeId = activeUrl ? getYoutubeId(activeUrl) : null;
 
   return (
-    <div className="flex flex-col h-full bg-[#f8f8f8] font-mono text-black brutal-grid-dot h-full overflow-hidden">
+    <div className="flex flex-col bg-[#f8f8f8] font-mono text-black brutal-grid-dot h-full overflow-hidden">
       {/* MEDIA_HEADER */}
       <div className="p-6 bg-white border-b-[6px] border-black flex items-center justify-between z-[70] shadow-[0_6px_0px_#000]">
         <div className="flex items-center gap-4 text-black">
@@ -107,7 +107,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ onSync, syncData, onClose }) 
               
               {/* SOURCE_OVERLAY */}
               <div className="absolute top-8 left-8 brutal-card bg-white p-4 border-4 border-black shadow-[8px_8px_0px_var(--brutal-cyan)] opacity-0 group-hover:opacity-100 transition-all transform -translate-y-4 group-hover:translate-y-0">
-                  <span className="text-black text-[10px] font-black uppercase flex items-center gap-4 tracking-widest italic lowercase truncate max-w-md">
+                  <span className="text-black text-[10px] font-black uppercase flex items-center gap-4 tracking-widest italic truncate max-w-md">
                      <Zap size={16} strokeWidth={3} className="text-[var(--brutal-cyan)]" /> {activeUrl}
                   </span>
               </div>
