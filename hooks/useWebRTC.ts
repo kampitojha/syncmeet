@@ -5,9 +5,13 @@ import { SignalPayload } from '../types';
 const rtcConfig: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
     { urls: 'stun:global.stun.twilio.com:3478' }
   ],
-  iceCandidatePoolSize: 0, 
+  iceCandidatePoolSize: 10,  // Pre-fetch candidates for speed
 };
 
 export const useWebRTC = (roomId: string, userName: string) => {
@@ -111,7 +115,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
     // Immediate Trigger
     signaling.joinRoom(roomId, userName);
 
-    // Aggressive ping every 1s (reduced from 2s for speed)
+    // Aggressive ping every 800ms for sub-second discovery
     handshakeInterval.current = window.setInterval(() => {
         if (peerConnection.current?.iceConnectionState === 'connected') {
             clearInterval(handshakeInterval.current!);
@@ -119,7 +123,7 @@ export const useWebRTC = (roomId: string, userName: string) => {
         }
         console.log("📡 Pinging room...");
         signaling.joinRoom(roomId, userName);
-    }, 1000);
+    }, 800);
 
   }, [roomId, userName]);
 

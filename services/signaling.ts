@@ -25,8 +25,9 @@ class PeerSignalingService {
         const config = { 
             appId: 'syncmeet-v3-robust',
             brokerUrls: [
-                'wss://broker.emqx.io:8084/mqtt',      // Primary
-                'wss://test.mosquitto.org:8081/mqtt',  // Backup
+                'wss://broker.emqx.io:8084/mqtt',         // Primary
+                'wss://public.mqtthq.com:443/mqtt',       // High Availability 
+                'wss://test.mosquitto.org:8081/mqtt',     // Backup
             ] 
         };
 
