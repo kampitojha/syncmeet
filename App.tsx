@@ -179,7 +179,7 @@ const App: React.FC = () => {
 
   if (!isInRoom) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 md:p-10 bg-[#f0f0f0] brutal-bg-pattern relative overflow-hidden font-mono">
+      <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center p-4 md:p-10 bg-[#f0f0f0] brutal-bg-pattern relative overflow-hidden font-mono">
         {/* Abstract Background Shapes */}
         <div className="absolute top-10 left-10 w-64 h-64 bg-[var(--brutal-yellow)] border-8 border-black -rotate-12 brutal-card shadow-[20px_20px_0px_#000] -z-0 hidden lg:block" />
         <div className="absolute top-1/4 right-20 w-48 h-48 bg-[var(--brutal-pink)] border-8 border-black rotate-6 brutal-card shadow-[15px_15px_0px_#000] -z-0 hidden lg:block" />
@@ -188,78 +188,78 @@ const App: React.FC = () => {
 
         {/* Permission Overlay */}
         {permissionError && (
-            <div className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
-                <div className="brutal-card bg-[var(--brutal-red)] p-10 border-4 border-black max-w-md w-full shadow-[20px_20px_0px_#000]">
-                    <div className="flex flex-col items-center gap-6 text-white">
-                        <ShieldAlert size={80} strokeWidth={3} className="brutal-shake" />
-                        <h2 className="text-4xl font-black uppercase text-center tracking-tighter italic">ACCESS_DENIED</h2>
-                        <p className="text-center font-bold uppercase tracking-widest text-sm opacity-90">Sensor feedback blocked by local admin protocols.</p>
+            <div className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 md:p-6">
+                <div className="brutal-card bg-[var(--brutal-red)] p-6 md:p-10 border-4 border-black max-w-md w-full shadow-[10px_10px_0px_#000] md:shadow-[20px_20px_0px_#000]">
+                    <div className="flex flex-col items-center gap-4 md:gap-6 text-white">
+                        <ShieldAlert strokeWidth={3} className="w-[60px] h-[60px] md:w-[80px] md:h-[80px] brutal-shake" />
+                        <h2 className="text-3xl md:text-4xl font-black uppercase text-center tracking-tighter italic">ACCESS_DENIED</h2>
+                        <p className="text-center font-bold uppercase tracking-widest text-[10px] md:text-sm opacity-90 leading-relaxed">Sensor feedback blocked by local admin protocols.</p>
                     </div>
-                    <div className="flex gap-4 mt-10">
-                        <button onClick={joinRoom} className="flex-1 brutal-btn bg-white hover:bg-[#f0f0f0]">RE_INIT</button>
-                        <button onClick={() => setPermissionError(null)} className="flex-1 brutal-btn bg-black text-white hover:bg-zinc-800">CLOSE</button>
+                    <div className="flex flex-col md:flex-row gap-4 mt-8 md:mt-10">
+                        <button onClick={joinRoom} className="flex-1 brutal-btn p-4 bg-white hover:bg-[#f0f0f0]">RE_INIT</button>
+                        <button onClick={() => setPermissionError(null)} className="flex-1 brutal-btn p-4 bg-black text-white hover:bg-zinc-800">CLOSE</button>
                     </div>
                 </div>
             </div>
         )}
 
-        <div className="relative z-10 w-full max-w-4xl flex flex-col lg:flex-row gap-10 items-stretch">
+        <div className="relative z-10 w-full max-w-4xl flex flex-col lg:flex-row gap-6 md:gap-10 items-stretch">
            {/* Left Hero Section */}
-           <div className="flex-1 flex flex-col justify-between p-6 bg-black text-white border-[8px] border-black shadow-[20px_20px_0px_var(--brutal-yellow)]">
+           <div className="flex-1 flex flex-col justify-between p-6 md:p-10 bg-black text-white border-[6px] md:border-[8px] border-black shadow-[10px_10px_0px_var(--brutal-yellow)] md:shadow-[20px_20px_0px_var(--brutal-yellow)]">
               <div>
-                <Activity size={48} className="text-[var(--brutal-yellow)] mb-6" />
-                <h1 className="text-7xl md:text-9xl font-black tracking-tighter italic leading-[0.8] mb-6 glitch-effect">SYNC<br/><span className="text-[var(--brutal-yellow)]">MEET</span></h1>
-                <p className="max-w-xs font-black uppercase tracking-widest text-xs opacity-50 italic">Ultra high-chroma peer-to-peer transmission engine v4.0.ALPHA</p>
+                <Activity className="text-[var(--brutal-yellow)] mb-4 md:mb-6 w-8 h-8 md:w-12 md:h-12" />
+                <h1 className="text-5xl md:text-7xl lg:text-9xl font-black tracking-tighter italic leading-[0.8] mb-4 md:mb-6 glitch-effect">SYNC<br/><span className="text-[var(--brutal-yellow)]">MEET</span></h1>
+                <p className="max-w-xs font-black uppercase tracking-widest text-[8px] md:text-xs opacity-50 italic">Ultra high-chroma peer-to-peer transmission engine v4.0.ALPHA</p>
               </div>
-              <div className="mt-20">
+              <div className="mt-8 md:mt-20">
                 <div className="flex flex-wrap gap-2">
                    {['P2P', 'AES_256', 'LOW_LATENCY', 'PROTO_MESH'].map(tag => (
-                       <span key={tag} className="bg-white text-black px-3 py-1 text-[8px] font-black border-2 border-black tracking-tighter">{tag}</span>
+                       <span key={tag} className="bg-white text-black px-2 md:px-3 py-0.5 md:py-1 text-[7px] md:text-[8px] font-black border-2 border-black tracking-tighter">{tag}</span>
                    ))}
                 </div>
               </div>
            </div>
 
            {/* Right Form Section */}
-           <div className="flex-1 brutal-card p-8 md:p-12 bg-white flex flex-col justify-center border-[8px] shadow-[20px_20px_0px_var(--brutal-violet)]">
-              <div className="flex items-center gap-3 mb-10 border-b-4 border-black pb-4">
-                 <TerminalIcon size={24} strokeWidth={3} />
-                 <h2 className="text-2xl font-black uppercase tracking-tight italic">ESTABLISH_UPLINK</h2>
+           <div className="flex-1 brutal-card p-6 md:p-12 bg-white flex flex-col justify-center border-[6px] md:border-[8px] shadow-[10px_10px_0px_var(--brutal-violet)] md:shadow-[20px_20px_0px_var(--brutal-violet)]">
+              <div className="flex items-center gap-3 mb-6 md:mb-10 border-b-4 border-black pb-4">
+                 <TerminalIcon strokeWidth={3} className="w-5 h-5 md:w-6 md:h-6" />
+                 <h2 className="text-lg md:text-2xl font-black uppercase tracking-tight italic">ESTABLISH_UPLINK</h2>
               </div>
               
-              <form onSubmit={handleJoin} className="space-y-6">
+              <form onSubmit={handleJoin} className="space-y-4 md:space-y-6">
                 <div className="group">
-                   <label className="block text-[10px] font-black uppercase mb-1 ml-1 tracking-widest">USER_ID</label>
+                   <label className="block text-[8px] md:text-[10px] font-black uppercase mb-1 ml-1 tracking-widest">USER_ID</label>
                    <input 
                      type="text" 
                      value={userName} 
                      onChange={(e) => {setUserName(e.target.value); if(formError) setFormError(null);}} 
-                     className={`w-full brutal-input ${formError && !userName.trim() ? 'brutal-shake border-[var(--brutal-red)]' : ''}`} 
+                     className={`w-full brutal-input text-xs md:text-sm p-4 md:p-5 ${formError && !userName.trim() ? 'brutal-shake border-[var(--brutal-red)]' : ''}`} 
                      placeholder="TYPE_IDENTIFIER" 
                    />
                 </div>
                 <div className="group">
-                   <label className="block text-[10px] font-black uppercase mb-1 ml-1 tracking-widest">SESSION_KEY</label>
+                   <label className="block text-[8px] md:text-[10px] font-black uppercase mb-1 ml-1 tracking-widest">SESSION_KEY</label>
                    <input 
                      type="text" 
                      value={roomId} 
                      onChange={(e) => {setRoomId(e.target.value); if(formError) setFormError(null);}} 
-                     className={`w-full brutal-input ${formError && !roomId.trim() ? 'brutal-shake border-[var(--brutal-red)]' : ''}`} 
+                     className={`w-full brutal-input text-xs md:text-sm p-4 md:p-5 ${formError && !roomId.trim() ? 'brutal-shake border-[var(--brutal-red)]' : ''}`} 
                      placeholder="ENTER_UUID" 
                    />
                 </div>
                 {formError && (
-                    <div className="bg-[var(--brutal-red)] text-white p-3 font-black text-[10px] uppercase tracking-widest border-2 border-black flex items-center gap-3 animate-shake">
+                    <div className="bg-[var(--brutal-red)] text-white p-3 font-black text-[8px] md:text-[10px] uppercase tracking-widest border-2 border-black flex items-center gap-3 animate-shake">
                         <ShieldAlert size={14} /> ERROR: {formError}
                     </div>
                 )}
-                <button type="submit" className="w-full py-5 brutal-btn-violet text-2xl font-black shadow-[10px_10px_0px_#000] hover:shadow-none hover:translate-x-[10px] hover:translate-y-[10px]">
+                <button type="submit" className="w-full py-4 md:py-5 brutal-btn-violet text-xl md:text-2xl font-black shadow-[6px_6px_0px_#000] md:shadow-[10px_10px_0px_#000] hover:shadow-none translate-x-0 active:translate-x-[6px] active:translate-y-[6px]">
                    BOOT_STREAM_
                 </button>
               </form>
 
-              <div className="mt-10 pt-10 border-t-2 border-dashed border-black/20 text-center">
-                 <p className="text-[10px] font-black uppercase opacity-30 italic">Developed by the industrial_minimal_labs // 2024</p>
+              <div className="mt-6 md:mt-10 pt-6 md:pt-10 border-t-2 border-dashed border-black/20 text-center">
+                 <p className="text-[8px] md:text-[10px] font-black uppercase opacity-30 italic">Developed by the industrial_minimal_labs // 2024</p>
               </div>
            </div>
         </div>
@@ -272,39 +272,39 @@ const App: React.FC = () => {
       <CommandPalette isOpen={showPalette} onClose={() => setShowPalette(false)} onCommand={handleCommand} />
       
       {/* HUD HEADER */}
-      <div className="h-20 border-b-[6px] border-black bg-white flex items-center justify-between px-6 z-[110] shadow-[0_6px_0px_#000]">
-        <div className="flex items-center gap-8">
-           <div className="font-black italic text-3xl tracking-tighter select-none glitch-effect">SYNC<span className="bg-[var(--brutal-yellow)] px-2 ml-1 border-2 border-black">MEET</span></div>
-           <div className="hidden lg:flex items-center gap-3 bg-[var(--brutal-cyan)] border-4 border-black px-4 py-1 text-[11px] font-black uppercase shadow-[4px_4px_0px_#000]"> 
-              <Box size={14} strokeWidth={3} /> {roomId} 
+      <div className="h-16 md:h-20 border-b-[4px] md:border-b-[6px] border-black bg-white flex items-center justify-between px-4 md:px-6 z-[110] shadow-[0_4px_0px_#000] md:shadow-[0_6px_0px_#000]">
+        <div className="flex items-center gap-4 md:gap-8">
+           <div className="font-black italic text-xl md:text-3xl tracking-tighter select-none glitch-effect">SYNC<span className="bg-[var(--brutal-yellow)] px-1.5 md:px-2 ml-1 border-2 border-black text-sm md:text-lg">MEET</span></div>
+           <div className="hidden sm:flex items-center gap-2 md:gap-3 bg-[var(--brutal-cyan)] border-2 md:border-4 border-black px-2 md:px-4 py-0.5 md:py-1 text-[9px] md:text-[11px] font-black uppercase shadow-[3px_3px_0px_#000] md:shadow-[4px_4px_0px_#000]"> 
+              <Box strokeWidth={3} className="w-2.5 h-2.5 md:w-3.5 md:h-3.5" /> {roomId} 
            </div>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
            {isRecording && (
-                <div className="bg-[var(--brutal-red)] text-white border-4 border-black px-4 py-1.5 flex items-center gap-3 shadow-[4px_4px_0px_#000] bounce-in">
-                   <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse shadow-[0_0_10px_white]" />
-                   <span className="text-[10px] font-black uppercase tracking-widest">RECORDING</span>
+                <div className="bg-[var(--brutal-red)] text-white border-2 md:border-4 border-black px-2 md:px-4 py-1 md:py-1.5 flex items-center gap-2 md:gap-3 shadow-[3px_3px_0px_#000] md:shadow-[4px_4px_0px_#000]">
+                   <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-white rounded-full animate-pulse shadow-[0_0_10px_white]" />
+                   <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest hidden xs:block">RECORDING</span>
                 </div>
            )}
-           <div className="hidden md:flex items-center gap-3 bg-black text-white px-5 py-2 text-[10px] font-black uppercase border-4 border-black shadow-[4px_4px_0px_#facc15]">
-              <Circle size={10} fill="var(--brutal-yellow)" className="border-none" /> LIVE_PROTO_STREAM
+           <div className="flex items-center gap-2 md:gap-3 bg-black text-white px-3 md:px-5 py-1.5 md:py-2 text-[8px] md:text-[10px] font-black uppercase border-2 md:border-4 border-black shadow-[3px_3px_0px_#facc15] md:shadow-[4px_4px_0px_#facc15]">
+              <Circle size={8} className="border-none fill-[var(--brutal-yellow)]" /> <span className="hidden sm:inline">LIVE_PROTO_STREAM</span><span className="sm:hidden">LIVE</span>
            </div>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col relative pt-12 pb-36 overflow-hidden px-6 lg:px-20">
+      <div className="flex-1 flex flex-col relative pt-4 md:pt-12 pb-24 md:pb-36 overflow-hidden px-4 md:px-20">
          {/* ACTIVE TOOL VIEWPORT */}
          <div className={`relative flex-1 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex flex-col ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'lg:mr-[480px]' : ''}`}>
             
             {['whiteboard', 'notes', 'media'].includes(activeTool) && (
-                <div className="absolute inset-x-0 inset-y-0 z-[120] lg:z-[60] border-[10px] border-black bg-white shadow-[20px_20px_0px_#000] overflow-hidden flex flex-col animate-slide-up">
-                    <div className="h-12 bg-black text-white flex items-center justify-between px-6 border-b-4 border-black">
-                        <div className="flex items-center gap-3">
-                            <Layout size={18} strokeWidth={3} className="text-[var(--brutal-yellow)]" />
-                            <span className="text-[11px] font-black uppercase tracking-widest italic">{activeTool}_PROTOCOL_INTERFACE</span>
+                <div className="absolute inset-0 md:inset-x-0 md:inset-y-0 z-[120] lg:z-[60] border-[6px] md:border-[10px] border-black bg-white shadow-[10px_10px_0px_#000] md:shadow-[20px_20px_0px_#000] overflow-hidden flex flex-col animate-slide-up">
+                    <div className="h-10 md:h-12 bg-black text-white flex items-center justify-between px-4 md:px-6 border-b-4 border-black text-[10px] md:text-sm">
+                        <div className="flex items-center gap-2 md:gap-3">
+                            <Layout strokeWidth={3} className="text-[var(--brutal-yellow)] w-3.5 h-3.5 md:w-[18px] md:h-[18px]" />
+                            <span className="font-black uppercase tracking-widest italic">{activeTool}_PROTOCOL</span>
                         </div>
-                        <button onClick={() => setActiveTool('none')} className="font-black text-xs hover:text-[var(--brutal-red)] transition-colors uppercase">TERMINATE [ESC]</button>
+                        <button onClick={() => setActiveTool('none')} className="font-black hover:text-[var(--brutal-red)] transition-colors uppercase">[CLOSE_X]</button>
                     </div>
                     <div className="flex-1 overflow-hidden">
                         {activeTool === 'whiteboard' && <Whiteboard roomId={roomId} />}
@@ -318,20 +318,20 @@ const App: React.FC = () => {
             <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-700
                 ${['whiteboard', 'notes', 'media'].includes(activeTool) ? 'opacity-5 scale-[0.95] blur-2xl pointer-events-none' : 'w-full h-full'}`}>
                
-               <div className={`grid gap-8 lg:gap-12 w-full max-w-[1800px] h-full transition-all duration-500 mx-auto content-center
-                  ${remotePeers.length === 0 ? 'grid-cols-1 max-w-6xl aspect-[16/9]' : 
+               <div className={`grid gap-4 md:gap-8 lg:gap-12 w-full max-w-[1800px] h-full transition-all duration-500 mx-auto content-center
+                  ${remotePeers.length === 0 ? 'grid-cols-1 aspect-video md:aspect-[16/9]' : 
                     remotePeers.length === 1 ? 'grid-cols-1 md:grid-cols-2' : 
                     remotePeers.length === 2 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
-                    'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
+                    'grid-cols-2 lg:grid-cols-4'}`}>
                   
                   {/* LOCAL_NODE */}
-                  <div className="w-full h-full brutal-card-highlight overflow-hidden border-[6px]">
+                  <div className="w-full h-full brutal-card-highlight overflow-hidden border-4 md:border-[6px] aspect-video">
                      <VideoTile stream={localStream} isLocal={true} username={userName.toUpperCase()} isAudioEnabled={isMicOn} isVideoEnabled={isCameraOn} isHandRaised={isHandRaised} isGlitching={isGlitching} isScreenShare={isScreenSharing} />
                   </div>
 
                   {/* REMOTE_NODES */}
                   {remotePeers.map((peer: any) => (
-                     <div key={peer.id} className="w-full h-full brutal-card-highlight overflow-hidden border-[6px]">
+                     <div key={peer.id} className="w-full h-full brutal-card-highlight overflow-hidden border-4 md:border-[6px] aspect-video">
                         <VideoTile stream={peer.stream} username={peer.userName.toUpperCase()} isAudioEnabled={peer.isMicOn} isVideoEnabled={peer.isCameraOn} isHandRaised={peer.isHandRaised} isGlitching={peer.isGlitching} isTyping={peer.isTyping} networkQuality={peer.networkQuality} connectionState={peer.connectionState as any} reactions={reactions} onRetry={manualReconnect as any} />
                      </div>
                   ))}
@@ -340,40 +340,40 @@ const App: React.FC = () => {
 
             {/* FLOATING SUBTITLES */}
             {isCaptionsOn && currentCaption && (
-               <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[100] w-full max-w-4xl px-6 pointer-events-none drop-shadow-[0_20px_20px_rgba(0,0,0,0.4)]">
-                  <div className="brutal-card bg-black text-white p-6 border-4 border-white shadow-[12px_12px_0px_var(--brutal-cyan)] text-center animate-slide-up">
-                      <p className="text-2xl font-black uppercase tracking-tighter leading-none italic">
-                         <span className="text-[var(--brutal-yellow)] mr-4 border-r-2 border-white/20 pr-4">{userName.substring(0, 3)}:</span> {currentCaption}
+               <div className="absolute bottom-6 md:bottom-10 left-0 right-0 z-[100] w-full max-w-4xl px-4 md:px-6 pointer-events-none drop-shadow-[0_10px_20px_rgba(0,0,0,0.4)]">
+                  <div className="brutal-card bg-black text-white p-4 md:p-6 border-4 border-white shadow-[8px_8px_0px_var(--brutal-cyan)] text-center animate-slide-up">
+                      <p className="text-sm md:text-2xl font-black uppercase tracking-tighter leading-none italic">
+                         <span className="text-[var(--brutal-yellow)] mr-2 md:mr-4 border-r-2 border-white/20 pr-2 md:pr-4">{userName.substring(0, 3)}:</span> {currentCaption}
                       </p>
                   </div>
                </div>
             )}
          </div>
 
-         {/* SIDEBAR PANEL */}
-         <div className={`fixed inset-y-10 right-10 w-full max-w-[440px] z-[150] transition-all duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] transform 
-             ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'translate-x-0' : 'translate-x-full opacity-0 pointer-events-none'}`}>
-            <div className="brutal-card h-full bg-white flex flex-col overflow-hidden border-[8px] shadow-[20px_20px_0px_#000]">
-               <div className="bg-black text-white p-5 font-black uppercase tracking-[.2em] flex items-center justify-between border-b-4 border-black">
+         {/* SIDEBAR PANEL - Full screen on mobile */}
+         <div className={`fixed inset-0 lg:inset-y-10 lg:right-10 lg:w-[440px] z-[150] transition-all duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] transform 
+             ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'translate-y-0 lg:translate-y-0 lg:translate-x-0' : 'translate-y-full lg:translate-y-0 lg:translate-x-full opacity-0 pointer-events-none'}`}>
+            <div className="brutal-card h-full bg-white flex flex-col overflow-hidden border-0 lg:border-[8px] shadow-none lg:shadow-[20px_20px_0px_#000]">
+               <div className="bg-black text-white p-4 md:p-5 font-black uppercase tracking-[.2em] flex items-center justify-between border-b-4 border-black">
                   <div className="flex items-center gap-3">
-                     <CommandIcon size={20} strokeWidth={3} className="text-[var(--brutal-yellow)]" />
-                     <span className="text-xs">SYSTEM_ACCESS</span>
+                     <CommandIcon strokeWidth={3} className="text-[var(--brutal-yellow)] w-[18px] h-[18px] md:w-5 md:h-5" />
+                     <span className="text-[10px] md:text-xs">SYSTEM_ACCESS</span>
                   </div>
-                  <button onClick={() => setActiveTool('none')} className="hover:text-[var(--brutal-red)] transition-colors">[CLOSE]</button>
+                  <button onClick={() => setActiveTool('none')} className="hover:text-[var(--brutal-red)] transition-colors p-2 text-xs md:text-sm">[CLOSE_X]</button>
                </div>
                
                {/* Quick Tool Switcher */}
-               <div className="p-4 grid grid-cols-2 gap-3 border-b-8 border-black bg-[#f0f0f0]">
+               <div className="p-3 md:p-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2 md:gap-3 border-b-8 border-black bg-[#f0f0f0]">
                   {[
-                    { id: 'chat', label: 'MESSAGES', color: '--brutal-violet' },
-                    { id: 'polls', label: 'POLLS_ENGINE', color: '--brutal-pink' },
-                    { id: 'dashboard', label: 'TELEMETRY', color: '--brutal-cyan' },
-                    { id: 'logs', label: 'SYS_CONSOLE', color: '--brutal-orange' }
+                    { id: 'chat', label: 'MSG', color: '--brutal-violet' },
+                    { id: 'polls', label: 'POLL', color: '--brutal-pink' },
+                    { id: 'dashboard', label: 'TELE', color: '--brutal-cyan' },
+                    { id: 'logs', label: 'LOGS', color: '--brutal-orange' }
                   ].map(btn => (
                     <button 
                        key={btn.id} 
                        onClick={() => setActiveTool(btn.id as any)} 
-                       className={`brutal-btn py-3 text-[10px] italic ${activeTool === btn.id ? `bg-[var(${btn.color})] text-white shadow-none translate-x-1 translate-y-1` : 'bg-white'}`}
+                       className={`brutal-btn py-2.5 md:py-3 text-[9px] md:text-[10px] font-black uppercase italic ${activeTool === btn.id ? `bg-[var(${btn.color})] text-white shadow-none translate-x-1 translate-y-1` : 'bg-white'}`}
                     >
                        {btn.label}
                     </button>
@@ -389,15 +389,15 @@ const App: React.FC = () => {
          </div>
       </div>
 
-      {/* FIXED CONTROL BAR */}
-      <div className="fixed bottom-12 left-0 right-0 z-[110] flex justify-center px-6 pointer-events-none">
-         <div className="pointer-events-auto flex gap-6 brutal-card bg-white p-4 border-[6px] border-black shadow-[15px_15px_0px_#000] hover:shadow-[20px_20px_0px_#000] transition-all">
+      {/* FIXED CONTROL BAR - Adjusted for mobile */}
+      <div className="fixed bottom-4 md:bottom-12 left-0 right-0 z-[110] flex justify-center px-4 md:px-6 pointer-events-none">
+         <div className="pointer-events-auto flex w-full max-w-full lg:max-w-fit gap-2 md:gap-6 brutal-card bg-white p-2 md:p-4 border-[4px] md:border-[6px] border-black shadow-[8px_8px_0px_#000] md:shadow-[15px_15px_0px_#000] overflow-x-auto custom-scrollbar no-scrollbar">
             <Controls onToggleMic={toggleMic} isMicOn={isMicOn} onToggleCamera={toggleCamera} isCameraOn={isCameraOn} onToggleScreenShare={toggleScreenShare} isScreenSharing={isScreenSharing} onToggleHandRaise={toggleHandRaise} isHandRaised={isHandRaised} onToggleTool={toggleTool} activeTool={activeTool} onLeave={handleLeave} onSendReaction={handleSendReaction} isRecording={isRecording} onToggleRecording={() => !isRecording ? startRecording() : stopRecording()} isCaptionsOn={isCaptionsOn} onToggleCaptions={() => setIsCaptionsOn(!isCaptionsOn)} />
          </div>
       </div>
 
-      {/* GLOBAL HUD DECORATION */}
-      <div className="fixed top-24 left-6 hidden lg:flex flex-col gap-4 opacity-40 select-none pointer-events-none">
+      {/* GLOBAL HUD DECORATION - Hidden on mobile */}
+      <div className="fixed top-24 left-6 hidden xl:flex flex-col gap-4 opacity-40 select-none pointer-events-none">
          <div className="p-3 border-4 border-black bg-white shadow-[4px_4px_0px_#000]">
             <Hash size={16} strokeWidth={3} />
          </div>

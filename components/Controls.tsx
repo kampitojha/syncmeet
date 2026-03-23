@@ -37,15 +37,15 @@ const Controls: React.FC<ControlsProps> = ({
   const [showReactions, setShowReactions] = useState(false);
 
   return (
-    <div className="relative flex items-center gap-4 bg-white p-2">
+    <div className="relative flex items-center gap-2 md:gap-4 bg-white p-1 md:p-2 min-w-0">
       {/* REACTION_PAYLOAD_POPOUT */}
       {showReactions && (
-        <div className="absolute bottom-full mb-10 left-1/2 -translate-x-1/2 brutal-card bg-white p-4 flex gap-4 shadow-[15px_15px_0px_#000] z-[300] animate-slide-up border-[6px]">
+        <div className="fixed md:absolute bottom-[100px] md:bottom-full mb-4 md:mb-10 left-1/2 -translate-x-1/2 brutal-card bg-white p-2 md:p-4 flex gap-2 md:gap-4 shadow-[10px_10px_0px_#000] md:shadow-[15px_15px_0px_#000] z-[300] animate-slide-up border-4 md:border-[6px] w-[90vw] md:w-auto overflow-x-auto no-scrollbar">
            {['⚡', '🔥', '👏', '❤️', '🎉', '😂', '💯'].map(emoji => (
              <button 
                 key={emoji} 
                 onClick={() => { onSendReaction(emoji); setShowReactions(false); }}
-                className="w-16 h-16 text-3xl brutal-card border-4 shadow-[6px_6px_0px_#000] hover:bg-[var(--brutal-yellow)] hover:-translate-y-2 transition-all"
+                className="w-12 h-12 md:w-16 md:h-16 text-xl md:text-3xl brutal-card border-2 md:border-4 shadow-[4px_4px_0px_#000] md:shadow-[6px_6px_0px_#000] hover:bg-[var(--brutal-yellow)] hover:-translate-y-2 transition-all shrink-0"
              >
                 {emoji}
              </button>
@@ -54,72 +54,72 @@ const Controls: React.FC<ControlsProps> = ({
       )}
 
       {/* CORE_COMM_GROUP */}
-      <div className="flex gap-4 border-r-8 border-black pr-6">
-        <div className="flex flex-col items-center gap-2">
+      <div className="flex gap-2 md:gap-4 border-r-4 md:border-r-8 border-black pr-3 md:pr-6 shrink-0">
+        <div className="flex flex-col items-center gap-1 md:gap-2">
             <button 
               onClick={onToggleMic}
-              className={`w-20 h-20 brutal-card border-4 flex items-center justify-center shadow-[6px_6px_0px_#000] ${isMicOn ? 'bg-[var(--brutal-green)] text-white' : 'bg-[var(--brutal-red)] text-white brutal-shake'}`}
+              className={`w-12 h-12 md:w-20 md:h-20 brutal-card border-2 md:border-4 flex items-center justify-center shadow-[4px_4px_0px_#000] md:shadow-[6px_6px_0px_#000] ${isMicOn ? 'bg-[var(--brutal-green)] text-white' : 'bg-[var(--brutal-red)] text-white brutal-shake'}`}
             >
-              {isMicOn ? <Mic size={32} strokeWidth={3} /> : <MicOff size={32} strokeWidth={3} />}
+              {isMicOn ? <Mic className="w-6 h-6 md:w-8 md:h-8" strokeWidth={3} /> : <MicOff className="w-6 h-6 md:w-8 md:h-8" strokeWidth={3} />}
             </button>
-            <span className="text-[9px] font-black uppercase tracking-widest">{isMicOn ? 'MIC_TX' : 'MIC_OFF'}</span>
+            <span className="text-[7px] md:text-[9px] font-black uppercase tracking-widest">{isMicOn ? 'ON' : 'OFF'}</span>
         </div>
 
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-1 md:gap-2">
             <button 
               onClick={onToggleCamera}
-              className={`w-20 h-20 brutal-card border-4 flex items-center justify-center shadow-[6px_6px_0px_#000] ${isCameraOn ? 'bg-[var(--brutal-green)] text-white' : 'bg-[var(--brutal-red)] text-white'}`}
+              className={`w-12 h-12 md:w-20 md:h-20 brutal-card border-2 md:border-4 flex items-center justify-center shadow-[4px_4px_0px_#000] md:shadow-[6px_6px_0px_#000] ${isCameraOn ? 'bg-[var(--brutal-green)] text-white' : 'bg-[var(--brutal-red)] text-white'}`}
             >
-              {isCameraOn ? <Video size={32} strokeWidth={3} /> : <VideoOff size={32} strokeWidth={3} />}
+              {isCameraOn ? <Video className="w-6 h-6 md:w-8 md:h-8" strokeWidth={3} /> : <VideoOff className="w-6 h-6 md:w-8 md:h-8" strokeWidth={3} />}
             </button>
-            <span className="text-[9px] font-black uppercase tracking-widest">{isCameraOn ? 'CAM_TX' : 'CAM_OFF'}</span>
+            <span className="text-[7px] md:text-[9px] font-black uppercase tracking-widest">{isCameraOn ? 'LIVE' : 'HIDE'}</span>
         </div>
       </div>
 
       {/* EXTENDED_TOOLS_GROUP */}
-      <div className="flex gap-4 px-4 overflow-x-auto no-scrollbar scroll-smooth max-w-[50vw]">
+      <div className="flex gap-2 md:gap-4 px-2 md:px-4 overflow-x-auto no-scrollbar scroll-smooth flex-1 md:flex-none">
         {[
-            { id: 'share', icon: <ScreenShare size={24} strokeWidth={3} />, action: onToggleScreenShare, active: isScreenSharing, color: '--brutal-yellow' },
-            { id: 'hand', icon: <Hand size={24} strokeWidth={3} />, action: onToggleHandRaise, active: isHandRaised, color: '--brutal-yellow' },
-            { id: 'chat', icon: <MessageSquare size={24} strokeWidth={3} />, action: () => onToggleTool('chat'), active: activeTool === 'chat', color: '--brutal-violet' },
-            { id: 'whiteboard', icon: <PenTool size={24} strokeWidth={3} />, action: () => onToggleTool('whiteboard'), active: activeTool === 'whiteboard', color: '--brutal-cyan' },
-            { id: 'notes', icon: <FileText size={24} strokeWidth={3} />, action: () => onToggleTool('notes'), active: activeTool === 'notes', color: '--brutal-cyan' },
-            { id: 'media', icon: <Tv size={24} strokeWidth={3} />, action: () => onToggleTool('media'), active: activeTool === 'media', color: '--brutal-orange' },
-            { id: 'captions', icon: <Captions size={24} strokeWidth={3} />, action: onToggleCaptions, active: isCaptionsOn, color: '--brutal-violet' },
-            { id: 'rec', icon: <Radio size={24} strokeWidth={3} />, action: onToggleRecording, active: isRecording, color: '--brutal-red' }
+            { id: 'share', icon: <ScreenShare className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />, action: onToggleScreenShare, active: isScreenSharing, color: '--brutal-yellow' },
+            { id: 'hand', icon: <Hand className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />, action: onToggleHandRaise, active: isHandRaised, color: '--brutal-yellow' },
+            { id: 'chat', icon: <MessageSquare className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />, action: () => onToggleTool('chat'), active: activeTool === 'chat', color: '--brutal-violet' },
+            { id: 'whiteboard', icon: <PenTool className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />, action: () => onToggleTool('whiteboard'), active: activeTool === 'whiteboard', color: '--brutal-cyan' },
+            { id: 'notes', icon: <FileText className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />, action: () => onToggleTool('notes'), active: activeTool === 'notes', color: '--brutal-cyan' },
+            { id: 'media', icon: <Tv className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />, action: () => onToggleTool('media'), active: activeTool === 'media', color: '--brutal-orange' },
+            { id: 'captions', icon: <Captions className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />, action: onToggleCaptions, active: isCaptionsOn, color: '--brutal-violet' },
+            { id: 'rec', icon: <Radio className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />, action: onToggleRecording, active: isRecording, color: '--brutal-red' }
         ].map(tool => (
-            <div key={tool.id} className="flex flex-col items-center gap-2">
+            <div key={tool.id} className="flex flex-col items-center gap-1 md:gap-2 shrink-0">
                 <button 
                   onClick={tool.action}
-                  className={`w-16 h-16 brutal-card border-[3px] flex items-center justify-center shadow-[4px_4px_0px_#000] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none ${tool.active ? `bg-[var(${tool.color})] ${tool.color.includes('red') || tool.color.includes('violet') ? 'text-white' : 'text-black'}` : 'bg-white'}`}
+                  className={`w-10 h-10 md:w-16 md:h-16 brutal-card border-2 md:border-[3px] flex items-center justify-center shadow-[4px_4px_0px_#000] transition-all active:translate-x-1 active:translate-y-1 active:shadow-none ${tool.active ? `bg-[var(${tool.color})] ${tool.color.includes('red') || tool.color.includes('violet') ? 'text-white' : 'text-black'}` : 'bg-white'}`}
                 >
                   {tool.icon}
                 </button>
-                <span className="text-[8px] font-black uppercase tracking-tighter opacity-40">{tool.id.toUpperCase()}</span>
+                <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-40">{tool.id.substring(0, 3)}</span>
             </div>
         ))}
 
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-1 md:gap-2 shrink-0">
             <button 
               onClick={() => setShowReactions(!showReactions)}
-              className={`w-16 h-16 brutal-card border-[3px] flex items-center justify-center shadow-[4px_4px_0px_#000] ${showReactions ? 'bg-[var(--brutal-yellow)]' : 'bg-white'}`}
+              className={`w-10 h-10 md:w-16 md:h-16 brutal-card border-2 md:border-[3px] flex items-center justify-center shadow-[4px_4px_0px_#000] ${showReactions ? 'bg-[var(--brutal-yellow)]' : 'bg-white'}`}
             >
-              <Smile size={24} strokeWidth={3} />
+              <Smile className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
             </button>
-            <span className="text-[8px] font-black uppercase opacity-40">REACT</span>
+            <span className="text-[7px] md:text-[8px] font-black uppercase opacity-40">ETC</span>
         </div>
       </div>
 
       {/* TERMINATION_BLOCK */}
-      <div className="pl-6 border-l-8 border-black">
-        <div className="flex flex-col items-center gap-2">
+      <div className="pl-3 md:pl-6 border-l-4 md:border-l-8 border-black shrink-0">
+        <div className="flex flex-col items-center gap-1 md:gap-2">
             <button 
               onClick={onLeave}
-              className="w-20 h-20 brutal-card bg-[var(--brutal-red)] text-white border-4 border-black shadow-[6px_6px_0px_#000] hover:bg-black hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px]"
+              className="w-12 h-12 md:w-20 md:h-20 brutal-card bg-[var(--brutal-red)] text-white border-2 md:border-4 border-black shadow-[4px_4px_0px_#000] md:shadow-[6px_6px_0px_#000] hover:bg-black active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
             >
-              <PhoneOff size={32} strokeWidth={3} />
+              <PhoneOff className="w-6 h-6 md:w-8 md:h-8" strokeWidth={3} />
             </button>
-            <span className="text-[9px] font-black uppercase tracking-widest text-[var(--brutal-red)]">DISCONNECT</span>
+            <span className="text-[7px] md:text-[9px] font-black uppercase tracking-widest text-[var(--brutal-red)]">END</span>
         </div>
       </div>
     </div>
