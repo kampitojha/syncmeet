@@ -1,140 +1,97 @@
-import { SignalPayload, DrawLinePayload } from '../types';
-// @ts-ignore
-import { joinRoom } from 'trystero/mqtt';
+import { selfId } from 'trystero';
+import { getPeerManager } from './peer-manager';
+import EventEmitter from 'events';
 
-class PeerSignalingService {
-  private room: any = null;
-  private sendAction: any = null;
-  private listeners: Record<string, Function[]> = {};
-  public userId: string;
-  public isConnectedToSignaling: boolean = false;
+class PeerSignalingService extends EventEmitter {
+  userId: string;
+  peerManagers: Record<string, any> = {};
 
   constructor() {
-    this.userId = Math.random().toString(36).substr(2, 9);
+    super();
+    this.userId = selfId;
   }
 
-  public joinRoom(roomId: string, name: string) {
-    if (this.room) {
-        // Immediate broadcast if already connected
-        this.send('join', roomId, { name });
-        return;
+  joinRoom(roomId: string, name: string) {
+    if (!this.peerManagers[roomId]) {
+      this.peerManagers[roomId] = getPeerManager(roomId);
+      this.setupListeners(roomId);
     }
+    this.send(roomId, 'join', { name });
+  }
 
-    try {
-        // Using v3-robust app ID for clean slate
-        const config = { 
-            appId: 'syncmeet-v3-robust',
-            brokerUrls: [
-                'wss://broker.emqx.io:8084/mqtt',         // Primary
-                'wss://public.mqtthq.com:443/mqtt',       // High Availability 
-                'wss://test.mosquitto.org:8081/mqtt',     // Backup
-            ] 
-        };
-
-        this.room = joinRoom(config, roomId);
-        
-        const [send, get] = this.room.makeAction('signal');
-        this.sendAction = send;
-        this.isConnectedToSignaling = true;
-
-        get((data: SignalPayload, peerId: string) => {
-          if (data.senderId === this.userId) return;
-          this.emit(data.type, data);
-        });
-
-        this.room.onPeerJoin((peerId: string) => {
-          console.log(`⚡ Instant: Peer ${peerId} detected`);
-          this.emit('peer-joined', { peerId });
-          // Immediate Reply
-          this.send('join', roomId, { name });
-        });
-
-        this.room.onPeerLeave((peerId: string) => {
-             this.emit('leave', { senderId: peerId, roomId });
-        });
-
-        // BURST STRATEGY: Send multiple announces quickly to ensure immediate discovery
-        // Fire 0ms (Now)
-        this.send('join', roomId, { name });
-        
-        // Fire 300ms (Backup for packet loss)
-        setTimeout(() => this.send('join', roomId, { name }), 300);
-        
-        // Fire 800ms (Final check)
-        setTimeout(() => this.send('join', roomId, { name }), 800);
-
-    } catch (error) {
-        console.error("Signaling Init Failed:", error);
-        this.isConnectedToSignaling = false;
+  leaveRoom(roomId: string) {
+    this.send(roomId, 'leave', { senderId: this.userId });
+    if (this.peerManagers[roomId]) {
+      this.peerManagers[roomId].leave();
+      delete this.peerManagers[roomId];
     }
   }
 
-  private send(type: SignalPayload['type'], roomId: string, payload: any) {
-    if (!this.sendAction) return;
-    try {
-        this.sendAction({ type, roomId, senderId: this.userId, payload });
-    } catch (e) {
-        console.warn(`Signaling Send Error (${type}):`, e);
+  private setupListeners(roomId: string) {
+    const pm = this.peerManagers[roomId];
+    const types = [
+      'join', 'offer', 'answer', 'ice-candidate', 
+      'media-status', 'reaction', 'hand-raise', 
+      'system-log', 'file-transfer', 'media-sync',
+      'caption-update', 'poll-update', 'poll-vote',
+      'screen-status', 'typing'
+    ];
+
+    types.forEach(type => {
+      pm.on(type, (payload: any, senderId: string) => {
+        this.emit(type, { roomId, senderId, payload });
+      });
+    });
+  }
+
+  send(roomId: string, type: string, payload: any) {
+    if (this.peerManagers[roomId]) {
+      this.peerManagers[roomId].send(type, payload);
     }
   }
 
-  public sendOffer(roomId: string, targetUserId: string, offer: RTCSessionDescriptionInit) {
-    this.send('offer', roomId, { targetUserId, sdp: offer });
+  sendOffer(roomId: string, targetUserId: string, sdp: RTCSessionDescriptionInit) {
+    this.send(roomId, 'offer', { targetUserId, sdp });
   }
 
-  public sendAnswer(roomId: string, targetUserId: string, answer: RTCSessionDescriptionInit) {
-    this.send('answer', roomId, { targetUserId, sdp: answer });
+  sendAnswer(roomId: string, targetUserId: string, sdp: RTCSessionDescriptionInit) {
+    this.send(roomId, 'answer', { targetUserId, sdp });
   }
 
-  public sendIceCandidate(roomId: string, targetUserId: string, candidate: RTCIceCandidate) {
-    this.send('ice-candidate', roomId, { targetUserId, candidate });
+  sendIceCandidate(roomId: string, targetUserId: string, candidate: RTCIceCandidate) {
+    this.send(roomId, 'ice-candidate', { targetUserId, candidate });
   }
 
-  public sendRestartRequest(roomId: string) {
-      this.send('ice-restart', roomId, {});
+  sendMediaStatus(roomId: string, kind: 'audio' | 'video', enabled: boolean) {
+    this.send(roomId, 'media-status', { kind, enabled });
   }
 
-  // Chat & Tools
-  public sendChatMessage(roomId: string, message: any) { this.send('chat', roomId, message); }
-  public sendChatStatus(roomId: string, status: 'seen', messageIds: string[]) { this.send('chat-status', roomId, { status, messageIds }); }
-  public sendTyping(roomId: string, isTyping: boolean) { this.send('typing', roomId, { isTyping }); }
-  public sendMediaStatus(roomId: string, kind: 'audio' | 'video', enabled: boolean) { this.send('media-status', roomId, { kind, enabled }); }
-  public sendScreenShareStatus(roomId: string, isScreenSharing: boolean) { this.send('screen-share-status', roomId, { isScreenSharing }); }
-  public sendDrawLine(roomId: string, data: DrawLinePayload) { this.send('draw-line', roomId, data); }
-  public sendClearBoard(roomId: string) { this.send('clear-board', roomId, {}); }
-  public sendNoteUpdate(roomId: string, content: string) { this.send('sync-notes', roomId, { content }); }
-  public sendReaction(roomId: string, emoji: string) { this.send('reaction', roomId, { emoji }); }
-  public sendHandRaise(roomId: string, isRaised: boolean) { this.send('hand-raise', roomId, { isRaised }); }
-  public sendSystemLog(roomId: string, message: string, type: 'info' | 'warn' | 'error' = 'info') { 
-      this.send('system-log', roomId, { message, type }); 
-  }
-  public sendMediaSync(roomId: string, data: { time: number, state: 'play' | 'pause' }) {
-      this.send('media-sync', roomId, data);
+  sendReaction(roomId: string, emoji: string) {
+    this.send(roomId, 'reaction', { emoji });
   }
 
-  public leaveRoom(roomId: string) {
-    if (this.room) {
-        try { this.room.leave(); } catch(e) {}
-    }
-    this.room = null;
-    this.sendAction = null;
-    this.isConnectedToSignaling = false;
+  sendHandRaise(roomId: string, isRaised: boolean) {
+    this.send(roomId, 'hand-raise', { isRaised });
   }
 
-  public on(event: string, callback: Function) {
-    if (!this.listeners[event]) this.listeners[event] = [];
-    this.listeners[event].push(callback);
+  sendSystemLog(roomId: string, message: string, type: 'info' | 'warn' | 'error' | 'success' = 'info') {
+    this.send(roomId, 'system-log', { message, type });
   }
 
-  public off(event: string, callback: Function) {
-    if (!this.listeners[event]) return;
-    this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+  sendMediaSync(roomId: string, data: { time: number, state: 'play' | 'pause' }) {
+    this.send(roomId, 'media-sync', data);
   }
 
-  private emit(event: string, data: any) {
-    if (this.listeners[event]) {
-      this.listeners[event].forEach(cb => cb(data));
-    }
+  sendCaption(roomId: string, text: string) {
+    this.send(roomId, 'caption-update', { text });
+  }
+
+  sendPollUpdate(roomId: string, poll: any) {
+    this.send(roomId, 'poll-update', { poll });
+  }
+
+  sendPollVote(roomId: string, pollId: string, optionId: string) {
+    this.send(roomId, 'poll-vote', { pollId, optionId });
   }
 }
 
