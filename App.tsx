@@ -33,8 +33,8 @@ import { signaling } from './services/signaling';
 import { SignalPayload, Poll } from './types';
 
 const App: React.FC = () => {
-  const [roomId, setRoomId] = useState('SYNC-P2P-PRO');
-  const [userName, setUserName] = useState('PEER-' + Math.random().toString(36).substr(2, 4).toUpperCase());
+  const [roomId, setRoomId] = useState('');
+  const [userName, setUserName] = useState('');
   const [activeTool, setActiveTool] = useState<'none' | 'chat' | 'whiteboard' | 'notes' | 'logs' | 'media' | 'polls' | 'dashboard'>('none');
   const [reactions, setReactions] = useState<string[]>([]);
   const [showPalette, setShowPalette] = useState(false);
