@@ -25,16 +25,10 @@ const App: React.FC = () => {
   const {
     isInRoom,
     localStream,
-    remoteStream,
+    remotePeers, // Array of peers
     isMicOn,
     isCameraOn,
     isScreenSharing,
-    remoteUserName,
-    remoteIsMicOn,
-    remoteIsCameraOn,
-    remoteIsScreenSharing,
-    networkQuality,
-    connectionState,
     statusMessage, 
     joinRoom,
     leaveRoom,
@@ -214,8 +208,10 @@ const App: React.FC = () => {
             {/* Video Grid */}
             <div className={`
                 grid gap-4 md:gap-8 w-full h-full max-h-[1400px] mx-auto transition-all duration-300
-                ${remoteStream 
-                    ? 'grid-rows-2 md:grid-rows-1 md:grid-cols-2' 
+                ${remotePeers.length > 0 
+                    ? remotePeers.length === 1 
+                        ? 'grid-rows-2 md:grid-rows-1 md:grid-cols-2' 
+                        : 'grid-cols-2 md:grid-cols-2 lg:grid-cols-3'
                     : 'grid-cols-1 max-w-5xl h-full md:h-auto md:aspect-video' 
                 }
                 ${(activeTool === 'whiteboard' || activeTool === 'notes') ? 'hidden md:grid opacity-10 grayscale scale-[0.98]' : ''}
@@ -228,36 +224,38 @@ const App: React.FC = () => {
                 isLocal={true} 
                 username={userName} 
                 isAudioEnabled={isMicOn}
-                isVideoEnabled={isScreenSharing || isCameraOn}
+                isVideoEnabled={isCameraOn}
                 isMirrored={!isScreenSharing} 
                 isScreenShare={isScreenSharing}
               />
             </div>
 
-            {/* Remote Video */}
-            {remoteStream ? (
-               <div className="relative w-full h-full min-h-0 brut-tile">
+            {/* Remote Videos (Mesh) */}
+            {remotePeers.map(peer => (
+               <div key={peer.id} className="relative w-full h-full min-h-0 brut-tile">
                 <VideoTile 
-                  stream={remoteStream} 
-                  username={remoteUserName || "PEER-01"} 
-                  isAudioEnabled={remoteIsMicOn}
-                  isVideoEnabled={remoteIsCameraOn}
-                  isTyping={isRemoteTyping}
-                  isScreenShare={remoteIsScreenSharing}
-                  networkQuality={networkQuality}
-                  connectionState={connectionState}
+                  stream={peer.stream} 
+                  username={peer.userName} 
+                  isAudioEnabled={peer.isMicOn}
+                  isVideoEnabled={peer.isCameraOn}
+                  isTyping={peer.isTyping}
+                  isScreenShare={peer.isScreenSharing}
+                  networkQuality={peer.networkQuality}
+                  connectionState={peer.connectionState}
                   reactions={reactions}
-                  statusMessage={statusMessage}
+                  statusMessage={peer.connectionState !== 'connected' ? 'NEGOTIATING_PROTOCOL' : ''}
                   onRetry={manualReconnect}
                 />
               </div>
-            ) : (
-              // Waiting State
+            ))}
+
+            {/* Waiting State */}
+            {remotePeers.length === 0 && (
               <div className="hidden md:flex flex-col items-center justify-center bg-white brut-border-lg border-dashed animate-fade-in px-4 text-center">
                 <div className="bg-[#ffdf00] p-4 md:p-6 brut-border mb-6">
                   <Users className="text-black w-8 h-8 md:w-12 md:h-12" strokeWidth={3} />
                 </div>
-                <h3 className="text-black text-xl md:text-3xl font-black uppercase italic -skew-x-3 mb-2 leading-tight">SYSTEM_IDLE: AWAITING_PEER</h3>
+                <h3 className="text-black text-xl md:text-3xl font-black uppercase italic -skew-x-3 mb-2 leading-tight">SYSTEM_IDLE: AWAITING_PEERS</h3>
                 <p className="text-black font-bold uppercase text-xs md:text-sm border-2 border-black px-3 py-1 bg-[#ffdf00] mt-2">LINK: {roomId}</p>
               </div>
             )}
