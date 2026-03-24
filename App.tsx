@@ -22,6 +22,8 @@ import MediaPlayer from './components/MediaPlayer';
 import Polls from './components/Polls';
 import Dashboard from './components/Dashboard';
 
+import { playEmojiSound } from './utils/sounds';
+
 import { useWebRTC } from './hooks/useWebRTC';
 import { useChat } from './hooks/useChat';
 import { useCaptions } from './hooks/useCaptions';
@@ -81,6 +83,7 @@ const App: React.FC = () => {
             senderId: payload.senderId
         };
         setReactions(prev => [...prev, newReaction]);
+        playEmojiSound(payload.payload.emoji); // Sound for remote reactions
         setTimeout(() => setReactions(prev => prev.filter(r => r.id !== newReaction.id)), 3000);
     };
     const handleSystemLog = (payload: SignalPayload) => {
@@ -168,6 +171,7 @@ const App: React.FC = () => {
       signaling.sendReaction(roomId, emoji);
       const newReaction = { id: Math.random().toString(36).substr(2, 9), emoji, senderId: signaling.userId };
       setReactions(prev => [...prev, newReaction]);
+      playEmojiSound(emoji); // Sound for local reaction
       setTimeout(() => setReactions(prev => prev.filter(r => r.id !== newReaction.id)), 3000);
   };
 
