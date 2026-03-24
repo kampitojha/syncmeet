@@ -236,10 +236,6 @@ const App: React.FC = () => {
 
            {/* Right Form Section */}
            <div className="flex-1 brutal-card p-6 md:p-12 bg-white flex flex-col justify-center border-[6px] md:border-[8px] shadow-[10px_10px_0px_var(--brutal-violet)] md:shadow-[20px_20px_0px_var(--brutal-violet)]">
-              <div className="flex items-center gap-3 mb-6 md:mb-10 border-b-4 border-black pb-4">
-                 <TerminalIcon strokeWidth={3} className="w-5 h-5 md:w-6 md:h-6" />
-                 <h2 className="text-lg md:text-2xl font-black uppercase tracking-tight italic">ESTABLISH_UPLINK</h2>
-              </div>
               
               <form onSubmit={handleJoin} className="space-y-4 md:space-y-6">
                 <div className="group">
@@ -354,14 +350,14 @@ const App: React.FC = () => {
                </div>
             </div>
 
-            {/* FLOATING SUBTITLES */}
+            {/* FLOATING SUBTITLES - RELOCATED TO TOP FOR VISIBILITY */}
             {isCaptionsOn && currentCaption && (
-               <div className="absolute bottom-32 md:bottom-44 left-0 right-0 z-[100] w-full max-w-2xl px-4 md:px-6 mx-auto pointer-events-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+               <div className="absolute top-24 md:top-32 left-0 right-0 z-[250] w-full max-w-2xl px-4 md:px-6 mx-auto pointer-events-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
                   <div 
                     key={currentCaption.split(' ').slice(-1)[0]} 
-                    className="brutal-card bg-black text-white p-3 md:p-5 border-[3px] border-white shadow-[6px_6px_0px_var(--brutal-yellow)] text-center animate-slide-up"
+                    className="brutal-card bg-black text-white p-3 md:p-4 border-[3px] border-[var(--brutal-yellow)] shadow-[6px_6px_0px_#000] text-center animate-slide-up"
                   >
-                      <p className="text-xs md:text-xl font-black uppercase tracking-tighter leading-tight italic font-mono">
+                      <p className="text-xs md:text-xl font-black uppercase tracking-tighter leading-tight italic font-mono overflow-hidden whitespace-nowrap overflow-ellipsis">
                          <span className="text-[var(--brutal-yellow)] bg-white/10 px-1.5 mr-3 border-r-2 border-white/20">{userName.substring(0, 3)}:</span> 
                          {currentCaption}
                          <span className="ml-1.5 inline-block w-1.5 md:w-3 h-3 md:h-5 bg-[var(--brutal-cyan)] animate-pulse" />

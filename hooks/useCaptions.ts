@@ -24,21 +24,16 @@ export const useCaptions = (isEnabled: boolean, onCaption: (text: string) => voi
     let lastResultTime = Date.now();
 
     recognition.onresult = (event: any) => {
-      let interimTranscript = '';
-      let finalTranscript = '';
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
+      let displayTranscript = '';
+      
+      // Use a sliding window of the last 2 results for better context/persistence
+      const startIndex = Math.max(0, event.results.length - 2);
+      for (let i = startIndex; i < event.results.length; ++i) {
+        displayTranscript += event.results[i][0].transcript;
       }
 
-      // Combine for real-time feel, prioritizing finality but showing progress
-      const currentSegment = finalTranscript || interimTranscript;
-      if (currentSegment.trim()) {
-        onCaption(currentSegment.trim());
+      if (displayTranscript.trim()) {
+        onCaption(displayTranscript.trim());
         lastResultTime = Date.now();
       }
     };
