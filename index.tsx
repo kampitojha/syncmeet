@@ -1,7 +1,12 @@
 import { Buffer } from 'buffer';
-window.Buffer = Buffer;
 (window as any).global = window;
-(window as any).process = { env: {} };
+(window as any).Buffer = Buffer;
+(window as any).process = {
+    env: { DEBUG: undefined },
+    nextTick: (fn: any) => setTimeout(fn, 0),
+    version: '',
+    browser: true
+} as any;
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
