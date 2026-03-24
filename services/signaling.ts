@@ -159,7 +159,8 @@ class RobustMeshSignaling {
 
     peer.on('close', () => this.destroyPeerConnection(targetSocketId));
     peer.on('error', (err) => {
-        this.destroyPeerConnection(targetSocketId);
+        this.systemLog(`P2P_SIGNAL_GLITCH: Retrying link with ${peerName}...`, 'warn');
+        // Don't destroy immediately, let trickle ICE work
     });
 
     return peer;

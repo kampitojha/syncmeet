@@ -85,7 +85,7 @@ const VideoTile: React.FC<VideoTileProps> = ({
       </div>
 
       {/* CAM_OFF_PLACEHOLDER */}
-      {!isVideoEnabled && (
+      {!isVideoEnabled && stream && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#fcfcfc] brutal-grid-dot p-4">
           <div className="brutal-card bg-white p-4 md:p-8 border-2 md:border-4 border-black shadow-[6px_6px_0px_var(--brutal-pink)] md:shadow-[10px_10px_0px_var(--brutal-pink)] mb-4 md:mb-6">
             <User className="w-8 h-8 md:w-16 md:h-16 text-black" strokeWidth={3} />
@@ -95,6 +95,16 @@ const VideoTile: React.FC<VideoTileProps> = ({
                 <VideoOff strokeWidth={3} className="text-[var(--brutal-red)] w-3.5 h-3.5 md:w-[18px] md:h-[18px]" /> NO_VIDEO
              </span>
           </div>
+        </div>
+      )}
+
+      {/* SYNC_CONNECTING_OVERLAY */}
+      {!stream && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white brutal-grid-dot p-4 z-50">
+           <div className="border-4 border-black p-4 bg-[var(--brutal-yellow)] shadow-[6px_6px_0px_#000] animate-pulse">
+              <span className="text-[10px] md:text-[14px] font-black uppercase tracking-tighter">SYNCHRONIZING...</span>
+           </div>
+           <div className="mt-4 text-[8px] font-bold opacity-30 uppercase tracking-widest italic animate-bounce">Awaiting Link Establishment</div>
         </div>
       )}
 
