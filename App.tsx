@@ -226,7 +226,7 @@ const App: React.FC = () => {
                     <img 
                       src={logo} 
                       alt="SyncMeet Logo" 
-                      className="relative w-12 h-12 md:w-20 md:h-20 border-[4px] md:border-[6px] border-black bg-white group-hover:bg-[var(--brutal-yellow)] transition-colors p-1" 
+                      className="relative w-12 h-12 md:w-20 md:h-20 border-[4px] md:border-[6px] border-black bg-white group-hover:bg-[var(--brutal-yellow)] transition-all object-cover" 
                     />
                  </div>
                 <h1 className="text-5xl md:text-7xl lg:text-9xl font-black tracking-tighter italic leading-[0.8] mb-4 md:mb-6 glitch-effect">SYNC<br/><span className="text-[var(--brutal-yellow)]">MEET</span></h1>
