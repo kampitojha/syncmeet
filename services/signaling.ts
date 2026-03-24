@@ -119,20 +119,17 @@ class RobustMeshSignaling {
         this.trigger('join', { roomId: this.activeRoom, senderId: peerUid, payload: { name: peerName } });
     });
 
-    peer.on('close', () => this.destroyPeerConnection(targetSocketId));
-    peer.on('error', (err) => {
-        this.trigger('system-log', { message: `P2P_FAIL: Link error with ${peerName}. Retrying...`, type: 'error' });
-        this.destroyPeerConnection(targetSocketId);
+    peer.on('data', (data) => {
+        try {
+            const parsed = JSON.parse(data.toString());
+            this.trigger(parsed.type, { ...parsed, senderId: peerUid, senderName: peerName, roomId: this.activeRoom });
+        } catch (e) {}
     });
 
-    setTimeout(() => {
-        if (this.socket && this.peerStatus[targetSocketId] && !this.peerStatus[targetSocketId].streamReceived && this.peerStatus[targetSocketId].retryCount < 2) {
-            this.peerStatus[targetSocketId].retryCount++;
-            this.trigger('system-log', { message: `LINK_RECOVERY: No video payload after 8s. Re-initiating mesh for ${peerName}.`, type: 'warn' });
-            this.destroyPeerConnection(targetSocketId);
-            this.createPeerConnection(targetSocketId, peerUid, peerName, isInitiator);
-        }
-    }, 8000);
+    peer.on('close', () => this.destroyPeerConnection(targetSocketId));
+    peer.on('error', (err) => {
+        this.destroyPeerConnection(targetSocketId);
+    });
 
     this.peers[targetSocketId] = peer;
     this.peerMetadata[targetSocketId] = { userId: peerUid, userName: peerName };
@@ -160,7 +157,7 @@ class RobustMeshSignaling {
     const data = JSON.stringify({ type, payload });
     Object.values(this.peers).forEach(p => { if (p.connected) p.send(data); });
     if (useRelay && this.socket?.connected) {
-        this.socket.emit('broadcast-action', this.activeRoom, { type, senderId: this.userId, senderName: this.userName, data: payload });
+        this.socket.emit('broadcast-action', this.activeRoom, { type, senderId: this.userId, senderName: this.userName, payload });
     }
   }
 
