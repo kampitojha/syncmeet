@@ -161,7 +161,9 @@ export const useWebRTC = (roomId: string, userName: string) => {
     };
 
     const handleTyping = (p: SignalPayload) => {
-        setRemotePeers(prev => (prev[p.senderId] ? { ...prev[p.senderId], isTyping: p.payload.isTyping } : prev) as any);
+        setRemotePeers(prev => prev[p.senderId] ? {
+            ...prev, [p.senderId]: { ...prev[p.senderId], isTyping: p.payload.isTyping }
+        } : prev);
     };
 
     signaling.on('join', handleJoin);
