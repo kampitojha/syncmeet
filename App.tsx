@@ -5,7 +5,6 @@ import {
   Zap,
   Circle,
   Hash,
-  Activity,
   Box,
   Layout,
   Command as CommandIcon,
@@ -221,7 +220,14 @@ const App: React.FC = () => {
            {/* Left Hero Section */}
            <div className="flex-1 flex flex-col justify-between p-6 md:p-10 bg-black text-white border-[6px] md:border-[8px] border-black shadow-[10px_10px_0px_var(--brutal-yellow)] md:shadow-[20px_20px_0px_var(--brutal-yellow)]">
               <div>
-                <Activity className="text-[var(--brutal-yellow)] mb-4 md:mb-6 w-8 h-8 md:w-12 md:h-12" />
+                 <div className="mb-4 md:mb-8 group cursor-pointer relative w-fit">
+                    <div className="absolute inset-0 bg-[var(--brutal-yellow)] translate-x-1.5 translate-y-1.5 group-hover:translate-x-3 group-hover:translate-y-3 transition-transform" />
+                    <img 
+                      src="./favicon.png" 
+                      alt="SyncMeet Logo" 
+                      className="relative w-12 h-12 md:w-20 md:h-20 border-[4px] md:border-[6px] border-black bg-white group-hover:bg-[var(--brutal-yellow)] transition-colors p-1" 
+                    />
+                 </div>
                 <h1 className="text-5xl md:text-7xl lg:text-9xl font-black tracking-tighter italic leading-[0.8] mb-4 md:mb-6 glitch-effect">SYNC<br/><span className="text-[var(--brutal-yellow)]">MEET</span></h1>
                 <p className="max-w-xs font-black uppercase tracking-widest text-[8px] md:text-xs opacity-50 italic">Ultra high-chroma peer-to-peer transmission engine v4.0.ALPHA</p>
               </div>
@@ -286,7 +292,10 @@ const App: React.FC = () => {
       {/* HUD HEADER */}
       <div className="h-16 md:h-20 border-b-[4px] md:border-b-[6px] border-black bg-white flex items-center justify-between px-4 md:px-6 z-[110] shadow-[0_4px_0px_#000] md:shadow-[0_6px_0px_#000]">
         <div className="flex items-center gap-4 md:gap-8">
-           <div className="font-black italic text-xl md:text-3xl tracking-tighter select-none glitch-effect">SYNC<span className="bg-[var(--brutal-yellow)] px-1.5 md:px-2 ml-1 border-2 border-black text-sm md:text-lg">MEET</span></div>
+           <div className="flex items-center gap-3 md:gap-4 select-none group cursor-pointer">
+              <img src="./favicon.png" alt="Logo" className="w-8 h-8 md:w-10 md:h-10 border-2 md:border-4 border-black bg-white shadow-[3px_3px_0px_#000] group-hover:shadow-none translate-x-0 transition-all active:translate-x-[3px] active:translate-y-[3px]" />
+              <div className="font-black italic text-xl md:text-3xl tracking-tighter glitch-effect">SYNC<span className="bg-[var(--brutal-yellow)] px-1.5 md:px-2 ml-1 border-2 border-black text-sm md:text-lg">MEET</span></div>
+           </div>
            <div className="hidden sm:flex items-center gap-2 md:gap-3 bg-[var(--brutal-cyan)] border-2 md:border-4 border-black px-2 md:px-4 py-0.5 md:py-1 text-[9px] md:text-[11px] font-black uppercase shadow-[3px_3px_0px_#000] md:shadow-[4px_4px_0px_#000]"> 
               <Box strokeWidth={3} className="w-2.5 h-2.5 md:w-3.5 md:h-3.5" /> {roomId} 
            </div>
