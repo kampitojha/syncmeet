@@ -355,15 +355,15 @@ const App: React.FC = () => {
 
             {/* FLOATING SUBTITLES */}
             {isCaptionsOn && currentCaption && (
-               <div className="absolute bottom-32 md:bottom-40 left-0 right-0 z-[100] w-full max-w-4xl px-4 md:px-6 mx-auto pointer-events-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+               <div className="absolute bottom-32 md:bottom-44 left-0 right-0 z-[100] w-full max-w-2xl px-4 md:px-6 mx-auto pointer-events-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
                   <div 
-                    key={currentCaption.split(' ').slice(-1)[0]} // Force slide-up on new words
-                    className="brutal-card bg-black text-white p-4 md:p-8 border-[4px] border-white shadow-[10px_10px_0px_var(--brutal-yellow)] text-center animate-slide-up"
+                    key={currentCaption.split(' ').slice(-1)[0]} 
+                    className="brutal-card bg-black text-white p-3 md:p-5 border-[3px] border-white shadow-[6px_6px_0px_var(--brutal-yellow)] text-center animate-slide-up"
                   >
-                      <p className="text-sm md:text-3xl font-black uppercase tracking-tighter leading-tight italic font-mono">
-                         <span className="text-[var(--brutal-yellow)] bg-white/10 px-2 mr-4 border-r-2 border-white/30">{userName.substring(0, 3)}:</span> 
+                      <p className="text-xs md:text-xl font-black uppercase tracking-tighter leading-tight italic font-mono">
+                         <span className="text-[var(--brutal-yellow)] bg-white/10 px-1.5 mr-3 border-r-2 border-white/20">{userName.substring(0, 3)}:</span> 
                          {currentCaption}
-                         <span className="ml-2 inline-block w-2 md:w-4 h-4 md:h-8 bg-[var(--brutal-cyan)] animate-pulse" />
+                         <span className="ml-1.5 inline-block w-1.5 md:w-3 h-3 md:h-5 bg-[var(--brutal-cyan)] animate-pulse" />
                       </p>
                   </div>
                </div>
