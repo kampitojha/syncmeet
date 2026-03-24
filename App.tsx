@@ -236,8 +236,13 @@ const App: React.FC = () => {
 
            {/* Right Form Section */}
            <div className="flex-1 brutal-card p-6 md:p-12 bg-white flex flex-col justify-center border-[6px] md:border-[8px] shadow-[10px_10px_0px_var(--brutal-violet)] md:shadow-[20px_20px_0px_var(--brutal-violet)]">
-              
-              <form onSubmit={handleJoin} className="space-y-4 md:space-y-6">
+               <div className="mb-10 md:mb-14 relative">
+                  <span className="absolute -top-10 -left-6 md:-top-16 md:-left-12 text-[60px] md:text-[80px] font-black opacity-5 select-none pointer-events-none tracking-tighter">PROTO_X</span>
+                  <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic leading-[0.9] mb-4">ACCESS<br />PORTAL</h2>
+                  <div className="h-2 md:h-3 w-16 md:w-24 bg-[var(--brutal-violet)]" />
+               </div>
+               
+               <form onSubmit={handleJoin} className="space-y-4 md:space-y-6">
                 <div className="group">
                    <label className="block text-[8px] md:text-[10px] font-black uppercase mb-1 ml-1 tracking-widest">USER_ID</label>
                    <input 
