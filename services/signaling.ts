@@ -103,6 +103,8 @@ class RobustMeshSignaling {
         delete this.peers[targetSocketId];
     }
 
+    this.peerStatus[targetSocketId] = { connected: false, streamReceived: false, retryCount: 0 };
+
     const peer = new Peer({
         initiator: isInitiator,
         trickle: true,
