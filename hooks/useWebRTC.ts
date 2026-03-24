@@ -117,21 +117,54 @@ export const useWebRTC = (roomId: string, userName: string) => {
 
   useEffect(() => {
     const handleJoin = (p: SignalPayload) => {
-        setRemotePeers(prev => ({
-            ...prev,
-            [p.senderId]: {
-                id: p.senderId, userName: p.payload.name, stream: null,
-                isMicOn: true, isCameraOn: true, isHandRaised: false, isGlitching: false,
-                isScreenSharing: false, connectionState: 'connected', isTyping: false, networkQuality: 4
-            }
-        }));
+        setRemotePeers(prev => {
+            const existing = prev[p.senderId];
+            return {
+                ...prev,
+                [p.senderId]: {
+                    id: p.senderId, 
+                    userName: p.payload.name || (existing?.userName) || 'User', 
+                    stream: existing?.stream || null,
+                    isMicOn: existing?.isMicOn ?? true, 
+                    isCameraOn: existing?.isCameraOn ?? true, 
+                    isHandRaised: existing?.isHandRaised ?? false, 
+                    isGlitching: existing?.isGlitching ?? false,
+                    isScreenSharing: existing?.isScreenSharing ?? false, 
+                    connectionState: 'connected', 
+                    isTyping: existing?.isTyping ?? false, 
+                    networkQuality: existing?.networkQuality ?? 4
+                }
+            };
+        });
     };
 
     const handleTrack = (p: { peerId: string, stream: MediaStream }) => {
-        setRemotePeers(prev => ({
-            ...prev,
-            [p.peerId]: { ...prev[p.peerId], stream: p.stream }
-        }));
+        setRemotePeers(prev => {
+            const existing = prev[p.peerId];
+            if (!existing) {
+                // If track arrives before join metadata, create placeholder
+                return {
+                    ...prev,
+                    [p.peerId]: {
+                        id: p.peerId,
+                        userName: 'User',
+                        stream: p.stream,
+                        isMicOn: true,
+                        isCameraOn: true,
+                        isHandRaised: false,
+                        isGlitching: false,
+                        isScreenSharing: false,
+                        connectionState: 'connected',
+                        isTyping: false,
+                        networkQuality: 4
+                    }
+                };
+            }
+            return {
+                ...prev,
+                [p.peerId]: { ...existing, stream: p.stream }
+            };
+        });
     };
 
     const handleLeave = (p: SignalPayload) => {
