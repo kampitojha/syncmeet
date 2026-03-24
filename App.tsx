@@ -293,9 +293,9 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col relative pt-4 md:pt-12 pb-24 md:pb-36 overflow-hidden px-4 md:px-20">
+      <div className={`flex-1 flex ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'flex-row' : 'flex-col'} relative pt-4 md:pt-12 pb-24 md:pb-36 overflow-hidden px-4 md:px-20`}>
          {/* ACTIVE TOOL VIEWPORT */}
-         <div className={`relative flex-1 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex flex-col ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'lg:mr-[480px]' : ''}`}>
+         <div className={`relative flex-1 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex flex-col`}>
             
             {['whiteboard', 'notes', 'media'].includes(activeTool) && (
                 <div className="absolute inset-0 md:inset-x-0 md:inset-y-0 z-[120] lg:z-[60] border-[6px] md:border-[10px] border-black bg-white shadow-[10px_10px_0px_#000] md:shadow-[20px_20px_0px_#000] overflow-hidden flex flex-col animate-slide-up">
