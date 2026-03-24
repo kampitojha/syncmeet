@@ -330,7 +330,7 @@ const App: React.FC = () => {
                   </div>
 
                   {/* REMOTE_NODES */}
-                  {remotePeers.filter((p: any) => p && p.id).map((peer: any) => (
+                  {remotePeers.filter((p: any) => p && typeof p === 'object' && p.id).map((peer: any) => (
                      <div key={peer.id} className="w-full h-full brutal-card-highlight overflow-hidden border-4 md:border-[6px] aspect-video">
                         <VideoTile stream={peer.stream} username={(peer.userName || 'GUEST').toUpperCase()} isAudioEnabled={peer.isMicOn} isVideoEnabled={peer.isCameraOn} isHandRaised={peer.isHandRaised} isGlitching={peer.isGlitching} isTyping={peer.isTyping} networkQuality={peer.networkQuality} connectionState={peer.connectionState as any} reactions={reactions} onRetry={manualReconnect as any} />
                      </div>

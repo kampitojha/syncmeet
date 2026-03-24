@@ -13,6 +13,8 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
+(window as any).setImmediate = (fn: any) => setTimeout(fn, 0);
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Could not find root element to mount to");

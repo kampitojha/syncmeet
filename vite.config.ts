@@ -17,8 +17,11 @@ export default defineConfig(({ mode }) => {
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'global': 'window', // Crucial for Simple-Peer
-        'process.env': {}    // Fallback for Node-specific checks
+        'global': 'window',
+        'process.env': {},
+        'process.browser': true,
+        'process.version': '"v16.0.0"',
+        'process.nextTick': '(fn) => setTimeout(fn, 0)',
       },
       resolve: {
         alias: {
