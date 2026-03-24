@@ -16,11 +16,14 @@ export default defineConfig(({ mode }) => {
       plugins: [react()],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+        'global': 'window', // Crucial for Simple-Peer
+        'process.env': {}    // Fallback for Node-specific checks
       },
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
+          'buffer': 'buffer', // Link to the buffer package
         }
       }
     };

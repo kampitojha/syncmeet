@@ -3,18 +3,12 @@ import Peer from 'simple-peer';
 
 type Listener = (data: any) => void;
 
-class ProSignalingService {
+class RobustMeshSignaling {
   userId: string;
   userName: string = 'User';
   socket: Socket | null = null;
-  
-  // Storage for all active peer connections in the mesh
-  // Record<SocketID, PeerInstance>
   peers: Record<string, Peer.Instance> = {};
-  
-  // Metadata map to link socket IDs to user IDs
   peerMetadata: Record<string, { userId: string, userName: string }> = {};
-
   listeners: Record<string, Listener[]> = {};
   activeRoom: string | null = null;
   localStream: MediaStream | null = null;
@@ -30,7 +24,7 @@ class ProSignalingService {
   }
 
   off(event: string, callback: Listener) {
-    if (!this.listeners[event]) return this;
+    if (!this.listeners[event]) return;
     this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
     return this;
   }
@@ -41,6 +35,7 @@ class ProSignalingService {
   }
 
   async joinRoom(roomId: string, name: string, localStream: MediaStream | null = null) {
+    // Robust room normalization (trim + lowercase)
     const normalizedRoomId = roomId.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
     this.userName = name;
     this.activeRoom = normalizedRoomId;
@@ -50,64 +45,66 @@ class ProSignalingService {
         this.socket.disconnect();
     }
 
-    // Connect to professional signaling backend
-    // In production, this should be your deployed server URL (Render, Heroku, etc.)
-    this.socket = io('http://localhost:3001', {
-        transports: ['websocket', 'polling'],
+    // DYNAMIC URL DETECTION: Always prioritize the explicitly set env variable
+    const BACKEND_URL = (import.meta as any).env.VITE_SIGNALING_SERVER || 'http://localhost:3001';
+    
+    this.trigger('system-log', { message: `CONNECT_ATTEMPT: Targeting hub at ${BACKEND_URL}`, type: 'info' });
+
+    this.socket = io(BACKEND_URL, {
+        transports: ['websocket', 'polling'], // Fallback to polling if WS is blocked
+        reconnection: true,
         reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
         reconnectionAttempts: 10
     });
 
     this.socket.on('connect', () => {
-        this.trigger('system-log', { message: `MESH_INIT: Connected to signaling hub. Status: ONLINE.`, type: 'success' });
+        this.trigger('system-log', { message: `SIGNAL_ACTIVE: Uplink secured. Identifying as NODE_${this.userId.substring(5, 9)}`, type: 'success' });
         this.socket?.emit('join-room', normalizedRoomId, this.userId, this.userName);
     });
 
-    // Received when we first join: contains all current peers in the room
     this.socket.on('mesh-manifest', (users: any[]) => {
-        this.trigger('system-log', { message: `MESH_SYNC: Received manifest of ${users.length} existing nodes.`, type: 'info' });
+        this.trigger('system-log', { message: `MANIFEST_RX: Syncing ${users.length} neighbors. Total mesh: ${users.length + 1}`, type: 'info' });
         users.forEach(user => {
-            // As the newcomer, WE initiate connections to everyone already there
             this.createPeerConnection(user.socketId, user.userId, user.userName, true);
         });
     });
 
-    // Received when someone else joins after us
     this.socket.on('user-entered-mesh', ({ socketId, userId, userName }) => {
-        this.trigger('system-log', { message: `PEER_DETECTED: ${userName} entering the mesh. Waiting for handshake.`, type: 'info' });
-        // As an existing member, we WAIT for the newcomer to initiate
+        this.trigger('system-log', { message: `NODE_DISCOVERY: ${userName} entering local orbit.`, type: 'info' });
         this.createPeerConnection(socketId, userId, userName, false);
     });
 
-    // Signal processing for WebRTC handshakes (SDP/ICE)
     this.socket.on('signal', ({ fromSocketId, fromUid, fromName, signal }) => {
-        if (this.peers[fromSocketId]) {
-            this.peers[fromSocketId].signal(signal);
-        } else {
-            // Edge case: if signal arrives before room manifest, initialize peer as non-initiator
+        if (!this.peers[fromSocketId]) {
             this.createPeerConnection(fromSocketId, fromUid, fromName, false);
-            this.peers[fromSocketId].signal(signal);
         }
+        this.peers[fromSocketId].signal(signal);
     });
 
     this.socket.on('user-left-mesh', ({ socketId, userId }) => {
-        this.trigger('system-log', { message: `PEER_LOST: Connection with node ${userId} severed.`, type: 'warn' });
+        this.trigger('system-log', { message: `NODE_LOST: Peer ${userId} de-synced from mesh.`, type: 'warn' });
         this.destroyPeerConnection(socketId);
     });
 
-    // Handle high-level broadcasts from server
     this.socket.on('broadcast-action', (payload: any) => {
-        this.trigger(payload.type, { roomId: this.activeRoom, senderId: payload.senderId, payload: payload.data });
+        this.trigger(payload.type, { 
+            roomId: this.activeRoom, 
+            senderId: payload.senderId, 
+            senderName: payload.senderName || 'Peer',
+            payload: payload.data 
+        });
     });
 
-    this.socket.on('disconnect', () => {
-        this.trigger('system-log', { message: `SIGNAL_LOST: Signaling server unreachable. Reconnecting...`, type: 'error' });
+    this.socket.on('connect_error', (err) => {
+        this.trigger('system-log', { message: `HUB_ERR: Protocol fail. Check if backend is live at ${BACKEND_URL}`, type: 'error' });
     });
   }
 
   private createPeerConnection(targetSocketId: string, peerUid: string, peerName: string, isInitiator: boolean) {
-    if (this.peers[targetSocketId]) return;
+    if (this.peers[targetSocketId]) {
+        console.warn('Peer collision detected. Re-syncing...');
+        this.peers[targetSocketId].destroy();
+    }
 
     const peer = new Peer({
         initiator: isInitiator,
@@ -118,15 +115,11 @@ class ProSignalingService {
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
                 { urls: 'stun:stun2.l.google.com:19302' },
-                { urls: 'stun:stun3.l.google.com:19302' },
-                { urls: 'stun:stun.voiparound.com:3478' },
-                { urls: 'stun:stun.voipstunt.com:3478' },
                 { urls: 'stun:global.stun.twilio.com:3478' }
             ] 
         }
     });
 
-    // WebRTC Signaling Phase
     peer.on('signal', (data) => {
         this.socket?.emit('signal', { 
             toSocketId: targetSocketId, 
@@ -136,33 +129,23 @@ class ProSignalingService {
         });
     });
 
-    // Stream Handling
     peer.on('stream', (stream) => {
         this.trigger('track_received', { peerId: peerUid, stream });
     });
 
-    // P2P Data Channel Communication
     peer.on('data', (raw) => {
-        try {
-            const data = JSON.parse(raw.toString());
-            this.trigger(data.type, { roomId: this.activeRoom, senderId: peerUid, payload: data.payload });
-        } catch (e) {
-            console.error('P2P Protocol Error:', e);
-        }
+        const data = JSON.parse(raw.toString());
+        this.trigger(data.type, { roomId: this.activeRoom, senderId: peerUid, payload: data.payload });
     });
 
-    // Peer Connection Lifecycle
     peer.on('connect', () => {
         this.trigger('join', { roomId: this.activeRoom, senderId: peerUid, payload: { name: peerName } });
+        this.trigger('peer-joined', { peerId: peerUid }); // Sync for App log
     });
 
     peer.on('close', () => this.destroyPeerConnection(targetSocketId));
-    peer.on('error', (err) => {
-        console.error(`P2P_ERR [${peerUid}]:`, err);
-        this.destroyPeerConnection(targetSocketId);
-    });
+    peer.on('error', (err) => this.destroyPeerConnection(targetSocketId));
 
-    // Metadata management for lookups
     this.peers[targetSocketId] = peer;
     this.peerMetadata[targetSocketId] = { userId: peerUid, userName: peerName };
 
@@ -174,7 +157,6 @@ class ProSignalingService {
     if (meta) {
         this.trigger('leave', { senderId: meta.userId });
     }
-
     if (this.peers[targetSocketId]) {
         this.peers[targetSocketId].destroy();
         delete this.peers[targetSocketId];
@@ -189,24 +171,21 @@ class ProSignalingService {
     this.activeRoom = null;
   }
 
-  // Multi-Path Communication: P2P for Low Latency, Server-Broadcast for Reliability
   send(type: string, payload: any, useRelay: boolean = false) {
     const data = JSON.stringify({ type, payload });
-    
-    // 1. Send via direct P2P Data Channels (lowest latency)
     Object.values(this.peers).forEach(peer => {
-        if (peer.connected) {
-            peer.send(data);
-        }
+        if (peer.connected) peer.send(data);
     });
-
-    // 2. If P2P is not yet established or relay is requested, use Server Broadcast
-    if (useRelay && this.socket) {
-        this.socket.emit('broadcast-action', this.activeRoom, { type, senderId: this.userId, data: payload });
+    if (useRelay && this.socket?.connected) {
+        this.socket.emit('broadcast-action', this.activeRoom, { 
+            type, 
+            senderId: this.userId, 
+            senderName: this.userName,
+            data: payload 
+        });
     }
   }
 
-  // High-Level Communication Interface
   sendMediaStatus(r: string, k: any, e: boolean) { this.send('media-status', { kind: k, enabled: e }); }
   sendReaction(r: string, e: string) { this.send('reaction', { emoji: e }, true); }
   sendHandRaise(r: string, i: boolean) { this.send('hand-raise', { isRaised: i }); }
@@ -224,4 +203,4 @@ class ProSignalingService {
   sendMediaSync(r: string, d: any) { this.send('media-sync', d); }
 }
 
-export const signaling = new ProSignalingService();
+export const signaling = new RobustMeshSignaling();
