@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import logo from './favicon.png';
 import { 
   Video, 
   Terminal as TerminalIcon,
@@ -223,7 +224,7 @@ const App: React.FC = () => {
                  <div className="mb-4 md:mb-8 group cursor-pointer relative w-fit">
                     <div className="absolute inset-0 bg-[var(--brutal-yellow)] translate-x-1.5 translate-y-1.5 group-hover:translate-x-3 group-hover:translate-y-3 transition-transform" />
                     <img 
-                      src="./favicon.png" 
+                      src={logo} 
                       alt="SyncMeet Logo" 
                       className="relative w-12 h-12 md:w-20 md:h-20 border-[4px] md:border-[6px] border-black bg-white group-hover:bg-[var(--brutal-yellow)] transition-colors p-1" 
                     />
@@ -293,7 +294,7 @@ const App: React.FC = () => {
       <div className="h-16 md:h-20 border-b-[4px] md:border-b-[6px] border-black bg-white flex items-center justify-between px-4 md:px-6 z-[110] shadow-[0_4px_0px_#000] md:shadow-[0_6px_0px_#000]">
         <div className="flex items-center gap-4 md:gap-8">
            <div className="flex items-center gap-3 md:gap-4 select-none group cursor-pointer">
-              <img src="./favicon.png" alt="Logo" className="w-8 h-8 md:w-10 md:h-10 border-2 md:border-4 border-black bg-white shadow-[3px_3px_0px_#000] group-hover:shadow-none translate-x-0 transition-all active:translate-x-[3px] active:translate-y-[3px]" />
+              <img src={logo} alt="Logo" className="w-8 h-8 md:w-10 md:h-10 border-2 md:border-4 border-black bg-white shadow-[3px_3px_0px_#000] group-hover:shadow-none translate-x-0 transition-all active:translate-x-[3px] active:translate-y-[3px]" />
               <div className="font-black italic text-xl md:text-3xl tracking-tighter glitch-effect">SYNC<span className="bg-[var(--brutal-yellow)] px-1.5 md:px-2 ml-1 border-2 border-black text-sm md:text-lg">MEET</span></div>
            </div>
            <div className="hidden sm:flex items-center gap-2 md:gap-3 bg-[var(--brutal-cyan)] border-2 md:border-4 border-black px-2 md:px-4 py-0.5 md:py-1 text-[9px] md:text-[11px] font-black uppercase shadow-[3px_3px_0px_#000] md:shadow-[4px_4px_0px_#000]"> 
