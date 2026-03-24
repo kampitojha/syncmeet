@@ -32,7 +32,13 @@ class RobustMeshSignaling {
 
   private trigger(event: string, data: any) {
     if (!this.listeners[event]) return;
-    this.listeners[event].forEach(cb => cb(data));
+    this.listeners[event].forEach(cb => {
+        try { cb(data); } catch (e) { console.error(`ERR_LISTENER: ${event}`, e); }
+    });
+  }
+
+  private systemLog(message: string, type: 'info' | 'success' | 'warn' | 'error' = 'info') {
+    this.trigger('system-log', { payload: { message, type }, roomId: this.activeRoom });
   }
 
   async joinRoom(roomId: string, name: string, localStream: MediaStream | null = null) {
@@ -44,7 +50,7 @@ class RobustMeshSignaling {
     if (this.socket) this.socket.disconnect();
 
     const BACKEND_URL = (import.meta as any).env.VITE_SIGNALING_SERVER || 'http://localhost:3001';
-    this.trigger('system-log', { message: `CONNECT_TARGET: ${BACKEND_URL}`, type: 'info' });
+    this.systemLog(`CONNECT_TARGET: ${BACKEND_URL}`, 'info');
 
     this.socket = io(BACKEND_URL, {
         transports: ['websocket', 'polling'],
@@ -53,17 +59,17 @@ class RobustMeshSignaling {
     });
 
     this.socket.on('connect', () => {
-        this.trigger('system-log', { message: `HUB_SYNC: Online. Entry as ${this.userName}_${this.userId.slice(-4)}`, type: 'success' });
+        this.systemLog(`HUB_SYNC: Online. Entry as ${this.userName}_${this.userId.slice(-4)}`, 'success');
         this.socket?.emit('join-room', normalizedRoomId, this.userId, this.userName);
     });
 
     this.socket.on('mesh-manifest', (users: any[]) => {
-        this.trigger('system-log', { message: `MESH_SCAN: Found ${users.length} peers in orbit. Handshaking...`, type: 'info' });
+        this.systemLog(`MESH_SCAN: Found ${users.length} peers in orbit. Handshaking...`, 'info');
         users.forEach(user => this.createPeerConnection(user.socketId, user.userId, user.userName, true));
     });
 
     this.socket.on('user-entered-mesh', ({ socketId, userId, userName }) => {
-        this.trigger('system-log', { message: `ORBIT_ENTRY: ${userName} detected. Initiating link.`, type: 'info' });
+        this.systemLog(`ORBIT_ENTRY: ${userName} detected. Initiating link.`, 'info');
         this.createPeerConnection(socketId, userId, userName, false);
     });
 
@@ -73,7 +79,7 @@ class RobustMeshSignaling {
     });
 
     this.socket.on('user-left-mesh', ({ socketId, userId }) => {
-        this.trigger('system-log', { message: `ORBIT_EXIT: Peer ${userId} de-synced.`, type: 'warn' });
+        this.systemLog(`ORBIT_EXIT: Peer ${userId} de-synced.`, 'warn');
         this.destroyPeerConnection(socketId);
     });
 
@@ -109,13 +115,13 @@ class RobustMeshSignaling {
 
     peer.on('stream', (stream) => {
         this.peerStatus[targetSocketId].streamReceived = true;
-        this.trigger('system-log', { message: `VIDEO_LINK: Stream RX from ${peerName}. Sync complete.`, type: 'success' });
+        this.systemLog(`VIDEO_LINK: Stream RX from ${peerName}. Sync complete.`, 'success');
         this.trigger('track_received', { peerId: peerUid, stream });
     });
 
     peer.on('connect', () => {
         this.peerStatus[targetSocketId].connected = true;
-        this.trigger('system-log', { message: `DATA_LINK: P2P Tunnel secured with ${peerName}.`, type: 'info' });
+        this.systemLog(`DATA_LINK: P2P Tunnel secured with ${peerName}.`, 'info');
         this.trigger('join', { roomId: this.activeRoom, senderId: peerUid, payload: { name: peerName } });
     });
 
@@ -128,6 +134,7 @@ class RobustMeshSignaling {
 
     peer.on('close', () => this.destroyPeerConnection(targetSocketId));
     peer.on('error', (err) => {
+        this.systemLog(`P2P_FAIL: Link error with ${peerName}.`, 'error');
         this.destroyPeerConnection(targetSocketId);
     });
 
