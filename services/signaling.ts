@@ -120,7 +120,8 @@ class RobustMeshSignaling {
         }
     });
 
-    this.peerStatus[targetSocketId] = { connected: false, streamReceived: false, retryCount: 0 };
+    this.peers[targetSocketId] = peer;
+    this.peerMetadata[targetSocketId] = { userId: peerUid, userName: peerName };
 
     peer.on('signal', (data) => {
         this.socket?.emit('signal', { toSocketId: targetSocketId, signal: data, fromUid: this.userId, fromName: this.userName });
@@ -128,14 +129,19 @@ class RobustMeshSignaling {
 
     peer.on('stream', (stream) => {
         this.peerStatus[targetSocketId].streamReceived = true;
-        this.systemLog(`VIDEO_LINK: Stream RX from ${peerName}. Sync complete.`, 'success');
+        this.systemLog(`PEER_VIDEO: Link verified with ${peerName}.`, 'success');
         this.trigger('track_received', { peerId: peerUid, stream });
     });
 
     peer.on('connect', () => {
         this.peerStatus[targetSocketId].connected = true;
-        this.systemLog(`DATA_LINK: P2P Tunnel secured with ${peerName}.`, 'info');
+        this.systemLog(`DATA_LINK: Secure tunnel with ${peerName}.`, 'info');
         this.trigger('join', { roomId: this.activeRoom, senderId: peerUid, payload: { name: peerName } });
+        
+        // Final fallback if stream didn't catch on init
+        if (this.localStream && peer.connected) {
+            try { peer.addStream(this.localStream); } catch (e) {}
+        }
     });
 
     peer.on('data', (data) => {
@@ -147,12 +153,9 @@ class RobustMeshSignaling {
 
     peer.on('close', () => this.destroyPeerConnection(targetSocketId));
     peer.on('error', (err) => {
-        this.systemLog(`P2P_FAIL: Link error with ${peerName}.`, 'error');
         this.destroyPeerConnection(targetSocketId);
     });
 
-    this.peers[targetSocketId] = peer;
-    this.peerMetadata[targetSocketId] = { userId: peerUid, userName: peerName };
     return peer;
   }
 
