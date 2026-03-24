@@ -11,88 +11,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
       :root {
-        --glass-bg: rgba(255, 255, 255, 0.03);
-        --glass-border: rgba(255, 255, 255, 0.1);
-        --accent-glow: rgba(0, 242, 255, 0.5);
+        --brutal-yellow: #facc15;
       }
-
       body {
         margin: 0;
-        background-color: #050505;
-        color: #ffffff;
-        font-family: 'Outfit', sans-serif;
-        overflow: hidden;
+        background-color: #f0f0f0;
+        color: #000000;
+        font-family: 'JetBrains Mono', 'Outfit', monospace;
+        overflow-x: hidden;
       }
-
-      /* Custom Scrollbar for modern look */
-      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-
-      /* Glassmorphism Classes */
-      .glass-card {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-      }
-
-      .glass-card-bright {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(30px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-      }
-
-      /* Animations */
-      @keyframes float {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-20px); }
-        100% { transform: translateY(0px); }
-      }
-
-      @keyframes pulse-glow {
-        0% { box-shadow: 0 0 5px rgba(0, 242, 255, 0.2); }
-        50% { box-shadow: 0 0 25px rgba(0, 242, 255, 0.5); }
-        100% { box-shadow: 0 0 5px rgba(0, 242, 255, 0.2); }
-      }
-
-      .animate-float { animation: float 6s ease-in-out infinite; }
-      .pulse-accent { animation: pulse-glow 3s infinite; }
-
-      /* Dynamic Mesh Background */
-      .mesh-bg {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        background: 
-          radial-gradient(circle at 0% 0%, #1a1a1a 0%, transparent 50%),
-          radial-gradient(circle at 100% 0%, #0d1b2a 0%, transparent 50%),
-          radial-gradient(circle at 100% 100%, #1b263b 0%, transparent 50%),
-          radial-gradient(circle at 0% 100%, #0a0a0a 0%, transparent 50%);
-        opacity: 0.8;
-      }
-
-      /* Glitch transition (Legacy kept but refined) */
-      .animate-glitch-refined {
-        animation: glitch-anim 0.4s cubic-bezier(.25,.46,.45,.94) both;
-      }
-      @keyframes glitch-anim {
-        0% { transform: translate(0); filter: hue-rotate(0deg); }
-        20% { transform: translate(-2px, 2px); filter: hue-rotate(90deg); }
-        40% { transform: translate(-2px, -2px); filter: hue-rotate(180deg); }
-        60% { transform: translate(2px, 2px); filter: hue-rotate(270deg); }
-        80% { transform: translate(2px, -2px); filter: hue-rotate(360deg); }
-        100% { transform: translate(0); filter: hue-rotate(0deg); }
-      }
+      /* Custom Brutalist Scrollbar */
+      ::-webkit-scrollbar { width: 12px; }
+      ::-webkit-scrollbar-track { background: #f0f0f0; border-left: 4px solid #000; }
+      ::-webkit-scrollbar-thumb { background: #000; border: 2px solid #fff; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--brutal-yellow); }
     </style>
   </head>
   <body>
     <div id="root"></div>
-    <div class="mesh-bg"></div>
+    <!-- Script handles the UI injection -->
     <script type="module" src="./index.tsx"></script>
   </body>
 </html>

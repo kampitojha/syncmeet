@@ -40,16 +40,22 @@ const Controls: React.FC<ControlsProps> = ({
     <div className="relative flex items-center gap-2 md:gap-4 bg-white p-1 md:p-2 min-w-0">
       {/* REACTION_PAYLOAD_POPOUT */}
       {showReactions && (
-        <div className="fixed md:absolute bottom-[100px] md:bottom-full mb-4 md:mb-10 left-1/2 -translate-x-1/2 brutal-card bg-white p-2 md:p-4 flex gap-2 md:gap-4 shadow-[10px_10px_0px_#000] md:shadow-[15px_15px_0px_#000] z-[300] animate-slide-up border-4 md:border-[6px] w-[90vw] md:w-auto overflow-x-auto no-scrollbar">
-           {['⚡', '🔥', '👏', '❤️', '🎉', '😂', '💯'].map(emoji => (
+        <div className="fixed bottom-24 md:bottom-32 left-1/2 -translate-x-1/2 brutal-card bg-white p-2 md:p-5 flex gap-3 md:gap-5 shadow-[12px_12px_0px_#000] z-[600] animate-slide-up border-4 md:border-[6px] max-w-[95vw] md:w-auto overflow-x-auto no-scrollbar">
+           {['⚡', '🔥', '👏', '❤️', '🎉', '😂', '💯', '🚀', '✨'].map(emoji => (
              <button 
                 key={emoji} 
                 onClick={() => { onSendReaction(emoji); setShowReactions(false); }}
-                className="w-12 h-12 md:w-16 md:h-16 text-xl md:text-3xl brutal-card border-2 md:border-4 shadow-[4px_4px_0px_#000] md:shadow-[6px_6px_0px_#000] hover:bg-[var(--brutal-yellow)] hover:-translate-y-2 transition-all shrink-0"
+                className="w-14 h-14 md:w-20 md:h-20 text-2xl md:text-5xl brutal-card border-2 md:border-[3px] shadow-[4px_4px_0px_#000] md:shadow-[6px_6px_0px_#000] hover:bg-[var(--brutal-yellow)] hover:-translate-y-3 transition-all shrink-0 flex items-center justify-center bg-white"
              >
                 {emoji}
              </button>
            ))}
+           <button 
+             onClick={() => setShowReactions(false)}
+             className="w-14 h-14 md:w-20 md:h-20 text-[10px] md:text-sm brutal-card border-2 md:border-[3px] bg-black text-white shadow-[4px_4px_0px_#000] hover:bg-[var(--brutal-red)] flex items-center justify-center shrink-0 font-black italic"
+           >
+             CLOSE
+           </button>
         </div>
       )}
 

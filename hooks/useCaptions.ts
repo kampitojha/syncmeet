@@ -19,7 +19,9 @@ export const useCaptions = (isEnabled: boolean, onCaption: (text: string) => voi
     
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'en-US'; // Default, but robust
+    recognition.lang = 'en-IN'; // Better support for local accents/Hinglish
+
+    let lastResultTime = Date.now();
 
     recognition.onresult = (event: any) => {
       let interimTranscript = '';
@@ -33,25 +35,35 @@ export const useCaptions = (isEnabled: boolean, onCaption: (text: string) => voi
         }
       }
 
-      const fullText = (finalTranscript || interimTranscript).trim();
-      if (fullText) {
-        onCaption(fullText);
+      // Combine for real-time feel, prioritizing finality but showing progress
+      const currentSegment = finalTranscript || interimTranscript;
+      if (currentSegment.trim()) {
+        onCaption(currentSegment.trim());
+        lastResultTime = Date.now();
       }
     };
 
     recognition.onerror = (event: any) => {
-        if (event.error !== 'no-speech' && event.error !== 'aborted') {
-            console.error("Speech Recognition Error:", event.error);
+        if (event.error === 'not-allowed') {
+            console.error("Speech Recognition PERMISSION_DENIED");
+            isEnabledRef.current = false;
+        }
+        // Restart on common non-fatal errors
+        if (['network', 'no-speech', 'audio-capture'].includes(event.error)) {
+            setTimeout(() => { if (isEnabledRef.current) recognition.start(); }, 1000);
         }
     };
 
     recognition.onend = () => {
+        // Aggressive restart if still enabled
         if (isEnabledRef.current) {
-            try { 
-                recognition.start(); 
-            } catch (e) {
-                // Ignore concurrent start errors
-            }
+            const timeSinceLastResult = Date.now() - lastResultTime;
+            // Short delay to prevent browser throttling
+            setTimeout(() => {
+                try { 
+                    if (isEnabledRef.current) recognition.start(); 
+                } catch (e) {}
+            }, timeSinceLastResult > 5000 ? 100 : 500); 
         }
     };
 

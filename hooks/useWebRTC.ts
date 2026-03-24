@@ -70,49 +70,59 @@ export const useWebRTC = (roomId: string, userName: string) => {
   }, [localStream]);
 
   const toggleScreenShare = async () => {
-    // Integration logic for PeerJS screen sharing
     if (!isScreenSharing) {
         try {
-            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-            const track = stream.getVideoTracks()[0];
+            const stream = await navigator.mediaDevices.getDisplayMedia({ 
+                video: { cursor: 'always' } as any,
+                audio: false 
+            });
+            const screenTrack = stream.getVideoTracks()[0];
             
-            // Replace local track in all active calls using Simple-Peer replaceTrack
+            // Replace local track in all active calls
             Object.values((signaling as any).peers).forEach((peer: any) => {
-                if (peer.connected) {
-                    const originalTrack = (localStream as MediaStream).getVideoTracks()[0];
-                    peer.replaceTrack(originalTrack, track, localStream);
+                if (peer.connected && localVideoTrack.current) {
+                    peer.replaceTrack(localVideoTrack.current, screenTrack, localStream);
                 }
             });
 
-            setLocalStream(new MediaStream([track, localAudioTrack.current!]));
+            const newLocalStream = new MediaStream([screenTrack]);
+            if (localAudioTrack.current) newLocalStream.addTrack(localAudioTrack.current);
+            
+            setLocalStream(newLocalStream);
             setIsScreenSharing(true);
             signaling.sendScreenShareStatus(roomId, true);
 
-            track.onended = () => {
-                const refreshedStream = new MediaStream([localVideoTrack.current!, localAudioTrack.current!]);
-                Object.values((signaling as any).peers).forEach((peer: any) => {
-                    if (peer.connected) {
-                        peer.replaceTrack(track, localVideoTrack.current, refreshedStream);
-                    }
-                });
-                setLocalStream(refreshedStream);
-                setIsScreenSharing(false);
-                signaling.sendScreenShareStatus(roomId, false);
+            screenTrack.onended = () => {
+                stopScreenShare(screenTrack);
             };
-        } catch (e) {}
+        } catch (e) {
+            console.error("SCREEN_SHARE_INIT_FAILED", e);
+        }
     } else {
-        const refreshedStream = new MediaStream([localVideoTrack.current!, localAudioTrack.current!]);
+        const activeScreenTrack = localStream?.getVideoTracks()[0];
+        if (activeScreenTrack) stopScreenShare(activeScreenTrack);
+    }
+  };
+
+  const stopScreenShare = (screenTrack: MediaStreamTrack) => {
+    screenTrack.stop();
+    
+    // Restore camera track in all active calls
+    if (localVideoTrack.current) {
         Object.values((signaling as any).peers).forEach((peer: any) => {
             if (peer.connected) {
-                // Find the active video track being sent (could be the screen track)
-                const activeVideoTrack = (localStream as MediaStream).getVideoTracks()[0];
-                peer.replaceTrack(activeVideoTrack, localVideoTrack.current, refreshedStream);
+                peer.replaceTrack(screenTrack, localVideoTrack.current, localStream);
             }
         });
-        setLocalStream(refreshedStream);
-        setIsScreenSharing(false);
-        signaling.sendScreenShareStatus(roomId, false);
     }
+
+    const refreshedStream = new MediaStream();
+    if (localVideoTrack.current) refreshedStream.addTrack(localVideoTrack.current);
+    if (localAudioTrack.current) refreshedStream.addTrack(localAudioTrack.current);
+    
+    setLocalStream(refreshedStream);
+    setIsScreenSharing(false);
+    signaling.sendScreenShareStatus(roomId, false);
   };
 
   useEffect(() => {

@@ -34,7 +34,7 @@ const App: React.FC = () => {
   const [roomId, setRoomId] = useState('');
   const [userName, setUserName] = useState('');
   const [activeTool, setActiveTool] = useState<'none' | 'chat' | 'whiteboard' | 'notes' | 'logs' | 'media' | 'polls' | 'dashboard'>('none');
-  const [reactions, setReactions] = useState<string[]>([]);
+  const [reactions, setReactions] = useState<{ id: string, emoji: string, senderId?: string }[]>([]);
   const [showPalette, setShowPalette] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [syncData] = useState<{ time: number, state: 'play' | 'pause' }>();
@@ -58,9 +58,13 @@ const App: React.FC = () => {
 
   useCaptions(isCaptionsOn && isMicOn, (text) => {
       setCurrentCaption(text);
+      // Synchronize with mesh immediately
       signaling.sendCaption(roomId, text);
+      
       if (captionTimeoutRef.current) clearTimeout(captionTimeoutRef.current);
-      captionTimeoutRef.current = setTimeout(() => setCurrentCaption(''), 6000);
+      captionTimeoutRef.current = setTimeout(() => {
+          setCurrentCaption('');
+      }, 5000); // 5s shelf life
   });
 
   const addLog = (message: string, type: LogEntry['type'] = 'info') => {
@@ -71,8 +75,13 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleReaction = (payload: SignalPayload) => {
         if (payload.roomId !== roomId) return;
-        setReactions(prev => [...prev, payload.payload.emoji]);
-        setTimeout(() => setReactions(prev => prev.slice(1)), 2000);
+        const newReaction = { 
+            id: Math.random().toString(36).substr(2, 9), 
+            emoji: payload.payload.emoji,
+            senderId: payload.senderId
+        };
+        setReactions(prev => [...prev, newReaction]);
+        setTimeout(() => setReactions(prev => prev.filter(r => r.id !== newReaction.id)), 3000);
     };
     const handleSystemLog = (payload: SignalPayload) => {
         if (payload.roomId !== roomId) return;
@@ -157,8 +166,9 @@ const App: React.FC = () => {
 
   const handleSendReaction = (emoji: string) => {
       signaling.sendReaction(roomId, emoji);
-      setReactions(prev => [...prev, emoji]);
-      setTimeout(() => setReactions(prev => prev.slice(1)), 2000);
+      const newReaction = { id: Math.random().toString(36).substr(2, 9), emoji, senderId: signaling.userId };
+      setReactions(prev => [...prev, newReaction]);
+      setTimeout(() => setReactions(prev => prev.filter(r => r.id !== newReaction.id)), 3000);
   };
 
   const [formError, setFormError] = useState<string | null>(null);
@@ -293,46 +303,51 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <div className={`flex-1 flex ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'flex-row' : 'flex-col'} relative pt-4 md:pt-12 pb-24 md:pb-36 overflow-hidden px-4 md:px-20`}>
-         {/* ACTIVE TOOL VIEWPORT */}
-         <div className={`relative flex-1 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex flex-col`}>
-            
-            {['whiteboard', 'notes', 'media'].includes(activeTool) && (
-                <div className="absolute inset-0 md:inset-x-0 md:inset-y-0 z-[120] lg:z-[60] border-[6px] md:border-[10px] border-black bg-white shadow-[10px_10px_0px_#000] md:shadow-[20px_20px_0px_#000] overflow-hidden flex flex-col animate-slide-up">
-                    <div className="h-10 md:h-12 bg-black text-white flex items-center justify-between px-4 md:px-6 border-b-4 border-black text-[10px] md:text-sm">
-                        <div className="flex items-center gap-2 md:gap-3">
-                            <Layout strokeWidth={3} className="text-[var(--brutal-yellow)] w-3.5 h-3.5 md:w-[18px] md:h-[18px]" />
-                            <span className="font-black uppercase tracking-widest italic">{activeTool}_PROTOCOL</span>
-                        </div>
-                        <button onClick={() => setActiveTool('none')} className="font-black hover:text-[var(--brutal-red)] transition-colors uppercase">[CLOSE_X]</button>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                        {activeTool === 'whiteboard' && <Whiteboard roomId={roomId} />}
-                        {activeTool === 'notes' && <CollaborativeNotes roomId={roomId} />}
-                        {activeTool === 'media' && <MediaPlayer syncData={syncData} onSync={(t, s) => signaling.sendMediaSync(roomId, { time: t, state: s })} onClose={() => setActiveTool('none')} />}
-                    </div>
-                </div>
-            )}
-
-            {/* MESH_VIEWPORT: Intel-Adaptive Grid */}
-            <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-700
+      <div className="flex-1 flex overflow-hidden relative">
+         {/* MAIN TRANSMISSION HUB */}
+         <div className={`flex-1 flex flex-col transition-all duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] relative
+            ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'lg:mr-[460px]' : ''}`}>
+            {/* MESH_VIEWPORT: Adaptive grid that respects sidebar docking */}
+            <div className={`flex-1 flex flex-col items-center justify-center p-4 md:p-12 transition-all duration-700
                 ${['whiteboard', 'notes', 'media'].includes(activeTool) ? 'opacity-5 scale-[0.95] blur-2xl pointer-events-none' : 'w-full h-full'}`}>
                
-               <div className={`grid gap-4 md:gap-8 lg:gap-12 w-full max-w-[1800px] h-full transition-all duration-500 mx-auto content-center
-                  ${remotePeers.length === 0 ? 'grid-cols-1 aspect-video md:aspect-[16/9]' : 
+               <div className={`grid gap-4 md:gap-10 w-full max-w-[1600px] h-full transition-all duration-500 mx-auto content-center
+                  ${remotePeers.length === 0 ? 'grid-cols-1 max-w-[1000px] aspect-video' : 
                     remotePeers.length === 1 ? 'grid-cols-1 md:grid-cols-2' : 
                     remotePeers.length === 2 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
                     'grid-cols-2 lg:grid-cols-4'}`}>
                   
                   {/* LOCAL_NODE */}
                   <div className="w-full h-full brutal-card-highlight overflow-hidden border-4 md:border-[6px] aspect-video">
-                     <VideoTile stream={localStream} isLocal={true} username={userName.toUpperCase()} isAudioEnabled={isMicOn} isVideoEnabled={isCameraOn} isHandRaised={isHandRaised} isGlitching={isGlitching} isScreenShare={isScreenSharing} />
+                     <VideoTile 
+                        stream={localStream} 
+                        isLocal={true} 
+                        username={userName.toUpperCase()} 
+                        isAudioEnabled={isMicOn} 
+                        isVideoEnabled={isCameraOn} 
+                        isHandRaised={isHandRaised} 
+                        isGlitching={isGlitching} 
+                        isScreenShare={isScreenSharing}
+                        reactions={reactions.filter(r => r.senderId === signaling.userId).map(r => r.emoji)}
+                     />
                   </div>
 
                   {/* REMOTE_NODES */}
                   {remotePeers.filter((p: any) => p && typeof p === 'object' && p.id).map((peer: any) => (
                      <div key={peer.id} className="w-full h-full brutal-card-highlight overflow-hidden border-4 md:border-[6px] aspect-video">
-                        <VideoTile stream={peer.stream} username={(peer.userName || 'GUEST').toUpperCase()} isAudioEnabled={peer.isMicOn} isVideoEnabled={peer.isCameraOn} isHandRaised={peer.isHandRaised} isGlitching={peer.isGlitching} isTyping={peer.isTyping} networkQuality={peer.networkQuality} connectionState={peer.connectionState as any} reactions={reactions} onRetry={manualReconnect as any} />
+                        <VideoTile 
+                            stream={peer.stream} 
+                            username={(peer.userName || 'GUEST').toUpperCase()} 
+                            isAudioEnabled={peer.isMicOn} 
+                            isVideoEnabled={peer.isCameraOn} 
+                            isHandRaised={peer.isHandRaised} 
+                            isGlitching={peer.isGlitching} 
+                            isTyping={peer.isTyping} 
+                            networkQuality={peer.networkQuality} 
+                            connectionState={peer.connectionState as any} 
+                            reactions={reactions.filter(r => r.senderId === peer.id).map(r => r.emoji)} 
+                            onRetry={manualReconnect as any} 
+                        />
                      </div>
                   ))}
                </div>
@@ -340,30 +355,35 @@ const App: React.FC = () => {
 
             {/* FLOATING SUBTITLES */}
             {isCaptionsOn && currentCaption && (
-               <div className="absolute bottom-6 md:bottom-10 left-0 right-0 z-[100] w-full max-w-4xl px-4 md:px-6 pointer-events-none drop-shadow-[0_10px_20px_rgba(0,0,0,0.4)]">
-                  <div className="brutal-card bg-black text-white p-4 md:p-6 border-4 border-white shadow-[8px_8px_0px_var(--brutal-cyan)] text-center animate-slide-up">
-                      <p className="text-sm md:text-2xl font-black uppercase tracking-tighter leading-none italic">
-                         <span className="text-[var(--brutal-yellow)] mr-2 md:mr-4 border-r-2 border-white/20 pr-2 md:pr-4">{userName.substring(0, 3)}:</span> {currentCaption}
+               <div className="absolute bottom-32 md:bottom-40 left-0 right-0 z-[100] w-full max-w-4xl px-4 md:px-6 mx-auto pointer-events-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+                  <div 
+                    key={currentCaption.split(' ').slice(-1)[0]} // Force slide-up on new words
+                    className="brutal-card bg-black text-white p-4 md:p-8 border-[4px] border-white shadow-[10px_10px_0px_var(--brutal-yellow)] text-center animate-slide-up"
+                  >
+                      <p className="text-sm md:text-3xl font-black uppercase tracking-tighter leading-tight italic font-mono">
+                         <span className="text-[var(--brutal-yellow)] bg-white/10 px-2 mr-4 border-r-2 border-white/30">{userName.substring(0, 3)}:</span> 
+                         {currentCaption}
+                         <span className="ml-2 inline-block w-2 md:w-4 h-4 md:h-8 bg-[var(--brutal-cyan)] animate-pulse" />
                       </p>
                   </div>
                </div>
             )}
          </div>
 
-         {/* SIDEBAR PANEL - Full screen on mobile */}
-         <div className={`fixed inset-0 lg:inset-y-10 lg:right-10 lg:w-[440px] z-[150] transition-all duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] transform 
-             ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'translate-y-0 lg:translate-y-0 lg:translate-x-0' : 'translate-y-full lg:translate-y-0 lg:translate-x-full opacity-0 pointer-events-none'}`}>
-            <div className="brutal-card h-full bg-white flex flex-col overflow-hidden border-0 lg:border-[8px] shadow-none lg:shadow-[20px_20px_0px_#000]">
+         {/* SIDEBAR PANEL - Docked on Desktop, Drawer on Mobile */}
+         <div className={`fixed lg:absolute top-0 bottom-0 right-0 z-[150] transition-all duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] transform 
+             ${['chat', 'logs', 'polls', 'dashboard'].includes(activeTool) ? 'translate-x-0 w-full lg:w-[440px]' : 'translate-x-full w-full lg:w-[440px] pointer-events-none'}`}>
+            <div className="h-full bg-white flex flex-col overflow-hidden border-l-[6px] md:border-l-[8px] border-black shadow-[-10px_0_30px_rgba(0,0,0,0.1)]">
                <div className="bg-black text-white p-4 md:p-5 font-black uppercase tracking-[.2em] flex items-center justify-between border-b-4 border-black">
                   <div className="flex items-center gap-3">
                      <CommandIcon strokeWidth={3} className="text-[var(--brutal-yellow)] w-[18px] h-[18px] md:w-5 md:h-5" />
-                     <span className="text-[10px] md:text-xs">SYSTEM_ACCESS</span>
+                     <span className="text-[10px] md:text-xs">{activeTool}_PROTOCOL</span>
                   </div>
-                  <button onClick={() => setActiveTool('none')} className="hover:text-[var(--brutal-red)] transition-colors p-2 text-xs md:text-sm">[CLOSE_X]</button>
+                  <button onClick={() => setActiveTool('none')} className="hover:text-[var(--brutal-red)] transition-colors p-2 text-xs md:text-sm font-black">[CLOSE_X]</button>
                </div>
                
                {/* Quick Tool Switcher */}
-               <div className="p-3 md:p-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2 md:gap-3 border-b-8 border-black bg-[#f0f0f0]">
+               <div className="p-3 md:p-4 grid grid-cols-4 gap-2 border-b-8 border-black bg-[#f0f0f0]">
                   {[
                     { id: 'chat', label: 'MSG', color: '--brutal-violet' },
                     { id: 'polls', label: 'POLL', color: '--brutal-pink' },
@@ -373,7 +393,7 @@ const App: React.FC = () => {
                     <button 
                        key={btn.id} 
                        onClick={() => setActiveTool(btn.id as any)} 
-                       className={`brutal-btn py-2.5 md:py-3 text-[9px] md:text-[10px] font-black uppercase italic ${activeTool === btn.id ? `bg-[var(${btn.color})] text-white shadow-none translate-x-1 translate-y-1` : 'bg-white'}`}
+                       className={`brutal-btn py-2 text-[8px] md:text-[9px] px-0 font-black uppercase italic ${activeTool === btn.id ? `bg-[var(${btn.color})] text-white shadow-none translate-x-1 translate-y-1` : 'bg-white'}`}
                     >
                        {btn.label}
                     </button>
@@ -395,6 +415,24 @@ const App: React.FC = () => {
             <Controls onToggleMic={toggleMic} isMicOn={isMicOn} onToggleCamera={toggleCamera} isCameraOn={isCameraOn} onToggleScreenShare={toggleScreenShare} isScreenSharing={isScreenSharing} onToggleHandRaise={toggleHandRaise} isHandRaised={isHandRaised} onToggleTool={toggleTool} activeTool={activeTool} onLeave={handleLeave} onSendReaction={handleSendReaction} isRecording={isRecording} onToggleRecording={() => !isRecording ? startRecording() : stopRecording()} isCaptionsOn={isCaptionsOn} onToggleCaptions={() => setIsCaptionsOn(!isCaptionsOn)} />
          </div>
       </div>
+
+      {/* MODAL_TOOL_LAYER: Highest Z-level for overlay tools */}
+      {['whiteboard', 'notes', 'media'].includes(activeTool) && (
+          <div className="fixed inset-4 md:inset-10 z-[500] border-[6px] md:border-[10px] border-black bg-white shadow-[10px_10px_0px_#000] md:shadow-[20px_20px_0px_#000] overflow-hidden flex flex-col animate-slide-up">
+              <div className="h-10 md:h-12 bg-black text-white flex items-center justify-between px-4 md:px-6 border-b-4 border-black text-[10px] md:text-sm">
+                  <div className="flex items-center gap-2 md:gap-3">
+                      <Layout strokeWidth={3} className="text-[var(--brutal-yellow)] w-3.5 h-3.5 md:w-[18px] md:h-[18px]" />
+                      <span className="font-black uppercase tracking-widest italic">{activeTool}_PROTOCOL</span>
+                  </div>
+                  <button onClick={() => setActiveTool('none')} className="font-black hover:text-[var(--brutal-red)] transition-colors uppercase italic">[TERMINATE_X]</button>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                  {activeTool === 'whiteboard' && <Whiteboard roomId={roomId} />}
+                  {activeTool === 'notes' && <CollaborativeNotes roomId={roomId} />}
+                  {activeTool === 'media' && <MediaPlayer syncData={syncData} onSync={(t, s) => signaling.sendMediaSync(roomId, { time: t, state: s })} onClose={() => setActiveTool('none')} />}
+              </div>
+          </div>
+      )}
 
       {/* GLOBAL HUD DECORATION - Hidden on mobile */}
       <div className="fixed top-24 left-6 hidden xl:flex flex-col gap-4 opacity-40 select-none pointer-events-none">

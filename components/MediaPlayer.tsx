@@ -45,21 +45,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ onSync, syncData, onClose }) 
 
   return (
     <div className="flex flex-col bg-[#f8f8f8] font-mono text-black brutal-grid-dot h-full overflow-hidden">
-      {/* MEDIA_HEADER */}
-      <div className="p-6 bg-white border-b-[6px] border-black flex items-center justify-between z-[70] shadow-[0_6px_0px_#000]">
-        <div className="flex items-center gap-4 text-black">
-           <div className="bg-[var(--brutal-cyan)] p-3 border-4 border-black shadow-[4px_4px_0px_#000]"> 
-             <Tv size={24} strokeWidth={3} /> 
-           </div>
-           <div className="flex flex-col">
-             <span className="font-black text-lg uppercase tracking-tighter italic leading-none">SYNCCAST_ENGINE_v4</span>
-             <span className="text-[9px] font-black uppercase opacity-30 mt-1">PROTO_MEDIA_UPLINK_READY</span>
-           </div>
-        </div>
-        <button onClick={onClose} className="brutal-btn p-3 bg-[var(--brutal-red)] text-white hover:bg-black border-4 shadow-[4px_4px_0px_#000]">
-           <X size={24} strokeWidth={3} />
-        </button>
-      </div>
+
 
       {!activeUrl ? (
           <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-[#f0f0f0] brutal-grid-dot">
