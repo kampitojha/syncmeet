@@ -107,18 +107,27 @@ export const useWebRTC = (roomId: string, userName: string) => {
   const stopScreenShare = (screenTrack: MediaStreamTrack) => {
     screenTrack.stop();
     
-    // Restore camera track in all active calls
+    // Explicitly re-enable camera track just in case
     if (localVideoTrack.current) {
-        Object.values((signaling as any).peers).forEach((peer: any) => {
-            if (peer.connected) {
-                peer.replaceTrack(screenTrack, localVideoTrack.current, localStream);
-            }
-        });
+        localVideoTrack.current.enabled = isCameraOn;
     }
 
     const refreshedStream = new MediaStream();
     if (localVideoTrack.current) refreshedStream.addTrack(localVideoTrack.current);
     if (localAudioTrack.current) refreshedStream.addTrack(localAudioTrack.current);
+
+    // Restore camera track in all active calls using the NEW stream
+    if (localVideoTrack.current) {
+        Object.values((signaling as any).peers).forEach((peer: any) => {
+            if (peer.connected) {
+                try {
+                   peer.replaceTrack(screenTrack, localVideoTrack.current!, refreshedStream);
+                } catch (e) {
+                   console.error("PEER_RESTORE_TRACK_FAILED", e);
+                }
+            }
+        });
+    }
     
     setLocalStream(refreshedStream);
     setIsScreenSharing(false);
