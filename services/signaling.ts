@@ -125,7 +125,6 @@ class RobustMeshSignaling {
         this.destroyPeerConnection(targetSocketId);
     });
 
-    // AUTO-REBOOT TIMER: If data connects but stream fails after 8s
     setTimeout(() => {
         if (this.socket && this.peerStatus[targetSocketId] && !this.peerStatus[targetSocketId].streamReceived && this.peerStatus[targetSocketId].retryCount < 2) {
             this.peerStatus[targetSocketId].retryCount++;
@@ -168,8 +167,17 @@ class RobustMeshSignaling {
   sendMediaStatus(r: string, k: any, e: boolean) { this.send('media-status', { kind: k, enabled: e }); }
   sendReaction(r: string, e: string) { this.send('reaction', { emoji: e }, true); }
   sendHandRaise(r: string, i: boolean) { this.send('hand-raise', { isRaised: i }); }
-  sendSystemLog(r: string, m: string, t: any = 'info') { this.trigger('system-log', { message: m, type: t }); }
+  sendCaption(r: string, t: string) { this.send('caption-update', { text: t }); }
+  sendTyping(r: string, i: boolean) { this.send('typing', { isTyping: i }); }
+  sendScreenShareStatus(r: string, i: boolean) { this.send('screen-status', { isScreenSharing: i }); }
   sendChatMessage(r: string, d: any) { this.send('chat', d, true); }
+  sendChatStatus(r: string, s: string, i: string[]) { this.send('chat-status', { status: s, messageIds: i }); }
+  sendPollUpdate(r: string, p: any) { this.send('poll-update', { poll: p }, true); }
+  sendPollVote(r: string, p: string, o: string) { this.send('poll-vote', { pollId: p, optionId: o }, true); }
+  sendDrawLine(r: string, d: any) { this.send('draw-line', d); }
+  sendClearBoard(r: string) { this.send('clear-board', {}); }
+  sendNoteUpdate(r: string, c: string) { this.send('sync-notes', { content: c }); }
+  sendMediaSync(r: string, d: any) { this.send('media-sync', d); }
 }
 
 export const signaling = new RobustMeshSignaling();
