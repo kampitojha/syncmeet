@@ -65,11 +65,15 @@ class RobustMeshSignaling {
 
     this.socket.on('mesh-manifest', (users: any[]) => {
         this.systemLog(`MESH_SCAN: Found ${users.length} peers in orbit. Handshaking...`, 'info');
-        users.forEach(user => this.createPeerConnection(user.socketId, user.userId, user.userName, true));
+        users.forEach(user => {
+            this.trigger('join', { roomId: this.activeRoom, senderId: user.userId, payload: { name: user.userName } });
+            this.createPeerConnection(user.socketId, user.userId, user.userName, true);
+        });
     });
 
     this.socket.on('user-entered-mesh', ({ socketId, userId, userName }) => {
         this.systemLog(`ORBIT_ENTRY: ${userName} detected. Initiating link.`, 'info');
+        this.trigger('join', { roomId: this.activeRoom, senderId: userId, payload: { name: userName } });
         this.createPeerConnection(socketId, userId, userName, false);
     });
 
