@@ -272,14 +272,11 @@ const App: React.FC = () => {
                 </button>
               </form>
 
-              <div className="mt-6 md:mt-10 pt-6 md:pt-10 border-t-2 border-dashed border-black/20 text-center">
-                 <p className="text-[8px] md:text-[10px] font-black uppercase opacity-30 italic">Developed by the industrial_minimal_labs // 2024</p>
-              </div>
-           </div>
-        </div>
-      </div>
-    );
-  }
+            </div>
+         </div>
+       </div>
+     );
+   }
 
   return (
     <div className="h-[100dvh] w-full bg-[#f8f8f8] brutal-bg-pattern flex flex-col overflow-hidden relative font-mono text-black">
