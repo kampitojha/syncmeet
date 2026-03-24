@@ -30,30 +30,33 @@ const roomRegistry = new Map();
 io.on('connection', (socket) => {
   console.log(`[NETWORK] Node established: ${socket.id}`);
 
-  socket.on('join-room', (roomId, userId, userName) => {
-    if (!roomId) return;
+  socket.on('join-room', (rawRoomId, userId, userName) => {
+    if (!rawRoomId || !userId) return;
     
-    // Join socket.io room for logical grouping
+    // Normalize room ID for casing consistency
+    const roomId = rawRoomId.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
     socket.join(roomId);
     
-    // Initialize room registry if new
     if (!roomRegistry.has(roomId)) {
-      roomRegistry.set(roomId, new Set());
+      roomRegistry.set(roomId, new Map());
+    }
+
+    const roomMap = roomRegistry.get(roomId);
+    
+    // Clean up any old socket for this userId in this room (ghosting prevention)
+    if (roomMap.has(userId)) {
+        const oldSid = roomMap.get(userId).socketId;
+        socket.to(roomId).emit('user-left-mesh', { socketId: oldSid, userId });
     }
 
     const userData = { socketId: socket.id, userId, userName };
-    roomRegistry.get(roomId).add(userData);
+    roomMap.set(userId, userData);
 
-    // 1. Tell the new user about ALL existing users in the room
-    const existingUsers = Array.from(roomRegistry.get(roomId))
-      .filter(u => u.socketId !== socket.id);
-    
+    const existingUsers = Array.from(roomMap.values()).filter(u => u.socketId !== socket.id);
     socket.emit('mesh-manifest', existingUsers);
-
-    // 2. Notify all existing users in the room about the new participant
     socket.to(roomId).emit('user-entered-mesh', userData);
 
-    console.log(`[ROUTING] User ${userName} (${userId}) joined room ${roomId}. Mesh size: ${roomRegistry.get(roomId).size}`);
+    console.log(`[ROUTING] User ${userName} joined room ${roomId}. Mesh size: ${roomMap.size}`);
   });
 
   // Signaling Relay Engine (The Core of the Mesh)
@@ -75,22 +78,19 @@ io.on('connection', (socket) => {
 
   // Robust Disconnection Handling
   const cleanup = () => {
-    for (const [roomId, users] of roomRegistry.entries()) {
-      const userArray = Array.from(users);
-      const userToRemove = userArray.find(u => u.socketId === socket.id);
+    for (const [roomId, roomMap] of roomRegistry.entries()) {
+      const userToRemove = Array.from(roomMap.values()).find(u => u.socketId === socket.id);
       
       if (userToRemove) {
-        users.delete(userToRemove);
-        console.log(`[CLEANUP] User ${userToRemove.userName} left room ${roomId}. Mesh size: ${users.size}`);
+        roomMap.delete(userToRemove.userId);
+        console.log(`[CLEANUP] User ${userToRemove.userName} left room ${roomId}. Mesh size: ${roomMap.size}`);
         
-        // Notify others to tear down peer connections
         socket.to(roomId).emit('user-left-mesh', {
           socketId: socket.id,
           userId: userToRemove.userId
         });
 
-        // Delete empty rooms
-        if (users.size === 0) {
+        if (roomMap.size === 0) {
           roomRegistry.delete(roomId);
           console.log(`[ROUTING] Room ${roomId} decommissioned.`);
         }
