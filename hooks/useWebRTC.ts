@@ -76,11 +76,12 @@ export const useWebRTC = (roomId: string, userName: string) => {
             const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
             const track = stream.getVideoTracks()[0];
             
-            // Replace local track in all active calls
-            Object.values(signaling.calls).forEach(call => {
-                const pc = (call as any).peerConnection as RTCPeerConnection;
-                const sender = pc.getSenders().find(s => s.track?.kind === 'video');
-                if (sender) sender.replaceTrack(track);
+            // Replace local track in all active calls using Simple-Peer replaceTrack
+            Object.values((signaling as any).peers).forEach((peer: any) => {
+                if (peer.connected) {
+                    const originalTrack = (localStream as MediaStream).getVideoTracks()[0];
+                    peer.replaceTrack(originalTrack, track, localStream);
+                }
             });
 
             setLocalStream(new MediaStream([track, localAudioTrack.current!]));
@@ -88,22 +89,27 @@ export const useWebRTC = (roomId: string, userName: string) => {
             signaling.sendScreenShareStatus(roomId, true);
 
             track.onended = () => {
-                Object.values(signaling.calls).forEach(call => {
-                    const sender = call.peerConnection.getSenders().find(s => s.track?.kind === 'video');
-                    if (sender && localVideoTrack.current) sender.replaceTrack(localVideoTrack.current);
+                const refreshedStream = new MediaStream([localVideoTrack.current!, localAudioTrack.current!]);
+                Object.values((signaling as any).peers).forEach((peer: any) => {
+                    if (peer.connected) {
+                        peer.replaceTrack(track, localVideoTrack.current, refreshedStream);
+                    }
                 });
-                setLocalStream(new MediaStream([localVideoTrack.current!, localAudioTrack.current!]));
+                setLocalStream(refreshedStream);
                 setIsScreenSharing(false);
                 signaling.sendScreenShareStatus(roomId, false);
             };
         } catch (e) {}
     } else {
-        Object.values(signaling.calls).forEach(call => {
-            const pc = (call as any).peerConnection as RTCPeerConnection;
-            const sender = pc.getSenders().find(s => s.track?.kind === 'video');
-            if (sender && localVideoTrack.current) sender.replaceTrack(localVideoTrack.current);
+        const refreshedStream = new MediaStream([localVideoTrack.current!, localAudioTrack.current!]);
+        Object.values((signaling as any).peers).forEach((peer: any) => {
+            if (peer.connected) {
+                // Find the active video track being sent (could be the screen track)
+                const activeVideoTrack = (localStream as MediaStream).getVideoTracks()[0];
+                peer.replaceTrack(activeVideoTrack, localVideoTrack.current, refreshedStream);
+            }
         });
-        setLocalStream(new MediaStream([localVideoTrack.current!, localAudioTrack.current!]));
+        setLocalStream(refreshedStream);
         setIsScreenSharing(false);
         signaling.sendScreenShareStatus(roomId, false);
     }
