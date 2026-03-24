@@ -74,8 +74,17 @@ class RobustMeshSignaling {
     });
 
     this.socket.on('signal', ({ fromSocketId, fromUid, fromName, signal }) => {
-        if (!this.peers[fromSocketId]) this.createPeerConnection(fromSocketId, fromUid, fromName, false);
-        this.peers[fromSocketId].signal(signal);
+        try {
+            if (!this.peers[fromSocketId]) {
+                this.createPeerConnection(fromSocketId, fromUid, fromName, false);
+            }
+            const peer = this.peers[fromSocketId];
+            if (peer && !peer.destroyed) {
+                peer.signal(signal);
+            }
+        } catch (e) {
+            this.systemLog(`SIGNAL_SYNC_WARN: ${fromName}`, 'warn');
+        }
     });
 
     this.socket.on('user-left-mesh', ({ socketId, userId }) => {
@@ -89,7 +98,10 @@ class RobustMeshSignaling {
   }
 
   private createPeerConnection(targetSocketId: string, peerUid: string, peerName: string, isInitiator: boolean) {
-    if (this.peers[targetSocketId]) this.peers[targetSocketId].destroy();
+    if (this.peers[targetSocketId]) {
+        try { this.peers[targetSocketId].destroy(); } catch (e) {}
+        delete this.peers[targetSocketId];
+    }
 
     const peer = new Peer({
         initiator: isInitiator,
@@ -102,7 +114,8 @@ class RobustMeshSignaling {
                 { urls: 'stun:stun2.l.google.com:19302' },
                 { urls: 'stun:stun3.l.google.com:19302' },
                 { urls: 'stun:stun4.l.google.com:19302' },
-                { urls: 'stun:global.stun.twilio.com:3478' }
+                { urls: 'stun:global.stun.twilio.com:3478' },
+                { urls: 'stun:stun.services.mozilla.com' }
             ] 
         }
     });
